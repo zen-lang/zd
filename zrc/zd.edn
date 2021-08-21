@@ -1,10 +1,29 @@
 {ns zd
+ import #{zenbox}
 
  doc
  {:zen/tags #{zen/tag zen/schema}
   :zen/desc "zd basic document"
-  :keys {:zd/md> {:type zen/string}}
+  :type zen/map
+  :keys {:zd/md> {:type zen/string}}}
 
+ render-index
+ {:zen/tags #{zenbox/op}}
+
+ render-symbol
+ {:zen/tags #{zenbox/op}}
+
+ api
+ {:zen/tags #{zenbox/api},
+  :GET {:operation render-index}
+  [:symbol] {:GET {:operation render-symbol}}}
+
+ server
+ {:zen/tags    #{zenbox/server}
+  :port        3030
+  :apis        #{api}
+  ;; :after-start [ensure-stores]
+  ;; :services    #{db}
   }
 
  }

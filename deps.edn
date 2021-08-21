@@ -1,17 +1,19 @@
-{:paths       ["src-c" "src" "resources"]
+{:paths       ["zrc" "src-c" "src" "resources"]
  :deps        {org.clojure/clojure             {:mvn/version "1.10.3"}
-               cheshire/cheshire               {:mvn/version "5.10.0"}
-               clj-commons/clj-yaml            {:mvn/version "0.7.106"}
-               com.cognitect/transit-clj       {:mvn/version "1.0.324"}
-               http-kit/http-kit               {:mvn/version "2.5.3"}
-               ring/ring                       {:mvn/version "1.9.3"}
-               ring/ring-defaults              {:mvn/version "0.3.3"}
+
                hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
                zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
                                                 :sha "a376f197902330473cf688eb3ff02f69094677de"}
+
+               zen-lang/zen-web                {:local/root "libs/zen-web"}
+
                borkdude/edamame                {:mvn/version "0.0.11-alpha.16"}
                hawk/hawk                       {:mvn/version "0.2.11"}
-               markdown-clj/markdown-clj       {:mvn/version "1.10.5"}}
+               markdown-clj/markdown-clj       {:mvn/version "1.10.5"}
+               clj-time/clj-time               {:mvn/version "0.15.2"}
+
+               stylo/stylo                     {:git/url "https://github.com/HealthSamurai/macrocss"
+                                                :sha "1d0cba81d545bc30a42f64f0e65ee4c2ae4d9767"}}
  :aliases
  {:nrepl
   {:extra-paths ["dev" "resources" "shadow-target/shadow/dev" "shadow-target/stylo/dev" "dev-resources"

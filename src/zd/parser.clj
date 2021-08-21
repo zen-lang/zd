@@ -2,6 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [edamame.core]
+   [zen.core :as zen]
    [clojure.string :as str])
   (:import [java.io StringReader]))
 
@@ -36,3 +37,21 @@
         (if (= :in-key state)
           (recur res ls state current-key (conj current-acc l))
           (recur (if (not (str/blank? l)) (update res :?> conj l) res) ls state current-key current-acc))))))
+
+(defn load-doc [ztx nm]
+  (let [pth (str (:zd/path @ztx) "/" (str/replace nm #"\." "/") ".zd")
+        f (io/file pth)]
+    (when(.exists f)
+      (let [cnt (slurp f)]
+        (parse ztx cnt)))))
+
+(comment
+
+  (def ztx (zen/new-context {:zd/path "zd"}))
+
+  (load-doc ztx 'zd.features.format)
+
+
+
+
+  )

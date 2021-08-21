@@ -1,6 +1,10 @@
-:zen/tags #{zd/doc}
+:zen/tags #{zd/doc ist/activity}
 :zd/title "zd file format specification"
 :zd/author niquola
+:zd/feature-of zd
+:zd/labels ["design"]
+
+:ist/todo {:by niquola :status ist/in-progress :started #inst"2021-08-21" :due #inst"2021-08-21"}
 
 :zd/md>
 
@@ -41,11 +45,15 @@ equeivalent to
 You can define nested attributes with
 
 ```
-:foaf/address  {
+ :foaf/address  {
   :city "SPb"
   :line "Shevchenko"
   :comment "nested text should be quoted
             but can be multiline"
-}
+ }
 ```
 There is no way to define inline text for nested maps
+
+:zd/notes>
+
+This is some notes

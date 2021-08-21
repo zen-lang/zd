@@ -1,18 +1,18 @@
-:zen/tags         zd/doc
-:zd/authors       [ niquola ]
+:zen/tags         #{zd/doc}
+:zd/title         "zd"
+:zd/author        niquola
+:zd/created-at    #inst "2021-08-21T13:21:18.233-00:00"
 
 :zd/md>
 
-# Welcome to zd
+zd is a data oriented and semantic re-think of HTML!
 
-zd is information management framework
+Whats wrong with HTML read [here][[zd/ref:HTML.whats-wrong]]
 
-An attempt to implement semantic wiki + zettelcasten
+zd allows you create semantic web of knowledge, which you can act upon
 
-zd uses zen-lang for schemas
+An attempt to implement semantic wiki + [[zettelkasten]]
 
-zd defines  `.zd` file format, which is essentially sugar edn to write manually
-Start string from : is forbidden
+More detailed description of format can be found [here][[zd/ref:zd.features.format]]
 
-
-* [[zd.format]]
+Just imagine that you can record information in a way suitable for humans and machines
