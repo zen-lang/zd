@@ -1,0 +1,51 @@
+:zen/tags #{zd/doc}
+:zd/title "zd file format specification"
+:zd/author niquola
+
+:zd/md>
+
+# ZD Format
+
+zd file is a freaked [[EDN]] file optimized for manual entry
+
+## Keys
+It consists of keys, which starts on new line from `:` - no spaces allowd before
+
+After the keyword the EDN value may be provided or if key ends with `>` other
+lines will be read as markdown text until next `:` on a new line
+
+```
+ :zd/title "Title"
+ :zd/map {:key "value"}
+ :md>
+    Here some text
+```
+That means that you can not start line in markdown with `:`
+
+## Collections
+
+You can repeat same keys, they will be grouped into a vector.
+Example:
+```
+  :zen/tags zd/doc
+  :zen/tags pj/issue
+```
+equeivalent to
+
+```
+ :zen/tags [zd/doc pj/issue]
+```
+
+## Nested maps
+
+You can define nested attributes with
+
+```
+:foaf/address  {
+  :city "SPb"
+  :line "Shevchenko"
+  :comment "nested text should be quoted
+            but can be multiline"
+}
+```
+There is no way to define inline text for nested maps

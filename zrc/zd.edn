@@ -1,0 +1,10 @@
+{ns zd
+
+ doc
+ {:zen/tags #{zen/tag zen/schema}
+  :zen/desc "zd basic document"
+  :keys {:zd/md> {:type zen/string}}
+
+  }
+
+ }
