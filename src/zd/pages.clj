@@ -1035,7 +1035,11 @@
    [:div {:class (c [:p 4] [:w 70] [:text :gray-600] {:position "absolute" :top 0 :bottom 0 :left 0})}
     [:div {:class (c :font-bold)}
      "Navigation"]
-    ]
+    (->>
+      (for [[nm doc] (:zd/resources @ztx)]
+        [:a {:href (str nm) :class (c [:text :blue-500] :block)}
+         (str nm)])
+      (into [:div]))]
    [:div {:class (c [:w 240] {:margin "0 auto"})}
     (when-let [t (:zd/title doc)]
       [:div {:class (c :text-xl :font-bold :border-b [:pt 2] [:pb 1])} t])
