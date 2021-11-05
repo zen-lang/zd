@@ -57,6 +57,7 @@
   [ztx rpc {{nm :name} :params}])
 
 (defn dispatch-op [ztx route request]
+  (zd.core/start ztx {})
   (if route
     (if-let [op (zen/get-symbol ztx (get-in route [:match :operation]))]
       (operation ztx op (assoc request :route-params (:params route)))
@@ -70,16 +71,18 @@
   (web/stop ztx))
 
 (comment
-  (def ztx (zen/new-context {:zd/path "zd"}))
+
+  (System/getProperty "user.dir")
+
+  (def pth "docs")
+
+  (def ztx (zen/new-context {:zd/path pth}))
 
   (zen.core/read-ns ztx 'zd)
 
   (zd.core/start ztx {})
 
-  (zd.parser/get-doc ztx 'zd)
-
-  (zen.core/get-tag ztx 'zenbox/server)
-  (zen.core/get-symbol ztx 'zd/server)
+  (zd.parser/get-doc ztx 'aidbox)
 
 
   (:zd/resources @ztx)

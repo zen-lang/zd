@@ -39,7 +39,7 @@
           (recur (if (not (str/blank? l)) (update res :?> conj l) res) ls state current-key current-acc))))))
 
 (defn name-to-path [ztx nm]
-  (str (:zd/path @ztx) "/" (str/replace nm #"\." "/") ".zd"))
+  (str (:zd/path @ztx) "/" (str/replace (name nm) #"\." "/") ".zd"))
 
 (defn path-to-name [ztx p]
   (let [pth (get @ztx :zd/path)]
@@ -66,6 +66,7 @@
         (load-doc ztx nm cnt)))))
 
 (defn get-doc [ztx nm]
+  (read-doc ztx nm)
   (get-in @ztx [:zd/resources nm]))
 
 (comment

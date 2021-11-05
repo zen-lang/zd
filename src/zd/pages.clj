@@ -1032,11 +1032,11 @@
 
 (defn generate-page [ztx doc]
   [:div {:class (c)}
-   [:div {:class (c [:p 4] [:w 70] [:text :gray-600] {:position "absolute" :top 0 :bottom 0 :left 0})}
+   [:div {:class (c [:p 4] [:w 140] [:text :gray-600]  :text-sm {:position "absolute" :top 0 :bottom 0 :left 0})}
     [:div {:class (c :font-bold)}
      "Navigation"]
     (->>
-      (for [[nm doc] (:zd/resources @ztx)]
+     (for [[nm doc] (sort-by first (:zd/resources @ztx))]
         [:a {:href (str nm) :class (c [:text :blue-500] :block)}
          (str nm)])
       (into [:div]))]
