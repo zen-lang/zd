@@ -1056,7 +1056,7 @@
            (render-items it k)))])
 
 (defn page [ztx doc]
-  [:div {:class (c [:w 240] [:bg :white] [:py 4] [:px 6] :shadow-md)}
+  [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
     (when-let [t (:zd/title doc)]
       [:div {:class (c [:text :gray-800] :font-bold :border-b [:pt 2] [:pb 1] {:font-size "1.5rem"})} t])
     (->>
@@ -1079,13 +1079,13 @@
       (into [:div {:class (c )}]))])
 
 (defn links [ztx doc]
-  [:div {:class (c [:p 4] [:w 70] [:text :gray-600])}
+  [:div {:class (c [:px 4]  [:text :gray-600])}
    (->>
     (for [[pth links] (zd.parser/get-links ztx (:zd/name doc))]
       [:div
        [:div  {:class (c :font-bold :text-xs :border-b)} (pr-str pth)]
        (into
-        [:div {:class (c [:pl 4])}]
+        [:div {:class (c [:pl 0])}]
         (for [[from opts] links]
           [:a {:href (str from) :class (c [:text :blue-500] :block)}
            from]))])
