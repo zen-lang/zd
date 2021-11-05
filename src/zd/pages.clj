@@ -268,6 +268,7 @@
   padding-left: 0;
   margin-top: 0;
   margin-bottom: 0;
+  list-style: disc;
 }
 
 .markdown-body ol ol,
@@ -1003,7 +1004,7 @@
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:style gh-md]]
-   [:body {:class (c [:bg :white])}
+   [:body {:class (c [:bg :gray-100])}
     content]])
 
 ;; (instance? java.util.Date. (java.util.Date.))
@@ -1030,36 +1031,72 @@
     :else
     [:div (pr-str v)]))
 
-(defn generate-page [ztx doc]
-  [:div {:class (c)}
-   [:div {:class (c [:p 4] [:w 140] [:text :gray-600]  :text-sm {:position "absolute" :top 0 :bottom 0 :left 0})}
-    [:div {:class (c :font-bold)}
-     "Navigation"]
-    (->>
-     (for [[nm doc] (sort-by first (:zd/resources @ztx))]
-        [:a {:href (str nm) :class (c [:text :blue-500] :block)}
-         (str nm)])
-      (into [:div]))]
-   [:div {:class (c [:w 240] {:margin "0 auto"})}
+(defn build-tree [ztx doc]
+  (->> 
+   (sort-by first (:zd/resources @ztx))
+   (reduce (fn [acc [nm doc]]
+             (let [parts (interpose :items (str/split (name nm) #"\."))]
+               (assoc-in acc parts {:title (or (:zd/title doc) nm)
+                                    :href (str nm)})))
+           {})))
+
+(defn render-items [item & [k]]
+  [:div
+   (if-let [h  (:href item)]
+     [:a {:href h :class (c [:text :blue-500])} (:title item)]
+     [:div k])
+   (into [:div {:class (c [:pl 4])}]
+    (for [[k it] (:items item)]
+      (render-items it k)))])
+
+(defn navigation [ztx doc]
+  [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
+   (into [:div]
+         (for [[k it] (build-tree ztx doc)]
+           (render-items it k)))])
+
+(defn page [ztx doc]
+  [:div {:class (c [:w 240] [:bg :white] [:py 4] [:px 6] :shadow-md)}
     (when-let [t (:zd/title doc)]
-      [:div {:class (c :text-xl :font-bold :border-b [:pt 2] [:pb 1])} t])
+      [:div {:class (c [:text :gray-800] :font-bold :border-b [:pt 2] [:pb 1] {:font-size "1.5rem"})} t])
     (->>
-      (for [[k v] (dissoc doc :zd/title)]
-        (if (str/ends-with? (name k) ">")
-          [:div  {:class (c {:position "relative"})}
-           [:div {:class (c [:text :gray-600] :text-sm
-                            [:px 1] :border
-                            [:bg :gray-100]
-                            {:weight "400" :position "absolute" :top "-1px" :right "0" :opacity "0.8"})}
-            (pr-str k)]
-           (render-value ztx k v)]
-          [:div {:class (c :flex [:space-x 2] [:pt 1] [:pb 0.5]
-                           :items-center
-                           {:border-bottom "1px solid #eaecef"})}
-           [:div {:class (c [:text :gray-600] :text-sm [:w 30] {:font-weight "400"})}
-            [:b (namespace k)] "/" (name k)]
-           (render-value ztx k v)]))
-      (into [:div {:class (c )}]))]])
+     (for [k (:-keys doc)]
+       (let [v (get doc k)]
+         (if (str/ends-with? (name k) ">")
+           [:div  {:class (c {:position "relative"})}
+            [:div {:class (c [:text :gray-600] :text-sm
+                             [:px 1] :border
+                             [:bg :gray-100]
+                             {:weight "400" :position "absolute" :top "-1px" :right "0" :opacity "0.8"})}
+             (pr-str k)]
+            (render-value ztx k v)]
+           [:div {:class (c :flex [:space-x 2] [:pt 1] [:pb 0.5]
+                            :items-center
+                            {:border-bottom "1px solid #eaecef"})}
+            [:div {:class (c [:text :gray-600] :text-sm [:w 30] {:font-weight "400"})}
+             [:b (namespace k)] "/" (name k)]
+            (render-value ztx k v)])))
+      (into [:div {:class (c )}]))])
+
+(defn links [ztx doc]
+  [:div {:class (c [:p 4] [:w 70] [:text :gray-600])}
+   (->>
+    (for [[pth links] (zd.parser/get-links ztx (:zd/name doc))]
+      [:div
+       [:div  {:class (c :font-bold :text-xs :border-b)} (pr-str pth)]
+       (into
+        [:div {:class (c [:pl 4])}]
+        (for [[from opts] links]
+          [:a {:href (str from) :class (c [:text :blue-500] :block)}
+           from]))])
+    (into [:div]))])
+
+
+(defn generate-page [ztx doc]
+  [:div {:class (c [:p 4] :flex [:space-x 4])}
+   (navigation ztx doc)
+   (page ztx doc)
+   (links ztx doc)])
 
 (defn render-page [ztx doc]
   (->> (generate-page ztx doc)

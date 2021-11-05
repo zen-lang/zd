@@ -15,15 +15,12 @@
 
  api
  {:zen/tags #{zenbox/api},
-  :GET {:operation render-index}
+  :GET {:operation render-symbol}
   [:symbol] {:GET {:operation render-symbol}}}
 
  server
  {:zen/tags    #{zenbox/server}
   :port        3030
-  :apis        #{api}
-  ;; :after-start [ensure-stores]
-  ;; :services    #{db}
-  }
+  :apis        #{api}}
 
  }
