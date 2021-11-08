@@ -1009,6 +1009,7 @@
 
 ;; (instance? java.util.Date. (java.util.Date.))
 
+
 (defn render-value [ztx k v]
   (cond
     (str/ends-with? (name k) ">")
@@ -1016,8 +1017,15 @@
      [:div.markdown-body
       (hiccup.util/as-str (markdown.core/md-to-html-string v))]]
 
+    (and (vector? v) (= :div (first v)))
+    [:div.markdown-body (eval v)]
+
     (symbol? v)
-    [:a {:href (str v) :class (c [:text :blue-500])} (str v)]
+    [:a {:href (str v) :class (cond
+                                (zd.parser/get-doc ztx v) (c [:text :blue-500])
+                                (zen.core/get-symbol ztx v) (c [:text :green-500])
+                                :else (c [:text :red-500])
+                                )} (str v)]
 
     (string? v)
     [:div v]

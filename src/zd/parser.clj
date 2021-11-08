@@ -78,8 +78,10 @@
         (str/replace #"/" ".")
         (symbol))))
 
-(defn load-doc [ztx nm cnt]
-  (let [doc (assoc (parse ztx cnt) :zd/name nm)]
+(defn load-doc [ztx nm cnt & [props]]
+  (let [doc (-> (parse ztx cnt)
+                (assoc :zd/name nm)
+                (merge props))]
     (swap! ztx assoc-in [:zd/resources nm] doc)
     (back-refs ztx nm doc)))
 

@@ -94,8 +94,6 @@
 
   (def ztx (zen/new-context {:zd/path pth}))
 
-  (zen.core/read-ns ztx 'zd)
-
   (zd.core/start ztx {})
 
   (zd.parser/get-doc ztx 'aidbox)
