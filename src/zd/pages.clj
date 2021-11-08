@@ -5,6 +5,7 @@
    [hiccup.core :as hiccup]
    [hiccup.util]
    [markdown.core]
+   [clojure.string :as str]
    [stylo.core :refer [c]]
    [clojure.string :as str]))
 
@@ -1003,6 +1004,8 @@
   [:html
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
+    [:meta {:charset "UTF-8"}]
+
     [:style gh-md]]
    [:body {:class (c [:bg :gray-100])}
     content]])
@@ -1028,7 +1031,9 @@
                                 )} (str v)]
 
     (string? v)
-    [:div v]
+    (if (str/starts-with? v "http")
+      [:a {:href v :class (c [:text :blue-500])} v]
+      [:div v])
 
     (set? v)
     (->>
@@ -1071,17 +1076,14 @@
      (for [k (:-keys doc)]
        (let [v (get doc k)]
          (if (str/ends-with? (name k) ">")
-           [:div  {:class (c {:position "relative"})}
-            [:div {:class (c [:text :gray-600] :text-sm
-                             [:px 1] :border
-                             [:bg :gray-100]
-                             {:weight "400" :position "absolute" :top "-1px" :right "0" :opacity "0.8"})}
-             (pr-str k)]
+           [:div  {:class (c {:border-bottom "1px solid #eaecef"})}
+            [:div {:class (c [:text :gray-600] :text-sm {:font-weight "400"})}
+             [:b (namespace k)] "/" (name k)]
             (render-value ztx k v)]
            [:div {:class (c :flex [:space-x 2] [:pt 1] [:pb 0.5]
                             :items-center
                             {:border-bottom "1px solid #eaecef"})}
-            [:div {:class (c [:text :gray-600] :text-sm [:w 30] {:font-weight "400"})}
+            [:div {:class (c [:text :gray-600] :text-sm [:w 40] {:font-weight "400"})}
              [:b (namespace k)] "/" (name k)]
             (render-value ztx k v)])))
       (into [:div {:class (c )}]))])
