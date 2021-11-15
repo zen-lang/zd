@@ -1,0 +1,46 @@
+:zd/title "This is Resource"
+
+:zd/book~:intro~:title "This is intro"
+:zd/book~:intro~:content md/
+
+Welcome to book
+
+:zd/book~:part-1~:title "This Part one" 
+:zd/book~:part-1~:content md/
+
+Part 1 Content
+
+:zd/book~:samples~:sample-1 {}
+~:title
+
+;; comments
+:zd/comments~#~
+~:title "Another key"
+~:date "Key"
+~:rdfs/label "Lable"
+~:text md/
+
+
+(( function ))
+
+Here is text which will be nested
+
+```code clojure {:opts "one"}
+
+```
+
+:zd/comments~# {:date "???"}
+~:title "Another comment"
+~:text md/
+
+Comment text
+
+:markup-2 md/
+
+This will produce `:zd/format` & `:zd/text` map
+
+;; which is equal
+
+:markup
+{:zd/format "fmt"
+ :zd/text   "...."}

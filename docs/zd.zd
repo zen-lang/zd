@@ -16,3 +16,34 @@ An attempt to implement semantic wiki + [[zettelkasten]]
 More detailed description of format can be found [here][[zd/ref:zd.features.format]]
 
 Just imagine that you can record information in a way suitable for humans and machines
+
+
+:zd/book~:intro~:title "This is intro"
+:zd/book~:intro~:content md/
+
+:zd/book~:samples~:sample-1 {}
+~:title
+
+
+:comments~#~
+~:title "Another key"
+~:date "Key"
+~:rdfs/label "Lable"
+~:rdfs/comments md/
+
+Here is text which will be nested
+
+```code clojure {:opts "one"}
+
+```
+
+:comments~#~
+~:title "Another key"
+~:date "Key"
+
+:markup
+{:zd/format "fmt"
+ :zd/text   "...."}
+
+:markup-2 md/
+This will produce `:zd/format` & `:zd/text` map

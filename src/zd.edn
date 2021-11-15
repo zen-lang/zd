@@ -13,10 +13,14 @@
  render-symbol
  {:zen/tags #{zenbox/op}}
 
+ render-zen
+ {:zen/tags #{zenbox/op}}
+
  api
  {:zen/tags #{zenbox/api},
   :GET {:operation render-symbol}
-  [:symbol] {:GET {:operation render-symbol}}}
+  [:symbol] {:GET {:operation render-symbol}}
+  [:ns] {[:sym] {:GET {:operation render-zen}}}}
 
  server
  {:zen/tags    #{zenbox/server}
