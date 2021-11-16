@@ -1,11 +1,20 @@
 {ns zd
  import #{zenbox}
 
- doc
- {:zen/tags #{zen/tag zen/schema}
-  :zen/desc "zd basic document"
+ markdown
+ {:zen/tags #{zen/schema}
   :type zen/map
-  :keys {:zd/md> {:type zen/string}}}
+  :keys {:format {:type zen/string}
+         :content {:type zen/string}}}
+ doc
+ {:zen/tags #{zen/schema}
+  :type zen/map
+  :keys {:zd/title {:type zen/string}
+         :zd/tags {:type zen/set :every {:type zen/symbol}}
+         :zd/add-tags {:type zen/set :every {:type zen/symbol}}
+         :zd/name {:type zen/symbol}
+         :zd/text {:confirms #{markdown}}
+         :zd/summary {:confirms #{markdown}}}}
 
  render-index
  {:zen/tags #{zenbox/op}}

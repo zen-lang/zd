@@ -133,7 +133,7 @@
                 (merge props))
         tags (-> (into (or (:zd/tags doc) #{})
                        (parent-tags ztx nm))
-                 (conj 'boxdoc/doc))
+                 (conj 'zd/doc))
         _ (->> (mapv namespace tags)
                (into #{} )
                (mapv (fn [n] (zen.core/read-ns ztx n))))
