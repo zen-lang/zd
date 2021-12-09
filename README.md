@@ -21,10 +21,33 @@ zd format is sugar for edn:
 here is 
 
 * any markdown
+
+;; nested datastructure can be flatten with ~
+:zd/book~:intro~
+~:title "Title"
+~:text md/
+
+This is intro
+
+:zd/book~:examples~
+~:title "Example"
+~:text md/
+
+Examples
+
+;; direct hickup support
+
+
+:aidbox/report
+[:ul
+ (->> (zd/by-tag 'incidents)
+      (group-by :inci/customer))]
 ```
 
 ## TODO
 
 * syntax highlight
 * static site generator
+* custom markdown with symbolic links
+* direct hickup support
 * plugins
