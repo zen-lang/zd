@@ -3,10 +3,12 @@
 Semantic knowledge base
 
 
-Knowledge base consists of structured resources.
-Each resource is file in zd format.
-Full name of resource calculated from project root dirictory: /myns/resource.zd => myns.resource
+* Knowledge base consists of structured resources.
+* Each resource is file in zd format.
+* Full name of resource calculated from project root dirictory: /myns/resource.zd => myns.resource
 and may be referenced from other resources
+* Resource may be described with zen tags
+
 
 zd format is sugar for edn:
 
@@ -20,3 +22,9 @@ here is
 
 * any markdown
 ```
+
+## TODO
+
+* syntax highlight
+* static site generator
+* plugins
