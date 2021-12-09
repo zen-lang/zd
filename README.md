@@ -33,6 +33,22 @@ This is intro
 ~:title "Example"
 ~:text md/
 
+;; There is special syntax for vectors
+:zd/comments~#~
+~:author aidbox.team.niquola
+~:date "2021-11-11"
+~:text md/
+
+Comment 1
+
+:zd/comments~#~
+~:author aidbox.team.niquola
+~:date "2021-11-11"
+~:text md/
+
+Comment 2
+
+
 Examples
 
 ;; direct hickup support
