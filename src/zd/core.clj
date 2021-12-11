@@ -1,11 +1,10 @@
 (ns zd.core
   (:require
    [zen.core :as zen]
+   [zd.db]
    [zd.parser]
    [zd.pages]
-   [clojure.java.io :as io]
    [clojure.pprint]
-   [clojure.string :as str]
    [clojure.walk]
    [edamame.core]
    [zenbox.rpc]
@@ -13,22 +12,16 @@
 
 
 (defn reload [ztx _opts]
-  (swap! ztx dissoc :zd/resources :zd/links)
-  (let [pth (:zd/path @ztx)]
-    (println "Load " pth)
-    (doseq [f (->> (file-seq (io/file pth))
-                   (sort-by (fn [x] (.getPath x))))]
-      (let [p (.getPath f)]
-        (when (and (str/ends-with? p ".zd")
-                   (not (str/starts-with? (.getName f) ".")))
-          (zd.parser/load-doc-file ztx f)))))
+  (swap! ztx dissoc :zdb)
+  (let [dirs (:zd/paths @ztx)]
+    (zd.db/load-dirs ztx dirs))
   :ok)
 
 (defmethod zenbox.web.core/operation 'zd/render-symbol
   [ztx op {{sym :symbol} :route-params :as req}]
   (reload ztx {})
-  (let [sym (if sym (symbol sym) '_welcome)]
-    (if-let [doc (zd.parser/get-doc ztx sym)]
+  (let [sym (if sym (symbol sym) 'readme)]
+    (if-let [doc (zd.db/read-resource ztx sym)]
       {:status 200
        :body  (zd.pages/render-page ztx doc)}
       {:status 404
@@ -41,7 +34,6 @@
      :body  (zd.pages/render-zen ztx doc)}
     {:status 404
      :body  (str "No page for " sym)}))
-
 
 (defn start [ztx opts]
   (reload ztx opts)
@@ -57,18 +49,9 @@
 
   (def pth "docs")
 
-  (def ztx (zen/new-context {:zd/path pth}))
+  (def ztx (zen/new-context {:zd/paths [pth]}))
 
-  (zd.core/start ztx {})
-
-  (zd.parser/get-doc ztx 'aidbox)
-
-
-  (:zd/resources @ztx)
-
-  (:errors @ztx)
-
-  (start ztx)
+  (start ztx {})
 
   (stop ztx)
 

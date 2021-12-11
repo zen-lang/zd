@@ -1,0 +1,129 @@
+:title "Welcome to zen-doc (zd)"
+:date "2021-12-10"
+:author:title "Nikolai Ryzhikov"
+:summary md/
+
+zen-doc (zd) is a library to build your knowledge base
+
+* it is semantic wiki engine
+* static site generation framework
+* zd syntax
+
+
+Example:
+
+```zd
+  :title  "Example document"
+  :summary /
+    Here is some text
+
+```
+
+This will be parsed into
+
+```edn
+{:title "Example document"
+ :summary "\n Multiline "}
+
+```
+
+:syntax:intro md/
+
+  zen document essentially is a hashmap (dictionary) - key/value
+  it is based on EDN
+  but introduce some sugar:
+  * unescaped and multiline strings
+  * keys order
+  * keys annotations
+  * flatten nested structures
+  * extensible macrosystem
+
+  Document consists of key-paths with values and annotations
+  key-path is started with `:` and contains colon-separated key names
+
+  key-path examples:
+  ```zd
+  :key-name val ;; key
+  :parent-key:nested-key  val ;; nested key
+
+  ```
+
+  annotations are started with `^` with symbol name and optional one-line edn
+
+  ```zd
+  ^table {:columns [:name :another-name]}
+  ```
+
+:syntax:parser md/
+
+  Scan document line by line
+  if starts with `^` assoc current keypath
+  and put annotation into annotations accumulator
+  if starts with `:` or `~:` - start new keypath and attach to it accumulated annotations
+  collect all lines until next annotation or keyword
+
+  Process keypath
+  * analize if keypath line ends with <annotation>/ -
+    the rest of lines are joined into multiline string with \n
+  * otherwise try to parse lines as EDN
+  * assoc path into resulting document
+  * remember keypath position and annotations in :zd/meta {[path] {annotation props, pos line-number}}
+  * add document to repository
+
+
+
+:html/example html/
+
+  <h1> Header </h2>
+  <ul>
+    <li> List </li>
+  </ul>
+
+:syntax:strings md/
+
+  Doublequoted strings are inherited from END
+  After special symbol `/` everything until next unidented line will be collected as a string
+  For example:
+
+  ```zd
+  :title / Some text .....
+  :text /
+    Here is
+    multiline string
+  ```
+  will be parsed into
+
+  ```edn
+  {:title "...." :text "...."}
+  ```
+
+^zd.view/comments {:collapse true}
+:syntax:comments:a
+~:author people.niquola
+~:date "2021-12-10"
+~:text md/
+
+ I do not agree with this
+
+:footer md/
+
+ This is just a footer
+
+:data
+ [{:code "code" :display "display"}
+  {:code "code" :display "display"}]
+
+
+:patient
+~:resourceType "Patient"
+~:active true
+~:bithDate "1956-02-03"
+:patient:name:0
+~:family "John"
+~:given:0 "Jackson"
+:patient:identifier:#
+~:system "pid"
+~:value "12345"
+:patient:identifier:#
+~:system "mpi"
+~:value "12345"

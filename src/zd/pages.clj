@@ -68,10 +68,10 @@
 
 (defn build-tree [ztx doc]
   (->>
-   (sort-by first (:zd/resources @ztx))
+   (sort-by first (:zdb @ztx))
    (reduce (fn [acc [nm doc]]
              (let [parts (interpose :items (str/split (name nm) #"\."))]
-               (assoc-in acc parts {:title (or (:zd/title doc) nm)
+               (assoc-in acc parts {:title (or (get-in doc [:resource :title]) nm)
                                     :href (str nm)
                                     :errors (when-let [err (:zen/errors doc)]
                                               (count err))})))
@@ -131,17 +131,47 @@
       (str/join "~" k)]
      (render-value ztx k v)]))
 
-(defn page [ztx doc]
+(def key-class (c [:text :orange-600] {:font-weight "400"}))
+
+(defmulti do-format (fn [ztx fmt block] fmt))
+
+(defmethod do-format
+  :md
+  [ztx fmt {data :data ann :annotations}]
+  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
+   (zd.markdown/parse ztx data)])
+
+(defmethod do-format
+  :default
+  [ztx fmt {data :data ann :annotations}]
+  [:div
+   (when (not (empty? ann))
+     [:div {:class (c :text-xs [:text :gray-400])}
+      (pr-str ann)])
+   [:pre data]])
+
+(defn keypath [path]
+  (let [id (str/join path)]
+    [:a {:id id :class key-class :href (str "#" id)} id]))
+
+(defn render-block [ztx {{fmt 'format :as annotations} :annotations data :data path :path :as block}]
+  (when data
+    [:div
+     (if (nil? fmt)
+       [:div {:class (c :flex [:space-x 4] {:border-bottom "1px solid #eaecef"})}
+        (keypath path)
+        [:div (if (string? data) data (pr-str data))]]
+
+       (do (println :fmt fmt)
+           [:div {:class (c {:border-bottom "1px solid #eaecef"})}
+            (keypath path)
+            (do-format ztx fmt block)]))]))
+
+(defn page [ztx {doc :doc}]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
-    (when-let [t (:zd/title doc)]
-      [:div {:class (c :flex :border-b [:pt 2] [:pb 1])} 
-       [:div {:class (c :flex-1 [:text :gray-800] :font-bold  {:font-size "1.5rem"})} t]
-       [:div (render-value ztx :zd/tags (:zd/tags doc))]])
     (->>
-     (for [k (:zd/keys doc)]
-       (when-not (contains? #{:zd/title :zd/tags} k)
-         (let [v (get-in doc k)]
-           (render-key ztx k v))))
+     (for [block doc]
+       (render-block ztx block))
       (into [:div {:class (c )}]))])
 
 (defn links [ztx doc]
