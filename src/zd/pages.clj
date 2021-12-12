@@ -142,6 +142,13 @@
    (zd.markdown/parse ztx data)])
 
 (defmethod do-format
+  :edn
+  [ztx fmt {data :data ann :annotations}]
+  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
+   [:pre
+    (clj-yaml.core/generate-string data)]])
+
+(defmethod do-format
   :default
   [ztx fmt {data :data ann :annotations}]
   [:div
@@ -162,10 +169,9 @@
         (keypath path)
         [:div (if (string? data) data (pr-str data))]]
 
-       (do (println :fmt fmt)
-           [:div {:class (c {:border-bottom "1px solid #eaecef"})}
-            (keypath path)
-            (do-format ztx fmt block)]))]))
+       [:div {:class (c {:border-bottom "1px solid #eaecef"})}
+        (keypath path)
+        (do-format ztx fmt block)])]))
 
 (defn page [ztx {doc :doc}]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}

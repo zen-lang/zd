@@ -1,50 +1,48 @@
 :title "Welcome to zen-doc (zd)"
 :date "2021-12-10"
 :author:title "Nikolai Ryzhikov"
-:summary md/
 
-zen-doc (zd) is a library to build your knowledge base
+^h2 "Summary"
+:summary:p1 md/
 
-* it is semantic wiki engine
-* static site generation framework
-* zd syntax
+  zen-doc (zd) is a library to build your knowledge base
 
+  *  it is a semantic wiki engine
+  * static site generation framework
+  * zd syntax
 
-Example:
+:summary:example:src /
 
-```zd
   :title  "Example document"
   :summary /
     Here is some text
 
-```
+^format :edn
+:summary:example:result
+  {:title "Example document"
+   :summary "Here is some text"}
 
-This will be parsed into
-
-```edn
-{:title "Example document"
- :summary "\n Multiline "}
-
-```
 
 :syntax:intro md/
 
   zen document essentially is a hashmap (dictionary) - key/value
   it is based on EDN
   but introduce some sugar:
+
   * unescaped and multiline strings
   * keys order
   * keys annotations
   * flatten nested structures
   * extensible macrosystem
 
+
   Document consists of key-paths with values and annotations
   key-path is started with `:` and contains colon-separated key names
 
   key-path examples:
   ```zd
-  :key-name val ;; key
-  :parent-key:nested-key  val ;; nested key
+    :key-name val ;; key
+    :parent-key:nested-key  val ;; nested key
 
   ```
 
@@ -54,6 +52,7 @@ This will be parsed into
   ^table {:columns [:name :another-name]}
   ```
 
+^h2 "Parser"
 :syntax:parser md/
 
   Scan document line by line
@@ -63,6 +62,8 @@ This will be parsed into
   collect all lines until next annotation or keyword
 
   Process keypath
+
+
   * analize if keypath line ends with <annotation>/ -
     the rest of lines are joined into multiline string with \n
   * otherwise try to parse lines as EDN

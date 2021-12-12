@@ -46,8 +46,10 @@
      :path (if child?
              (into parent-path (to-path path))
              (to-path path))
-     :annotation (when (and ann (not (str/blank? ann)))
-                   (println (str "^format :" (str/replace ann #"/$" "")))
+     :annotation (cond
+                   (and ann (= "/" (str/trim ann)))
+                   (str "^format :string")
+                   (and ann (not (str/blank? (str/trim (str/replace ann #"/$" "")))))
                    (str "^format :" (str/replace ann #"/$" "")))
      :line tail}
     {:status :error
@@ -59,9 +61,13 @@
                  (if (str/blank? an)
                    acc
                    (let [[k s] (str/split an #"\s" 2)
-                         v (try (edamame.core/parse-string s)
-                                (catch Exception e
-                                  (str "Error: " (.getMessage e) " | " s)))]
+                         v (if (not (or (nil? s) (str/blank? s)))
+                             (try (edamame.core/parse-string s)
+                                  (catch Exception e
+                                    (println :ERROR ann :- s)
+                                    ;; (println  e)
+                                    (str "Error: " (.getMessage e) " | " s)))
+                             nil)]
                      (assoc acc (symbol (subs k 1)) v))))
                {})))
 
@@ -78,7 +84,9 @@
     (let [{p :path ch? :child? a :annotation l :line} (parse-path res kp last-path)
           lns (if l (into [l] lns) lns)
           content (str/trim (str/join "\n" lns))
-          data (if a content (edamame.core/parse-string content))
+          data (if a content (try (edamame.core/parse-string content)
+                                  (catch Exception e
+                                    (str "Error: " (.getMessage e) " | " content))))
           res-ann (parse-annotations (if a (conj ann a) ann))
           res (smart-assoc-in res p data)]
       (-> ctx

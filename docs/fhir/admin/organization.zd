@@ -1,0 +1,34 @@
+:tags #{fhir.profile}
+:title "Organization"
+
+:maturity "M"
+:category fhir.administrative
+:use "Draft"
+:work-group fhir.groups.admin-resources
+
+^chapter
+:summary {}
+^chapter
+:scope {}
+^chapter
+:boundaries {}
+^chapter
+:references {}
+^chapter
+:content {}
+^chapter
+:content:profile {}
+^chapter
+:content:terminology {}
+^chapter
+:content:constraints {}
+^chapter
+:notes {}
+^chapter
+:examples {}
+:examples:example-1 {}
+:examples:example-2 {}
+^chapter
+:search-params {}
+:search-params:active {}
+:search-params:name {}
