@@ -23,25 +23,25 @@ here is
 * any markdown
 
 ;; nested datastructure can be flatten with ~
-:zd/book~:intro~
+:zd/book:intro
 ~:title "Title"
 ~:text md/
 
 This is intro
 
-:zd/book~:examples~
+:zd/book:examples
 ~:title "Example"
 ~:text md/
 
 ;; There is special syntax for vectors
-:zd/comments~#~
+:zd/comments:#
 ~:author aidbox.team.niquola
 ~:date "2021-11-11"
 ~:text md/
 
 Comment 1
 
-:zd/comments~#~
+:zd/comments:#
 ~:author aidbox.team.niquola
 ~:date "2021-11-11"
 ~:text md/
