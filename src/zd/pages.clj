@@ -48,7 +48,7 @@
     [:span {:class (c [:text :green-600])} v]
 
     (symbol? v)
-    [:a {:href (str v) :class (cond (zd.parser/get-doc ztx v) (c [:text :blue-500])
+    [:a {:href (str v) :class (cond ;;(zd.parser/get-doc ztx v) (c [:text :blue-500])
                                     (zen.core/get-symbol ztx v) (c [:text :green-500])
                                     :else (c [:text :red-500]))} (str v)]
 
@@ -183,7 +183,7 @@
 (defn links [ztx doc]
   [:div {:class (c [:px 4]  [:text :gray-600])}
    (->>
-    (for [[pth links] (zd.parser/get-links ztx (:zd/name doc))]
+    (for [[pth links] [] #_(zd.parser/get-links ztx (:zd/name doc))]
       [:div
        [:div  {:class (c :font-bold :text-xs :border-b)} (pr-str pth)]
        (into

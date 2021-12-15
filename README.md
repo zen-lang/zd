@@ -62,8 +62,55 @@ Examples
 
 ## TODO
 
-* syntax highlight
-* static site generator
-* custom markdown with symbolic links
-* direct hickup support
-* plugins
+^Eugeny&Max
+* zd-mode for emacs
+ * syntax
+ * jump
+
+^Vlad&Nicola
+* markdown/zendown extensible down 
+  * [[multi params params]]
+  * code blocks with hl
+
+* zd api (search)
+
+* macro engine
+
+* zen schema integration
+
+* hickup engine
+  * expressions
+  * helpers - zd api search 
+  * render helpers tables
+
+^Eugeny&Max
+* static generator
+  * ui styles
+  * render blocks  (annotations)
+  * navigation (dsl & render)  
+
+* dev-mode (watch file -> reload resource in db) -> render page
+
+* plugin example
+* import plugin
+
+* sample knowledge base
+
+
+```
+git clone kb
+cd kb
+zd dev-mode
+
+open localhost:3030
+
+edit file.zd
+
+reloaded automaticaly localhost:3030
+
+git push
+
+github actions
+github pages
+
+```
