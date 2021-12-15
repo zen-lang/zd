@@ -148,30 +148,59 @@
    [:pre
     (clj-yaml.core/generate-string data)]])
 
+(defmulti do-block (fn [ztx k block] k))
+
+(defmethod do-block :default [& _] nil)
+
+(defmethod do-block
+  :badge
+  [ztx fmt {data :data path :path}]
+  [:div {:class (c :border [:m 1] :inline-block :rounded [:p 0])}
+   [:b {:class (c :border-r [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
+    (subs (str (last path)) 1) ]
+   [:span {:class (c [:px 2] [:py 0.5] )} (str data)]])
+
 (defmethod do-format
   :default
   [ztx fmt {data :data ann :annotations}]
-  [:div
-   (when (not (empty? ann))
-     [:div {:class (c :text-xs [:text :gray-400])}
-      (pr-str ann)])
-   [:pre data]])
+  [:div (pr-str data)])
 
 (defn keypath [path]
   (let [id (str/join path)]
     [:a {:id id :class key-class :href (str "#" id)} id]))
 
-(defn render-block [ztx {{fmt 'format :as annotations} :annotations data :data path :path :as block}]
-  (when data
-    [:div
-     (if (nil? fmt)
-       [:div {:class (c :flex [:space-x 4] {:border-bottom "1px solid #eaecef"})}
-        (keypath path)
-        [:div (if (string? data) data (pr-str data))]]
+(defmulti render-keypath (fn [kp _] kp))
 
-       [:div {:class (c {:border-bottom "1px solid #eaecef"})}
-        (keypath path)
-        (do-format ztx fmt block)])]))
+(defmethod render-keypath
+  :default
+  [_ & _]
+  nil)
+
+(defmethod render-keypath
+  [:title]
+  [_ title]
+  [:h1 {:class (c [:mb 2] :border-b {:font-size "34px"})} title])
+
+(defmethod render-keypath
+  [:summary]
+  [_ summary]
+  [:p {:class (c [:mb 4] [:text :gray-600])} summary])
+
+(defn render-block [ztx {{fmt 'format blk 'block :as annotations} :annotations data :data path :path :as block}]
+  (when data
+    (if-let [res (render-keypath path data)]
+      res
+      (if-let [res (and blk (do-block ztx blk block))]
+        res
+        [:div
+         (if (nil? fmt)
+           [:div {:class (c [:py 1] :flex [:space-x 4] {:border-bottom "1px solid #eaecef"})}
+            (keypath path)
+            [:div (if (string? data) data (pr-str data))]]
+
+           [:div {:class (c [:py 1] {:border-bottom "1px solid #eaecef"})}
+            (keypath path)
+            (do-format ztx fmt block)])]))))
 
 (defn page [ztx {doc :doc}]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}

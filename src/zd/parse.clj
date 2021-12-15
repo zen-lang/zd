@@ -41,7 +41,7 @@
       (pr-str e))))
 
 (defn parse-path [res l parent-path]
-  (if-let [[_ child? path ann tail :as p] (re-matches #"^(~)?(:\S+)\s*(\S*/)?(.*)$" l)]
+  (if-let [[_ child? path ann tail :as p] (re-matches #"^(~)?(:\S+)\s*([a-z]*/)?(.*)$" l)]
     {:child? (not (nil? child?))
      :path (if child?
              (into parent-path (to-path path))

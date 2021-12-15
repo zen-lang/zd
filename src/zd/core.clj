@@ -48,6 +48,8 @@
   (System/getProperty "user.dir")
 
   (def pth "docs")
+  
+  (def pth "/Users/niquola/sansara/box/docs")
 
   (def ztx (zen/new-context {:zd/paths [pth]}))
 
