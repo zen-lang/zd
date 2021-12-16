@@ -19,8 +19,10 @@
 (def closed-node-style (c [:bg :red-500]))
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
-   [:h1 {:font-size "46px"
-         :font-weight "700"}]
+   [:h1 {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"}]
+   [:h2 {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"}]
+   [:h3 {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"}]
+   [:p {:margin-bottom "1rem"}]
    [:.closed {:display "none"}]
    [:.pl-4  {:padding-left "1rem"}]
    [:.toggler {:padding-left "4px"
@@ -29,7 +31,6 @@
                :padding-bottom "2px"}]
    [:.rotateToggler {:transform "rotate(-90deg)"}]])
 
-(garden.core/css common-style)
 
 (defn layout [ztx content]
   [:html
@@ -133,41 +134,34 @@
                            (sort-by :title))]
            (render-items it k)))])
 
-(defmulti render-key (fn [ztx k v] k))
 
+;; (defmethod render-key [:zen/errors]
+;;   [ztx k v]
+;;   [:div {:class (c [:bg :red-100]  [:p 2])}
+;;    [:h3 {:class (c [:text :red-700] [:my 1] :text-xl)} "zen/errors"]
+;;    [:div.markdown-body
+;;     [:ul
+;;      (for [e v]
+;;        [:li {:class (c [:text :red-500] :text-xs)}
+;;         (:message e)
+;;         "  @ "
+;;         (pr-str (:path e))
+;;         (when (:schema e)
+;;           (str  " by "        (pr-str (:schema e))))])]]])
 
-(defmethod render-key [:person/avatar]
-  [ztx k v]
-  [:div {:class (c  [:p 2])}
-   [:img {:src v :class (c [:w 20] :rounded :box-shadow)}]])
-
-(defmethod render-key [:zen/errors]
-  [ztx k v]
-  [:div {:class (c [:bg :red-100]  [:p 2])}
-   [:h3 {:class (c [:text :red-700] [:my 1] :text-xl)} "zen/errors"]
-   [:div.markdown-body
-    [:ul
-     (for [e v]
-       [:li {:class (c [:text :red-500] :text-xs)}
-        (:message e)
-        "  @ "
-        (pr-str (:path e))
-        (when (:schema e)
-          (str  " by "        (pr-str (:schema e))))])]]])
-
-(defmethod render-key :default
-  [ztx k v]
-  (if (:format v)
-    [:div  {:class (c {:border-bottom "1px solid #eaecef"})}
-     [:div {:class (c [:text :gray-600] :text-sm {:font-weight "400"})}
-      (str/join "~" k)]
-     (render-value ztx k v)]
-    [:div {:class (c :flex [:space-x 2] [:pt 1] [:pb 0.5]
-                     :items-center
-                     {:border-bottom "1px solid #eaecef"})}
-     [:div {:class (c [:text :gray-600] :text-sm [:w 40] {:font-weight "400"})}
-      (str/join "~" k)]
-     (render-value ztx k v)]))
+;; (defmethod render-key :default
+;;   [ztx k v]
+;;   (if (:format v)
+;;     [:div  {:class (c {:border-bottom "1px solid #eaecef"})}
+;;      [:div {:class (c [:text :gray-600] :text-sm {:font-weight "400"})}
+;;       (str/join "~" k)]
+;;      (render-value ztx k v)]
+;;     [:div {:class (c :flex [:space-x 2] [:pt 1] [:pb 0.5]
+;;                      :items-center
+;;                      {:border-bottom "1px solid #eaecef"})}
+;;      [:div {:class (c [:text :gray-600] :text-sm [:w 40] {:font-weight "400"})}
+;;       (str/join "~" k)]
+;;      (render-value ztx k v)]))
 
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
 
@@ -198,13 +192,6 @@
 
 (defmethod do-block :default [& _] nil)
 
-(defmethod do-block
-  :badge
-  [ztx fmt {data :data path :path}]
-  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
-   [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
-    (subs (str (last path)) 1) ]
-   [:div {:class (c [:px 2] [:py 0.5] :inline-block)} (str data)]])
 
 (defmethod do-format
   :default
@@ -215,44 +202,71 @@
   (let [id (str/join path)]
     [:a {:id id :class key-class :href (str "#" id)} id]))
 
-(defmulti render-keypath (fn [kp _] kp))
+(defmulti render-key     (fn [ztx {pth :path}] pth))
+(defmulti render-block   (fn [ztx {{blk :block} :annotations}] (keyword blk)))
+(defmulti render-content (fn [ztx {{cnt :content} :annotations}] (keyword cnt)))
 
-(defmethod render-keypath
-  :default
-  [_ & _]
-  nil)
+(defmethod render-key :default [_ & _] nil)
 
-(defmethod render-keypath
+(defmethod render-key
   [:title]
-  [_ title]
+  [_ {title :data}]
   [:h1 {:class (c [:mb 4] :border-b)} title])
 
-(defmethod render-keypath
+(defmethod render-key
   [:summary]
-  [_ summary]
-  [:p {:class (c [:mb 4] [:text :gray-600])} summary])
+  [ztx block]
+  [:p {:class (c [:mb 4] [:text :gray-600])}
+   (render-content ztx block)])
 
-(defn render-block [ztx {{fmt 'format blk 'block :as annotations} :annotations data :data path :path :as block}]
-  (when data
-    (if-let [res (render-keypath path data)]
-      res
-      (if-let [res (and blk (do-block ztx blk block))]
-        res
-        [:div
-         (if (nil? fmt)
-           [:div {:class (c [:py 1] :flex [:space-x 4] {:border-bottom "1px solid #eaecef"})}
-            (keypath path)
-            [:div (if (string? data) data (pr-str data))]]
+(defmethod render-content
+  :md
+  [ztx {data :data}]
+  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
+   (zd.zentext/parse-block ztx data)])
 
-           [:div {:class (c [:py 1] {:border-bottom "1px solid #eaecef"})}
-            (keypath path)
-            (do-format ztx fmt block)])]))))
+(defmethod render-content
+  :default
+  [ztx {data :data}]
+  (cond
+    (string? data) data
+    (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
+    ;; TODO: check link
+    (symbol? data) [:a {:href (str "/" data)} (str :TBD data)]
+    :else [:pre (pr-str data)]))
+
+(defmethod render-block
+  :default
+  [ztx {ann :annotations data :data path :path :as block}]
+  [:div {:class (c [:py 2])}
+   [(keyword (str "h" (inc (count path)))) (or (:title ann) (let [k (last path)] (if (keyword? k) (subs (str k) 1) (str k))))]
+   (render-content ztx block)])
+
+(defmethod render-block
+  :badge
+  [ztx {data :data path :path :as block}]
+  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
+   [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
+    (subs (str (last path)) 1) ]
+   [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
+    (render-content ztx block)]])
+
+(defmethod render-block
+  :attribute
+  [ztx {data :data path :path :as block}]
+  [:div {:class (c [:py 1] :flex :border-b)}
+   [:div {:class (c :inline-block [:px 2] [:py 0.5] [:text :gray-600] {:font-weight "500"})}
+    (subs (str (last path)) 1) ]
+   [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
+    (render-content ztx block)]])
+
 
 (defn page [ztx {doc :doc}]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
    (->>
     (for [block doc]
-      (render-block ztx block))
+      (or (render-key ztx block)
+          (render-block ztx block)))
     (into [:div {:class (c )}]))])
 
 (defn links [ztx doc]

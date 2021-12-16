@@ -24,6 +24,11 @@
     [:img {:src src :alt alt}]))
 
 (defmethod inline-method
+  :src
+  [m arg]
+  [:a {:class (c [:text :green-500])} (str "Code :" arg)])
+
+(defmethod inline-method
   :default
   [m arg]
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])

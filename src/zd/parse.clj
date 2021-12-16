@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as str]
    [clojure.java.io :as io]
+   [zd.deep-merge :refer [deep-merge]]
    [edamame.core])
   (:import [java.io StringReader]))
 
@@ -48,14 +49,39 @@
              (to-path path))
      :annotation (cond
                    (and ann (= "/" (str/trim ann)))
-                   (str "^format :string")
+                   {}
                    (and ann (not (str/blank? (str/trim (str/replace ann #"/$" "")))))
-                   (str "^format :" (str/replace ann #"/$" "")))
+                   {:content (str/replace ann #"/$" "")})
      :line tail}
     {:status :error
      :line l}))
 
-(defn parse-annotations [ann]
+(defmulti annotation (fn [nm params] (keyword nm)))
+
+(defmethod annotation
+  :default
+  [nm params]
+  {:errors {nm {:params params
+                :message (str "No rule for " nm)}}})
+
+(defmethod annotation
+  :view-only
+  [nm params]
+  {:view-only true})
+
+(defmethod annotation
+  :badge
+  [nm params]
+  {:block :badge
+   :badge params})
+
+(defmethod annotation
+  :attribute
+  [nm params]
+  {:block :attribute
+   :attribute params})
+
+(defn parse-annotations [acc ann]
   (->> ann
        (reduce (fn [acc an]
                  (if (str/blank? an)
@@ -68,8 +94,8 @@
                                     ;; (println  e)
                                     (str "Error: " (.getMessage e) " | " s)))
                              nil)]
-                     (assoc acc (symbol (subs k 1)) v))))
-               {})))
+                     (deep-merge acc (annotation (subs k 1) v)))))
+               acc)))
 
 (defn parse-keypath
   [{res :resource
@@ -84,13 +110,19 @@
     (let [{p :path ch? :child? a :annotation l :line} (parse-path res kp last-path)
           lns (if l (into [l] lns) lns)
           content (str/trim (str/join "\n" lns))
-          data (if a content (try (edamame.core/parse-string content)
-                                  (catch Exception e
-                                    (str "Error: " (.getMessage e) " | " content))))
-          res-ann (parse-annotations (if a (conj ann a) ann))
-          res (smart-assoc-in res p data)]
+          data (if a
+                 content
+                 (try (edamame.core/parse-string content)
+                      (catch Exception e
+                        (str "Error: " (.getMessage e) " | " content))))
+          res-ann (parse-annotations (or a {}) ann)
+          res (if (:view-only res-ann)
+                res
+                (smart-assoc-in res p data))]
       (-> ctx
-          (update :doc conj {:path p :annotations res-ann :data data})
+          (update :doc conj (cond-> {:path p :data data}
+                              (not (empty? res-ann))
+                              (assoc :annotations res-ann)))
           (assoc :lines [] :annotations [] :keypath nil
                  :last-path (if ch? last-path p)
                  :resource res)))))
