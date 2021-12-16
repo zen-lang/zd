@@ -133,7 +133,7 @@ name:
 ..* 1-3
 * 2
 
-final paragraph"
+final paragraph [[src box/zrc/aidbox.edn#config]] "
 
 
   )

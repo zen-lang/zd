@@ -2,7 +2,7 @@
   (:require
    [zen.core :as zen]
    [zd.parser]
-   [zd.markdown]
+   [zd.zentext]
    [hiccup.core :as hiccup]
    [hiccup.page]
    [hiccup.util]
@@ -169,7 +169,9 @@
   :md
   [ztx fmt {data :data ann :annotations}]
   [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-   (zd.markdown/parse ztx data)])
+   (zd.zentext/parse-block ztx data)
+   ;; (zd.markdown/parse ztx data)
+   ])
 
 (defmethod do-format
   :edn

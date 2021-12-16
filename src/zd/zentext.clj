@@ -8,10 +8,10 @@
   (:import [java.io StringReader]))
 
 
-(def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
+(def inline-regex #"(\b#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
 
 (defn call-inline-link [s]
-  [:a {:href (str "/" s)} (str "TBD:" s)])
+  [:a {:href (str "/" s) :class (c [:text :blue-600])} s])
 
 (defmulti inline-method (fn [m arg] (keyword m)))
 
@@ -24,7 +24,7 @@
 (defmethod inline-method
   :default
   [m arg]
-  [:span {:class "error"} (str "No inline-method for " m " arg:" arg)])
+  [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
 (defn call-inline-method [s]
   (let [[method arg] (str/split s #"\s+" 2)]
@@ -202,8 +202,9 @@
 
 (defmulti process-block (fn [tp args cnt] tp))
 
-(defmethod process-block "code" [_ args cnt]
-  [:pre {:class (str "lang-" args)} cnt])
+(defmethod process-block "code" [_ lang cnt]
+  [:pre [:code {:class (str "language-" lang " hljs")}
+         cnt]])
 
 (defmethod process-block :default [tp args cnt]
   [:block {:params args :tp tp} cnt])
