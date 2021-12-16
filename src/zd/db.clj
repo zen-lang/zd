@@ -35,7 +35,18 @@
      {} distinct-attrs)))
 
 (defn read-resource [ztx nm]
+  (println "DEPRECATED: zd.db/read-resource. Use zd.db/get-page or zd.db/get-resource or zd.db/get-doc")
   (get-in @ ztx [:zdb nm]))
+
+(defn get-page [ztx nm]
+  (get-in @ ztx [:zdb nm]))
+
+(defn get-resource [ztx nm]
+  (get-in @ ztx [:zdb nm :resource]))
+
+(defn get-doc [ztx nm]
+  (get-in @ ztx [:zdb nm :doc]))
+
 
 (defn *collect-refs [acc resource-name path node]
   (cond
@@ -58,6 +69,16 @@
 (defn collect-refs [resource-name resource]
   ;; {target {source #{[:path] [:path]}}}
   (*collect-refs {} resource-name [] resource))
+
+(defn load-content [ztx path cnt]
+  (let [resource-name (symbol (str/replace (str/replace path #"\.zd$" "") #"/" "."))
+        data (zd.parse/parse ztx cnt)
+        refs (collect-refs resource-name (:resource data))]
+    (create-resource
+     ztx (assoc data
+                :zd/name resource-name
+                :zd/file path))
+    (update-refs ztx refs)))
 
 (defn load-dirs [ztx dirs]
   (doseq [dir dirs]

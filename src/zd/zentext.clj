@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as str]
    [sci.core]
+   [zd.db]
    [stylo.core :refer [c]]
    [edamame.core]
    [clojure.java.io :as io])
@@ -12,8 +13,10 @@
 
 (def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
 
-(defn call-inline-link [s]
-  [:a {:href (str "/" s) :class (c [:text :blue-600])} s])
+(defn call-inline-link [ztx s]
+  (if-let [res (zd.db/get-resource ztx (symbol s))]
+    [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
+    [:span {:class (c [:text :red-600] [:bg :red-100])} (str "invalid link #" s)]))
 
 (defmulti inline-method (fn [m arg] (keyword m)))
 
@@ -57,7 +60,7 @@
                       match (subs s (.start m) (.end m))]
                   (recur
                    (.end m)
-                   (conj res head (cond (str/starts-with? match "#")  (call-inline-link (subs match 1))
+                   (conj res head (cond (str/starts-with? match "#")  (call-inline-link ztx  (subs match 1))
                                         (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
                                         (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2)))))))
                 (conj res (subs s start))))]

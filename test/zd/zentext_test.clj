@@ -1,11 +1,12 @@
 (ns zd.zentext-test
   (:require [zd.zentext :as sut]
+            [zd.db]
             [matcho.core :as matcho]
             [clojure.test :as t]))
 
 #_(remove-ns 'zd.zentext-test)
 
-(def ztx (zen.core/new-context))
+(defonce ztx (zen.core/new-context))
 
 (defmacro match [md & [pattern]]
   `(let [res# (sut/parse-block ztx ~md)]
@@ -159,13 +160,6 @@ final paragraph [[src box/zrc/aidbox.edn#config]] "
 
   (match "paragraph" [:div [:p "paragraph"]])
 
-  (match-inline
-   "This is a #link.to-entity and another #link.to"
-   ["This is a "
-    [:a {:href "/link.to-entity"} "link.to-entity"]
-    " and another "
-    [:a {:href "/link.to"} "link.to"]])
-
   (match
    "```code sql
 select 1
@@ -209,9 +203,7 @@ select 1
            nil?]])
 
 
-  (match
-   "* #link.to"
-   [:div [:ul [:li [:a {:href "/link.to"} "link.to"]]]])
+
 
 
   (match
@@ -268,6 +260,29 @@ select 1
 
   (clojure.pprint/pprint
    (sut/parse-block ztx sample))
+
+  (zd.db/load-content ztx "team/vlad.zd" "
+:title \"Vlad Ganshin\"
+:birth-date \"1994-09-26\"
+")
+
+  (zd.db/get-resource ztx 'team.vlad)
+
+  (zd.db/get-page ztx 'team.vlad)
+
+  (match "
+#team.vlad
+#team.imposter
+" [:div
+   [:p
+    [:a {:href "/team.vlad"} "team.vlad"]
+    [:span {} (str "invalid link #team.imposter")]]])
+
+  (match
+   "* #team.vlad"
+   [:div [:ul [:li [:a {:href "/team.vlad"} "team.vlad"]]]])
+
+
 
 
 
