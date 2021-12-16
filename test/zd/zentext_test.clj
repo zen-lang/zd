@@ -8,12 +8,12 @@
 (def ztx (zen.core/new-context))
 
 (defmacro match [md & [pattern]]
-  `(let [res# ~(sut/parse-block ztx md)]
+  `(let [res# (sut/parse-block ztx ~md)]
      (matcho/match res# ~pattern)
      res#))
 
 (defmacro match-inline [md & [pattern]]
-  `(let [res# ~(sut/parse-inline ztx md)]
+  `(let [res# (sut/parse-inline ztx ~md)]
      (matcho/match res# ~pattern)
      res#))
 
@@ -179,6 +179,14 @@ select 1
 "
          [:div [:ul [:li "list 1"] [:li "list 2"]]])
 
+
+  (match
+   "
+* list
+..* list
+"
+   [:div [:ul [:li "list" [:ul [:li "list"]]]]])
+
   (match "
 * 1
 * 2
@@ -200,6 +208,10 @@ select 1
            [:li "3"]
            nil?]])
 
+
+  (match
+   "* #link.to"
+   [:div [:ul [:li [:a {:href "/link.to"} "link.to"]]]])
 
 
 

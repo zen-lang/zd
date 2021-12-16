@@ -44,18 +44,19 @@
       [:error (pr-str e)])))
 
 (defn parse-inline [ztx s]
-  (let [m (re-matcher inline-regex s)]
-    (loop [start 0
-           res []]
-      (if (.find m)
-        (let [head (subs s start (.start m))
-              match (subs s (.start m) (.end m))]
-          (recur
-           (.end m)
-           (conj res head (cond (str/starts-with? match "#")  (call-inline-link (subs match 1))
-                                (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
-                                (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2)))))))
-        (conj res (subs s start))))))
+  (let [m (re-matcher inline-regex s)
+        res (loop [start 0
+                   res []]
+              (if (.find m)
+                (let [head (subs s start (.start m))
+                      match (subs s (.start m) (.end m))]
+                  (recur
+                   (.end m)
+                   (conj res head (cond (str/starts-with? match "#")  (call-inline-link (subs match 1))
+                                        (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
+                                        (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2)))))))
+                (conj res (subs s start))))]
+    (remove empty? res)))
 
 (declare parse-block*)
 
@@ -228,17 +229,20 @@
          :items []
          :sub-items []))
 
-(defn process-list-item [ctx]
-  (if (empty? (:sub-items ctx))
-    [:li (subs (or (:item ctx) "") 2)]
-    (into [:li (subs (or (:item ctx) "") 2)]
-          (let [lines (mapv #(subs % 2) (:sub-items ctx))]
-            (parse-block* "ztx" lines)))))
+(defn process-list-item [ztx ctx]
+  (let [item (when (:item ctx)
+               (parse-inline ztx (subs (:item ctx) 2)))]
+    (cond-> [:li]
+      item
+      (into item)
+
+      (seq (:sub-items ctx))
+      (into (parse-block* ztx (mapv #(subs % 2) (:sub-items ctx)))))))
 
 (defmethod apply-transition :ul-add
   [ztx _ ctx line]
   (-> ctx
-      (assoc :items (conj (:items ctx) (process-list-item ctx)))
+      (assoc :items (conj (:items ctx) (process-list-item ztx ctx)))
       (assoc :item line)
       (assoc :sub-items [])))
 
@@ -251,7 +255,7 @@
   [ztx _ ctx line]
   (-> (update ctx :result conj (into [:ul] (mapv (fn [x] x)
                                                  (conj (:items ctx)
-                                                       (process-list-item ctx)))))
+                                                       (process-list-item ztx ctx)))))
       (assoc :state :none :items [] :sub-items [] :item nil)))
 
 (defmethod apply-transition
