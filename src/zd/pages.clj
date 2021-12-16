@@ -4,10 +4,11 @@
    [zd.parser]
    [zd.markdown]
    [hiccup.core :as hiccup]
+   [hiccup.page]
    [hiccup.util]
    [markdown.core]
    [clojure.string :as str]
-   [stylo.core :refer [c]]
+   [stylo.core :refer [c c?]]
    [garden.core]
    [stylo.rule  :refer [join-rules]]
    [clojure.string :as str]))
@@ -20,7 +21,12 @@
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
    [:h1 {:font-size "46px"
          :font-weight "700"}]
-   [:.closed (join-rules [[:bg :red-500]])]])
+   [:.closed {:display "none"}]
+   [:.pl-4  {:padding-left "1rem"}]
+   [:.toggler {:padding-left "4px"
+               :padding-right "4px"
+               :padding-top "2px"
+               :padding-bottom "2px"}]])
 
 (garden.core/css common-style)
 
@@ -33,6 +39,7 @@
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
+    [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
     [:script "hljs.highlightAll()"]]
    [:body {:class (c [:bg :gray-100])}
     content
@@ -91,21 +98,27 @@
 
 
 
-(defn render-items [item & [k]]
+(defn render-items [item & [k depth]]
   [:div {:id  (str/lower-case k)
-         :class ["closed"]}
-   (if-let [h  (:href item)]
-     [:a {:href h :class (c [:text :blue-500])}
-      (:title item) (when-let [e (:errors item)]
-                      [:span {:class (c [:text :red-500] :text-xs [:px 1])} e])]
-     [:div k])
-   (into [:div {:class (c [:pl 4])}]
-         (for [[k it] (->> (:items item)
-                           (sort-by :title))]
-           (render-items it k)))])
+         :class ["closable"]}
+   [:div {:class (c :flex :items-baseline [:p 1] :rounded [:hover :cursor-pointer [:bg :gray-200]])}
+    (when (:items item)
+      [:span {:class (c [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg [:mr 0.5])}
+       [:i.fas.fa-caret-down.toggler]])
+    (if-let [h  (:href item)]
+      [:a {:href h :class (c [:text :blue-500])}
+       (:title item) (when-let [e (:errors item)]
+                       [:span {:class (c [:text :red-500] :text-xs [:px 1])}
+                        e])]
+      [:div {:class (c :inline-block)} k])]
+   (into [:div {:class ["closed" "closableContent" "pl-4"]}
+          (let [node-content
+                (for [[k it] (->> (:items item)
+                                  (sort-by :title))]
+                  (render-items it k true))]
+            node-content)])])
 
 (defn navigation [ztx doc]
-  #_(clojure.pprint/pprint (build-tree ztx doc))
   [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
    (into [:div]
          (for [[k it] (->> (build-tree ztx doc)
@@ -221,10 +234,10 @@
 
 (defn page [ztx {doc :doc}]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
-    (->>
-     (for [block doc]
-       (render-block ztx block))
-      (into [:div {:class (c )}]))])
+   (->>
+    (for [block doc]
+      (render-block ztx block))
+    (into [:div {:class (c )}]))])
 
 (defn links [ztx doc]
   [:div {:class (c [:px 4]  [:text :gray-600])}

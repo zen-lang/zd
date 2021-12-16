@@ -49,7 +49,7 @@
 
   (def pth "docs")
 
-  (def pth "/Users/mput/projects/sansara/box/docs")
+  (def pth "/Users/ghrp/prog/sansara/box/docs")
 
   (def ztx (zen/new-context {:zd/paths [pth]}))
 
