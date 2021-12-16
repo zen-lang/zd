@@ -187,10 +187,10 @@
 (defmethod do-block
   :badge
   [ztx fmt {data :data path :path}]
-  [:div {:class (c :border [:m 1] :inline-block :rounded [:p 0])}
-   [:b {:class (c :border-r [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
+  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
+   [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
     (subs (str (last path)) 1) ]
-   [:span {:class (c [:px 2] [:py 0.5] )} (str data)]])
+   [:div {:class (c [:px 2] [:py 0.5] :inline-block)} (str data)]])
 
 (defmethod do-format
   :default
