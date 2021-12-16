@@ -124,14 +124,14 @@ line2.2
 ```block params
   some text
 ```
-* list1
-..* subitem 1
-..* subitem 2
-* list2
+* 1
+..* 1-1
+..* 1-2
+....* 1-2-1
+..* 1-3
+* 2
 
-final paragraph
-
-"
+final paragraph"
 
 
   )

@@ -7,6 +7,7 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
+(declare parse-block*)
 
 (defn get-lines [s]
   (line-seq (io/reader (StringReader. s))))
@@ -110,16 +111,20 @@
            :*     :conj}
    :ul    {:list :ul-add
            :sub-list :ul-add-sub
+           :eof  :end-ul
            :*    :end-ul}})
 
 (defn get-token [l]
-  (when l
+  (if l
     (cond
       (str/starts-with? l "```")    :block
       (or (str/starts-with? l "* ") (re-matches #"^\d+\) " l)) :list
+      (or (re-matches #"\.+\* " l) (re-matches #"^\d+\) " l)) :sub-list
       (str/starts-with? l "..")    :sub-list
       (str/blank? l) :blank
-      :else :text)))
+      (= l :final) :final
+      :else :text)
+    :eof))
 
 (defmulti apply-transition (fn [action ctx line] action))
 
@@ -155,24 +160,35 @@
   (assoc ctx
          :state :ul
          :item line
-         :items []))
+         :items []
+         :sub-items []))
+
+(defn process-list-item [ctx]
+  (if (empty? (:sub-items ctx))
+    [:li (subs (or (:item ctx) "") 2)]
+    (into [:li (subs (or (:item ctx) "") 2)]
+          (let [lines (mapv #(subs % 2) (:sub-items ctx))]
+            (parse-block* "ztx" lines)))))
 
 (defmethod apply-transition :ul-add
   [_ ctx line]
-  (println "Check subitems" (:sub-items line))
-  (assoc ctx
-         :item line
-         :items (conj (:items ctx) (:item ctx))))
+  (println "Check subitems" (:sub-items ctx))
+  (-> ctx
+      (assoc :items (conj (:items ctx) (process-list-item ctx)))
+      (assoc :item line)
+      (assoc :sub-items [])))
 
 (defmethod apply-transition :ul-add-sub
   [_ ctx line]
-  (assoc ctx :sub-items (conj (:sub-items ctx) line)))
+  (-> ctx
+      (assoc :sub-items (conj (:sub-items ctx) line))))
 
 (defmethod apply-transition :end-ul
   [_ ctx line]
-  (-> (update ctx :result conj (into [:ul] (mapv (fn [x] [:li x]) (:items ctx))))
-      (assoc :state :none :items nil)))
-
+  (-> (update ctx :result conj (into [:ul] (mapv (fn [x] x)
+                                                 (conj (:items ctx)
+                                                       (process-list-item ctx)))))
+      (assoc :state :none :items [] :sub-items [] :item nil)))
 
 (defmethod apply-transition
   :default
@@ -180,21 +196,24 @@
   (println :missed a)
   ctx)
 
-(defn parse-block [ztx s]
-  (let [lines (get-lines s)
-        res (loop [[l & ls :as old-ls] lines
-                   ctx  {:state :none :result [:div ]}]
+(defn parse-block* [ztx lines]
+  (let [res (loop [[l & ls :as old-ls] lines
+                   ctx  {:state :none :result []}]
               (let [token (get-token l)
                     action (or (get-in block-parser [(:state ctx) token])
                                    (get-in block-parser [(:state ctx) :*])
                                    {:action :unknown :state (:state ctx) :token token})
                     new-ctx (apply-transition action ctx l)]
                 (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
-                (if l
+                (if (not= :eof token)
                   (if (:push-back new-ctx)
                     (recur old-ls (dissoc new-ctx :push-back))
                     (recur ls new-ctx))
-                  (:result ctx))))]
-    (println res)))
+                  (:result new-ctx))))]
+    res))
 
-
+(defn parse-block [ztx s]
+  (let [lines (get-lines s)
+        res (parse-block* ztx lines)]
+    (clojure.pprint/pprint res)
+    (into [:div] res)))
