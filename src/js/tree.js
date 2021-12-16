@@ -7,7 +7,14 @@ openedNodesIds.forEach(id =>
     .getElementById(id)
     .getElementsByClassName("closableContent")[0]
     .classList
-    .remove("closed"))
+    .toggle("closed"))
+
+openedNodesIds.forEach(id =>
+  document
+    .getElementById(id)
+    .getElementsByClassName("toggler")[0]
+    .classList
+    .toggle("rotateToggler"))
 
 const currentPathElms = document.location.pathname.slice(1).split(".")
 
@@ -43,3 +50,4 @@ togglerElms.forEach(node =>
                           node.classList.toggle("rotateToggler")
 
                         }))
+

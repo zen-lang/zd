@@ -54,7 +54,7 @@
     (and (map? v) (:format v))
     (case (:format v)
       "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-              (zd.markdown/parse ztx (:content v))
+              #_(zd.markdown/parse ztx (:content v))
               #_[:div.markdown-body
                  (hiccup.util/as-str (markdown.core/md-to-html-string (:content v)))]]
       [:div "Unknown format " (:format v)
@@ -269,19 +269,23 @@
           (render-block ztx block)))
     (into [:div {:class (c )}]))])
 
+
+
 (defn links [ztx doc]
-  [:div {:class (c [:px 4]  [:text :gray-600])}
-   [:pre (str/join "\n" (zd.db/get-refs ztx (:zd/name doc)))]
-   #_(->>
-    (for [[res links] ]
-      [:div
-       [:div  {:class (c :font-bold :text-xs :border-b)} (pr-str pth)]
-       (into
-        [:div {:class (c [:pl 0])}]
-        (for [[from opts] links]
-          [:a {:href (str from) :class (c [:text :blue-500] :block)}
-           from]))])
-    (into [:div]))])
+  (let [grouped-refs (zd.db/group-refs-by-attr ztx (:zd/name doc))]
+    (when (seq grouped-refs)
+      [:div {:class (c [:text :gray-600])}
+       (->>
+        (for [[attr links] grouped-refs]
+          [:div {:class (c [:py 4] :text-sm)}
+           [:span (->> attr (map (comp str/capitalize name #({:# "["} % %))) (str/join " "))]
+           (for [l links]
+             [:div {:class (c :flex :flex-col)}
+              [:a {:href l
+                   :class (c [:text :blue-500])}
+               l]])])
+        (into [:div {:class (c [:bg :white] [:py 2] [:px 4] :shadow-md)}
+               [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))])))
 
 
 (defn generate-page [ztx doc]

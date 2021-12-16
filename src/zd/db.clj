@@ -15,6 +15,25 @@
 (defn get-refs [ztx symbol]
   (get-in @ztx [:zrefs symbol]))
 
+(defn group-refs-by-attr [ztx symbol]
+  (let [refs (get-refs ztx symbol)
+        distinct-attrs (->> refs
+                            vals
+                            (apply concat)
+                            distinct)]
+    (reduce
+     (fn [acc attr]
+       (assoc acc
+              attr
+              (reduce-kv
+               (fn [acc res attrs]
+                 (if (contains? attrs attr)
+                   (conj acc res)
+                   acc))
+               []
+               refs)))
+     {} distinct-attrs)))
+
 (defn read-resource [ztx nm]
   (get-in @ ztx [:zdb nm]))
 
