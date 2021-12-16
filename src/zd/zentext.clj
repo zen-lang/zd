@@ -15,8 +15,8 @@
   (when l
     (cond
       (str/starts-with? l "```") :block
-      (str/starts-with? l "* ") :list
-      (re-matches #"^\d+\) " l) :olist
+      (or (str/starts-with? l "* ") (re-matches #"^\d+\) " l)) :list
+
       (str/blank? l) :blank
       :else :p)))
 
@@ -26,9 +26,9 @@
     (and (= :none state) (= :p line-type)) :p
     (and (= :p state)    (= :p line-type)) :p
     (and (= :p state)    (= :blank line-type)) :none
+    (and (not (= state :block)) (= line-type :block)) :block
     (and (= state :block) (not (= :block line-type))) :block
     (and (= state :block) (= :block line-type)) :none
-    (and (not (= state :block)) (= line-type :block)) :block
     (and (= line-type :list)) :list
     (and (= state :list) (contains? #{:block :blank} line-type)) :none
     :else :tbd))
@@ -75,10 +75,57 @@
     :else
     (assoc ctx :state new-state)))
 
+(defn process-list [lines]
+  (let [res
+        (reduce
+         (fn [ctx line]
+           (let [parsed (re-find #"(\.+)?(\*|\d+\))\s+(.+)" line)
+                 lvl (count (second parsed))
+                 tp (if (= "*" (nth parsed 2)) :ul :ol)
+                 line (nth parsed 3)
+                 ctx (if (or (not= tp (:type ctx))
+                             (not= lvl (:lvl ctx)))
+                       (-> ctx
+                           (assoc :type tp)
+                           (assoc :lvl lvl)
+                           (update :lists (fn [lists]
+                                            (if (:list ctx)
+                                              (conj lists (:list ctx))
+                                              lists)))
+                           (assoc :list [tp {:class (str "lvl-" lvl)}[:li line]]))
+                       (update ctx :list #(conj % [:li line])))]
+             ctx))
+         {:lvl 0 :type nil :lists [:div]}
+         lines)]
+    (conj (:lists res) (:list res))))
+
 (defn parse-block [ztx s]
   (let [lines (get-lines s)
         ctx {}
-        res (loop [ctx  {:state :none :res [:div ]}
+        res  (->> lines
+                  (reduce (fn [lines l]
+                            (conj lines
+                                  {:type (action (or (:type (last lines)) :none) (line-type l))
+                                   :line l})) [])
+                  (partition-by :type)
+                  (remove #(= :none (:type (first %))))
+                  (map (fn [lines]
+                         {:type (:type (first lines))
+                          :lines (mapv :line lines)}))
+                  (map (fn [ctx]
+                          (cond
+                            (= :p (:type ctx))
+                            (into [:p] (:lines ctx))
+
+                            (= :block (:type ctx))
+                            (into [:pre] (:lines ctx))
+
+                            (= :list (:type ctx))
+                            (process-list (:lines ctx))
+
+                            :else
+                            [:tbd ctx]))))
+        #_#_res (loop [ctx  {:state :none :res [:div ]}
                    [l & ls] lines]
               (let [line-type (line-type l)
                     new-state (action (:state ctx) line-type)
@@ -87,7 +134,8 @@
                 (if l
                   (recur new-ctx ls)
                   (:res ctx))))]
-    (println res)))
+    (clojure.pprint/pprint res)
+    #_(println res)))
 
 
 ;; (def rules
