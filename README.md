@@ -13,7 +13,7 @@ and may be referenced from other resources
 zd format is sugar for edn:
 
 ```edn
-:zd/title "Person"
+:title "Person"
 :zen/tags #{foam.Person}
 ;; specila multiline string
 :zd/desc md/

@@ -2,8 +2,27 @@
 :tags #{fhir.profile}
 :id "urn:ru:organization"
 :created "2021-12-05"
-:authors #{niquola kogan timur}
+:authors #{people.niquola people.kogan people.timur}
+:menu {:order 1 :title "Admin Module"}
 :summary md/
+
+  Text #people.niquola
+
+  [[func params parms]]
+
+  [[my/code-ref box/core.clj:123]]
+
+  [[ref people.niquola]]
+
+  [[youtube 11234]]
+
+  ^[:b Text]
+
+  ```meth params
+
+  ```
+
+  #123 @niquola
 
   Профиль организации описывает субъекты хозяйственной деятельности в области здравоохранении. 
   Этот профиль применим только к  [Юридическим Лицам](http://www.consultant.ru/document/cons_doc_LAW_5142/68642eb1daeec13480d8f283f27bc14b42b929df/) 
@@ -22,7 +41,7 @@
 
  Ниже приведен набор возможных систем для идентификаторов
 
-^table
+^table {:columns [:code :display] :sort :code}
 :identifiers:systems:data
 [{:code "ОГРН"}
  {:code "ИНН"}
@@ -33,7 +52,7 @@
 
  По правовой форме `system = urn:ru:org:kind`
 
-^table
+^table {:columns [:code :display] :sort :code}
 :types:kind:data
 [{:code "ИП"   :display "Индивидуальный предприниматель"}]
  {:code "ООО"  :display "Общество с ограниченной ответственностью"}

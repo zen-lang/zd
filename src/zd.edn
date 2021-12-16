@@ -9,7 +9,7 @@
  doc
  {:zen/tags #{zen/schema}
   :type zen/map
-  :keys {:zd/title {:type zen/string}
+  :keys {:title {:type zen/string}
          :zd/tags {:type zen/set :every {:type zen/symbol}}
          :zd/add-tags {:type zen/set :every {:type zen/symbol}}
          :zd/name {:type zen/symbol}

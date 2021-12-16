@@ -1,5 +1,6 @@
 :title "Chapter (books)"
 :source "https://en.wikipedia.org/wiki/Chapter_(books)"
+:author niqoula
 :categories
 
  ["Book design"
@@ -7,12 +8,18 @@
   "Components of intellectual works"
   "Narrative units"]
 
+^h2 "Summary"
 :summary /
+
+  [[ns/ref niquola]]
+
+  (defmethod 'ns/ref)
 
   A chapter (capitula in Latin - sommaires in French)
   is any of the main thematic divisions within a writing of relative length, such as a book of prose, poetry, or law.
   A chapter book may have multiple chapters that respectively comprise discrete topics or themes. In each case, chapter
 
+^h2 "Summary"
 :history /
 
   Many ancient books had neither word divisions nor chapter divisions.[1]

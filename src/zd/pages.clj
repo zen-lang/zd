@@ -8,13 +8,20 @@
    [markdown.core]
    [clojure.string :as str]
    [stylo.core :refer [c]]
+   [garden.core]
    [clojure.string :as str]))
 
 (defn to-html [x] (hiccup/html x))
 
+(def common-style
+  [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
+   [:h1 {:font-size "46px"
+         :font-weight "700"}]])
+
 (defn layout [ztx content]
   [:html
    [:head
+    [:style (garden.core/css common-style)]
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:meta {:charset "UTF-8"}]
     [:link {:rel"stylesheet" :href "/static/gh.css"}]
@@ -179,7 +186,7 @@
 (defmethod render-keypath
   [:title]
   [_ title]
-  [:h1 {:class (c [:mb 2] :border-b {:font-size "34px"})} title])
+  [:h1 {:class (c [:mb 4] :border-b)} title])
 
 (defmethod render-keypath
   [:summary]

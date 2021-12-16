@@ -2,6 +2,9 @@
 
 :source "http://build.fhir.org/administration-module.html"
 
+:menu
+[{}]
+
 :intro /
 
  Some text ....

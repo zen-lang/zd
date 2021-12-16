@@ -2,10 +2,51 @@
 :date "2021-12-10"
 :author:title "Nikolai Ryzhikov"
 
+:menu [{:dir fhir    :title ""}
+       {:dir fhir-ru :title ""}
+       (mapv menu-item (search {:tag "..."}))]
+
 ^h2 "Summary"
 :summary:p1 md/
 
+blcoplugin exampleplugin example
+blcoplugin []() ** ** [:b ] [:i ] [:a ""] [:a ""]  [:a text text]
+
+[[fun-name  ]]
+
+#people.niquola:path:path
+
+[[ref  people.niquola]]
+[[a "https://github.com" "gh"]]
+
+[[img https://github.com]]
+
+((table :colums []))
+
+
+```sql
+
+  SELECT * from
+
+```
+
+blcoplugin exampleplugin example
+blcoplugin exampleplugin [:sql "WHERE .. .."]
+
+blcoplugin exampleplugin example  
+blcoplugin exampleplugin example  
+
+* list
+* list
+* list
+* list
+* list
+
+
+
   zen-doc (zd) is a library to build your knowledge base
+
+  [[backrefs ...]]
 
   *  it is a semantic wiki engine
   * static site generation framework
@@ -56,9 +97,9 @@
 :syntax:parser md/
 
   Scan document line by line
-  if starts with `^` assoc current keypath
+  if line starts with `^` assoc current keypath
   and put annotation into annotations accumulator
-  if starts with `:` or `~:` - start new keypath and attach to it accumulated annotations
+  if line starts with `:` or `~:` - start new keypath and attach to it accumulated annotations
   collect all lines until next annotation or keyword
 
   Process keypath
@@ -72,6 +113,27 @@
   * add document to repository
 
 
+^table
+:csv-table (load-file "dict.csv" :csv)
+
+; comment
+:exaple (load-file "dict.csv" :yaml)
+
+^hiccup
+^h2 "Authored docs:"
+:backrefs
+[:div (table (back-refs [:author]) {:columns [:title]})]
+
+:sample (load-file "sample.yaml")
+
+^graviz
+:visualize-deps [{}]
+
+
+^hiccup
+:refs
+  [:ul (for [res (search {:category #{'fhir.admin}}
+     [:li (:title res)])])]
 
 :html/example html/
 

@@ -1,0 +1,60 @@
+:title "ZEN DOC"
+:repository "https://github.com/zen-lang/zd"
+
+^img
+:logo "zd.png"
+
+^h1 "Problem"
+:problem /
+
+  How to create knowledge base as a data and docs under the git
+
+  * What if OrgMode was developed by clojurians?
+  * What if (semantic) wiki was developed by clojurians?
+
+  Data is Document - Document is Data!
+
+:inspirations #{"OrgMode" "Jekyll" "Semantic WEB" "ROAM" "Notion" "zen-lang"}
+
+^table
+:team
+[{:name "Николай Рыжиков" :role "engineer"}
+ {:name "Максим Путинцев" :role "engineer"}
+ {:name "Влад Ганшин"     :role "engineer"}
+ {:name "Евгений Муха"    :role "engineer"}
+ {:name "Злата Рыжикова"  :role "designer"}]
+
+
+^h1 "Features"
+:features
+
+:features:core        "Parser for zendoc and extensible markdown"
+:features:ui          "Nice UI for zen-doc"
+:features:scripting   "Script documents with clojure"
+:features:emacs       "Support for zd-mode - syntax and navigation"
+:features:site        "Generate static site"
+:features:zen         "Write schemas in zen and validate documents"
+:features:plugins     "Write plugins which use knowledge base"
+
+:show-case /
+
+  We want to demonstrate power of zen doc on Aidbox (FHIR Backend)
+  use cases
+
+  * Customers
+  * Incidents
+  * Documentation
+  * Team
+
+:stars
+[:div
+ (for [star (search {:tag #{xmas.stars} :project xmas.zen-doc})]
+   [:div (:user star)])]
+
+
+
+
+
+
+
+
