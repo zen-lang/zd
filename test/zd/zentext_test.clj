@@ -250,6 +250,22 @@ select 1
        [:li "1-1"]
        [:li "1-2"]]]]])
 
+  (match
+   "
+1) ol 1-1
+1) ol 1-2
+* ul 1-1
+* ul 1-2
+"
+   [:div
+    [:ol
+     [:li "ol 1-1"]
+     [:li "ol 1-2"]]
+    [:ul
+     [:li "ul 1-1"]
+     [:li "ul 1-2"]]])
+
+
   (clojure.pprint/pprint
    (sut/parse-block ztx sample))
 

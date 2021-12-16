@@ -180,10 +180,14 @@
 
 (defmethod apply-transition :list-add-elem
   [ztx _ ctx line]
-  (-> ctx
-      (assoc :items (conj (:items ctx) (process-list-item ztx ctx)))
-      (assoc :item line)
-      (assoc :sub-items [])))
+  (if (= (:state ctx) (if (str/starts-with? line "*") :ul :ol))
+    (-> ctx
+        (assoc :items (conj (:items ctx) (process-list-item ztx ctx)))
+        (assoc :item line)
+        (assoc :sub-items []))
+    (-> (apply-transition ztx :end-list ctx nil)
+        (assoc :state :none)
+        (assoc :push-back true))))
 
 (defmethod apply-transition :list-add-sub-elem
   [ztx _ ctx line]
@@ -225,7 +229,3 @@
         res (into [:div] (parse-block* ztx lines))]
     res))
 
-(parse-block {} "
-* list 1
-* list 2
-")
