@@ -7,7 +7,56 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
+
+(def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
+
+(defn call-inline-link [s]
+  [:a {:href (str "/" s)} (str "TBD:" s)])
+
+(defmulti inline-method (fn [m arg] (keyword m)))
+
+(defmethod inline-method
+  :img
+  [m arg]
+  (let [[src alt] (str/split arg #"\s+" 2)]
+    [:img {:src src :alt alt}]))
+
+(defmethod inline-method
+  :default
+  [m arg]
+  [:span {:class "error"} (str "No inline-method for " m " arg:" arg)])
+
+(defn call-inline-method [s]
+  (let [[method arg] (str/split s #"\s+" 2)]
+    (inline-method method arg)))
+
+
+(defmulti inline-function (fn [m arg] (keyword m)))
+
+(defn call-inline-function [s]
+  (try
+    (let [[method arg] (str/split s #"\s+" 2)
+          arg (edamame.core/parse-string arg)]
+      (inline-function method arg))
+    (catch Exception e
+      [:error (pr-str e)])))
+
+(defn parse-inline [ztx s]
+  (let [m (re-matcher inline-regex s)]
+    (loop [start 0
+           res []]
+      (if (.find m)
+        (let [head (subs s start (.start m))
+              match (subs s (.start m) (.end m))]
+          (recur
+           (.end m)
+           (conj res head (cond (str/starts-with? match "#")  (call-inline-link (subs match 1))
+                                (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
+                                (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2)))))))
+        (conj res (subs s start))))))
+
 (declare parse-block*)
+
 
 (defn get-lines [s]
   (line-seq (io/reader (StringReader. s))))
@@ -139,7 +188,9 @@
 
 (defmethod apply-transition :p-end
   [tr {lns :lines :as ctx} line]
-  (-> (update ctx :result conj (into [:p] lns))
+  (-> (update ctx :result conj (into [:p] (mapcat (fn [l]
+                                                    ;; TODO: ztx
+                                                    (parse-inline {} l)) lns)))
       (assoc :state :none :lines [] :push-back true)))
 
 (defmethod apply-transition :block-start
@@ -184,7 +235,6 @@
 
 (defmethod apply-transition :ul-add
   [_ ctx line]
-  (println "Check subitems" (:sub-items ctx))
   (-> ctx
       (assoc :items (conj (:items ctx) (process-list-item ctx)))
       (assoc :item line)
@@ -216,7 +266,7 @@
                                    (get-in block-parser [(:state ctx) :*])
                                    {:action :unknown :state (:state ctx) :token token})
                     new-ctx (apply-transition action ctx l)]
-                (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
+                ;; (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
                 (if (not= :eof token)
                   (if (:push-back new-ctx)
                     (recur old-ls (dissoc new-ctx :push-back))
@@ -227,5 +277,4 @@
 (defn parse-block [ztx s]
   (let [lines (get-lines s)
         res (into [:div] (parse-block* ztx lines))]
-    (clojure.pprint/pprint res)
     res))

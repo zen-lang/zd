@@ -116,7 +116,8 @@ Pargraph
 
 (def sample
   "
-line1
+This is a paragraph with #aidbox.customers
+[[img logo.png]]
 line2
 
 line2.1
@@ -137,9 +138,15 @@ final paragraph"
 
   )
 
+(def ztx (zen.core/new-context))
+
 (t/deftest test-parser
 
-  (sut/parse-block {} sample)
+  (clojure.pprint/pprint
+   (sut/parse-block ztx sample))
+
+
+  (sut/parse-inline ztx "This is a #link.to-entity and another #link.to")
 
 
 
