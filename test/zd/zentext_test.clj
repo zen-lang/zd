@@ -214,7 +214,41 @@ select 1
    [:div [:ul [:li [:a {:href "/link.to"} "link.to"]]]])
 
 
+  (match
+   "
+1) ordered list 1
+2) ordered list 2
+"
+   [:div
+    [:ol
+     [:li "ordered list 1"]
+     [:li "ordered list 2"]]]
+   )
 
+  (match
+   "
+1) ordered list 1
+1) ordered list 2
+..* 2-1
+"
+   [:div
+    [:ol
+     [:li "ordered list 1"]
+     [:li "ordered list 2"
+      [:ul [:li "2-1"]]]]])
+
+  (match
+   "
+* ordered list 1
+..1) 1-1
+..1) 1-2
+"
+   [:div
+    [:ul
+     [:li "ordered list 1"
+      [:ol
+       [:li "1-1"]
+       [:li "1-2"]]]]])
 
   (clojure.pprint/pprint
    (sut/parse-block ztx sample))

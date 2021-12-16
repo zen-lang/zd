@@ -92,23 +92,25 @@
   {:none  {:block :block-start
            :blank :nop
            :text  :p-start
-           :list  :ul-start}
+           :list  :list-start}
    :p     {:text  :conj
            :*     :p-end}
    :block {:block :block-end 
            :*     :conj}
-   :ul    {:list :ul-add
-           :sub-list :ul-add-sub
-           :eof  :end-ul
-           :*    :end-ul}})
+   :ol {:list :list-add-elem
+        :sub-list :list-add-sub-elem
+        :*    :end-list}
+   :ul {:list :list-add-elem
+        :sub-list :list-add-sub-elem
+        :*    :end-list}})
 
 (defn get-token [l]
   (if l
     (cond
-      (str/starts-with? l "```")    :block
-      (or (str/starts-with? l "* ") (re-matches #"^\d+\) " l)) :list
-      (or (re-matches #"\.+\* " l) (re-matches #"^\d+\) " l)) :sub-list
-      (str/starts-with? l "..")    :sub-list
+      (str/starts-with? l "```") :block
+      (or (re-matches #"^\* .+" l) (re-matches #"^\d+\) .+" l)) :list
+      (or (re-matches #"^\.+\* " l) (re-matches #"^\.+\d+\) " l)) :sub-list
+      (str/starts-with? l "..") :sub-list
       (str/blank? l) :blank
       (= l :final) :final
       :else :text)
@@ -157,17 +159,18 @@
         (assoc :state :none :lines [] :params nil))))
 
 
-(defmethod apply-transition :ul-start
+(defmethod apply-transition :list-start
   [ztx _ ctx line]
   (assoc ctx
-         :state :ul
+         :state (if (str/starts-with? line "*") :ul :ol)
          :item line
          :items []
          :sub-items []))
 
+
 (defn process-list-item [ztx ctx]
   (let [item (when (:item ctx)
-               (parse-inline ztx (subs (:item ctx) 2)))]
+               (parse-inline ztx (last (re-find #"^(\* |\d+\) )(.+)" (:item ctx)))))]
     (cond-> [:li]
       item
       (into item)
@@ -175,23 +178,24 @@
       (seq (:sub-items ctx))
       (into (parse-block* ztx (mapv #(subs % 2) (:sub-items ctx)))))))
 
-(defmethod apply-transition :ul-add
+(defmethod apply-transition :list-add-elem
   [ztx _ ctx line]
   (-> ctx
       (assoc :items (conj (:items ctx) (process-list-item ztx ctx)))
       (assoc :item line)
       (assoc :sub-items [])))
 
-(defmethod apply-transition :ul-add-sub
+(defmethod apply-transition :list-add-sub-elem
   [ztx _ ctx line]
   (-> ctx
       (assoc :sub-items (conj (:sub-items ctx) line))))
 
-(defmethod apply-transition :end-ul
+(defmethod apply-transition :end-list
   [ztx _ ctx line]
-  (-> (update ctx :result conj (into [:ul] (mapv (fn [x] x)
-                                                 (conj (:items ctx)
-                                                       (process-list-item ztx ctx)))))
+  (-> (update ctx :result conj (into [(:state ctx)]
+                                     (mapv (fn [x] x)
+                                           (conj (:items ctx)
+                                                 (process-list-item ztx ctx)))))
       (assoc :state :none :items [] :sub-items [] :item nil)))
 
 (defmethod apply-transition
@@ -208,7 +212,7 @@
                                    (get-in block-parser [(:state ctx) :*])
                                    {:action :unknown :state (:state ctx) :token token})
                     new-ctx (apply-transition ztx action ctx l)]
-                ;; (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
+                (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
                 (if (not= :eof token)
                   (if (:push-back new-ctx)
                     (recur old-ls (dissoc new-ctx :push-back))
@@ -220,3 +224,8 @@
   (let [lines (get-lines s)
         res (into [:div] (parse-block* ztx lines))]
     res))
+
+(parse-block {} "
+* list 1
+* list 2
+")
