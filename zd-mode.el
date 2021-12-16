@@ -692,12 +692,21 @@ any number of matches of `zd--sym-forbidden-rest-chars'."))
 (defconst zd-font-lock-keywords
   (eval-when-compile
     `( ;; Top-level variable definition
+
+      (,(concat "\\(<<.*>>\\)")
+       1 font-lock-keyword-face)
+
+      (,(concat " \\(#[.a-zA-Z0-9]+\\)\\>")
+       1 font-lock-keyword-face)
+
+
       (,(concat " \\([a-z]*/\\)$")
        1 font-lock-keyword-face)
 
 
-      (,(concat "\\<\\(@[.a-zA-Z]*\\)\\>$")
-       1 font-lock-keyword-face)
+      ;; (,(concat "\\<\\(@[.a-zA-Z]*\\)\\>$")
+      ;;  1 font-lock-keyword-face)
+
 
       (,(concat "\\(\\^\\[\\)")
        1 font-lock-keyword-face)

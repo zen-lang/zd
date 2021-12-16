@@ -9,8 +9,7 @@
 ^h2 "Summary"
 :summary:p1 md/
 
-blcoplugin exampleplugin example
-blcoplugin []() ** ** [:b ] [:i ] [:a ""] [:a ""]  [:a text text]
+Tblcoplugin exampleplugin example #this.is.a.ref
 
 [[fun-name  ]]
 

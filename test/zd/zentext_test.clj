@@ -1,8 +1,7 @@
 (ns zd.zentext-test
   (:require [zd.zentext :as sut]
             [matcho.core :as matcho]
-            [clojure.test :as t])
-  )
+            [clojure.test :as t]))
 
 (def paragraphs
   ["
@@ -126,6 +125,8 @@ line2.2
   some text
 ```
 * list1
+..* subitem 1
+..* subitem 2
 * list2
 
 final paragraph
