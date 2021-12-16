@@ -7,8 +7,10 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
+#_(remove-ns 'zd.zentext)
 
-(def inline-regex #"(\b#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
+
+(def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
 
 (defn call-inline-link [s]
   [:a {:href (str "/" s) :class (c [:text :blue-600])} s])
@@ -175,26 +177,25 @@
       :else :text)
     :eof))
 
-(defmulti apply-transition (fn [action ctx line] action))
+(defmulti apply-transition (fn [ztx action ctx line] action))
 
-(defmethod apply-transition :nop [tr ctx line] ctx)
+(defmethod apply-transition :nop [ztx tr ctx line] ctx)
 (defmethod apply-transition :p-start
-  [_ ctx line]
+  [ztx _ ctx line]
   (assoc ctx :state :p :lines [line]))
 
 (defmethod apply-transition :conj
-  [tr ctx line]
+  [ztx tr ctx line]
   (update ctx :lines conj line))
 
 (defmethod apply-transition :p-end
-  [tr {lns :lines :as ctx} line]
+  [ztx tr {lns :lines :as ctx} line]
   (-> (update ctx :result conj (into [:p] (mapcat (fn [l]
-                                                    ;; TODO: ztx
-                                                    (parse-inline {} l)) lns)))
+                                                    (parse-inline ztx l)) lns)))
       (assoc :state :none :lines [] :push-back true)))
 
 (defmethod apply-transition :block-start
-  [_ ctx line]
+  [ztx _ ctx line]
   (assoc ctx
          :state :block
          :params line
@@ -210,7 +211,7 @@
   [:block {:params args :tp tp} cnt])
 
 (defmethod apply-transition :block-end
-  [_ {lns :lines params :params :as ctx} line]
+  [ztx _ {lns :lines params :params :as ctx} line]
   (let [block-params (str/split params #" " 2)
         tp (subs (first block-params) 3)
         args (second block-params)
@@ -220,7 +221,7 @@
 
 
 (defmethod apply-transition :ul-start
-  [_ ctx line]
+  [ztx _ ctx line]
   (assoc ctx
          :state :ul
          :item line
@@ -235,19 +236,19 @@
             (parse-block* "ztx" lines)))))
 
 (defmethod apply-transition :ul-add
-  [_ ctx line]
+  [ztx _ ctx line]
   (-> ctx
       (assoc :items (conj (:items ctx) (process-list-item ctx)))
       (assoc :item line)
       (assoc :sub-items [])))
 
 (defmethod apply-transition :ul-add-sub
-  [_ ctx line]
+  [ztx _ ctx line]
   (-> ctx
       (assoc :sub-items (conj (:sub-items ctx) line))))
 
 (defmethod apply-transition :end-ul
-  [_ ctx line]
+  [ztx _ ctx line]
   (-> (update ctx :result conj (into [:ul] (mapv (fn [x] x)
                                                  (conj (:items ctx)
                                                        (process-list-item ctx)))))
@@ -255,7 +256,7 @@
 
 (defmethod apply-transition
   :default
-  [a ctx line]
+  [ztx a ctx line]
   (println :missed a)
   ctx)
 
@@ -266,7 +267,7 @@
                     action (or (get-in block-parser [(:state ctx) token])
                                    (get-in block-parser [(:state ctx) :*])
                                    {:action :unknown :state (:state ctx) :token token})
-                    new-ctx (apply-transition action ctx l)]
+                    new-ctx (apply-transition ztx action ctx l)]
                 ;; (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
                 (if (not= :eof token)
                   (if (:push-back new-ctx)

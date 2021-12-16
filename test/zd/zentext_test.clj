@@ -3,6 +3,23 @@
             [matcho.core :as matcho]
             [clojure.test :as t]))
 
+#_(remove-ns 'zd.zentext-test)
+
+(def ztx (zen.core/new-context))
+
+(defmacro match [md & [pattern]]
+  `(let [res# ~(sut/parse-block ztx md)]
+     (matcho/match res# ~pattern)
+     res#))
+
+(defmacro match-inline [md & [pattern]]
+  `(let [res# ~(sut/parse-inline ztx md)]
+     (matcho/match res# ~pattern)
+     res#))
+
+
+
+
 (def paragraphs
   ["
 This is first paragraph
@@ -138,15 +155,61 @@ final paragraph [[src box/zrc/aidbox.edn#config]] "
 
   )
 
-(def ztx (zen.core/new-context))
-
 (t/deftest test-parser
+
+  (match "paragraph" [:div [:p "paragraph"]])
+
+  (match-inline
+   "This is a #link.to-entity and another #link.to"
+   ["This is a "
+    [:a {:href "/link.to-entity"} "link.to-entity"]
+    " and another "
+    [:a {:href "/link.to"} "link.to"]])
+
+  (match
+   "```code sql
+select 1
+```
+"
+   [:div [:pre [:code {} "select 1"]]])
+
+  (match "
+* list 1
+* list 2
+"
+         [:div [:ul [:li "list 1"] [:li "list 2"]]])
+
+  (match "
+* 1
+* 2
+..* 2-1
+....* 2-1-1
+..* 2-2
+* 3
+"
+         [:div
+          [:ul
+           [:li "1"]
+           [:li "2"
+            [:ul
+             [:li
+              "2-1"
+              [:ul
+               [:li "2-1-1"]]]
+             [:li "2-2"]]]
+           [:li "3"]
+           nil?]])
+
+
+
+
 
   (clojure.pprint/pprint
    (sut/parse-block ztx sample))
 
 
-  (sut/parse-inline ztx "This is a #link.to-entity and another #link.to")
+
+
 
 
 
