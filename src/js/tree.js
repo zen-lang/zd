@@ -25,6 +25,7 @@ const togglerElms = Array.from(document.getElementsByClassName("toggler"));
 togglerElms.forEach(node =>
   node.addEventListener("click",
                         (e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           const closableNodeParent = node.closest(".closable")
                           const closableNode =
@@ -39,5 +40,6 @@ togglerElms.forEach(node =>
                             window.sessionStorage.removeItem(closableNodeParent.id, null)
 
                           closableNode.classList.toggle("closed")
+                          node.classList.toggle("rotateToggler")
 
                         }))

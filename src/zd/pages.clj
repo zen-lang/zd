@@ -26,7 +26,8 @@
    [:.toggler {:padding-left "4px"
                :padding-right "4px"
                :padding-top "2px"
-               :padding-bottom "2px"}]])
+               :padding-bottom "2px"}]
+   [:.rotateToggler {:transform "rotate(-90deg)"}]])
 
 (garden.core/css common-style)
 
@@ -101,14 +102,21 @@
 (defn render-items [item & [k depth]]
   [:div {:id  (str/lower-case k)
          :class ["closable"]}
-   [:div {:class (c :flex :items-baseline [:p 1] :rounded [:hover :cursor-pointer [:bg :gray-200]])}
+   [(if (:href item)
+      :a :div) {:href (:href item)
+                :class (c :inline-block :flex :items-center [:p 1] :rounded [:hover :cursor-pointer [:bg :gray-200]])}
     (when (:items item)
       [:span {:class (c [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg [:mr 0.5])}
-       [:i.fas.fa-caret-down.toggler]])
-    (if-let [h  (:href item)]
-      [:a {:href h :class (c [:text :blue-500])}
+       [:i.fas.fa-caret-down.toggler.rotateToggler]])
+    (when (and depth (not (seq (:items item))))
+      [:span {:class (c [:mr 0.5] {:padding-left "4px"
+                                   :padding-right "4px"
+                                   :padding-top "2px"
+                                   :padding-bottom "2px"})}])
+    (if (:href item)
+      [:span {:class (when (:href item) (c [:text :blue-500]))}
        (:title item) (when-let [e (:errors item)]
-                       [:span {:class (c [:text :red-500] :text-xs [:px 1])}
+                       [:span {:class [(c [:text :red-500] :text-xs [:px 1])]}
                         e])]
       [:div {:class (c :inline-block)} k])]
    (into [:div {:class ["closed" "closableContent" "pl-4"]}
