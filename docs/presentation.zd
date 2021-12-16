@@ -12,6 +12,8 @@
   * What if OrgMode was developed by clojurians?
   * What if (semantic) wiki was developed by clojurians?
 
+  ((zen/schema 'symbol'))
+
   Data is Document - Document is Data!
 
 :inspirations #{"OrgMode" "Jekyll" "Semantic WEB" "ROAM" "Notion" "zen-lang"}
@@ -24,6 +26,9 @@
  {:name "Евгений Муха"    :role "engineer"}
  {:name "Злата Рыжикова"  :role "designer"}]
 
+
+^hiccup
+:intro:schema (zen/schema 'symbol)
 
 ^h1 "Features"
 :features

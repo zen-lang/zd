@@ -1,8 +1,8 @@
 (ns zd.pages
   (:require
    [zen.core :as zen]
-   [zd.parser]
    [zd.zentext]
+   [zd.db]
    [hiccup.core :as hiccup]
    [hiccup.page]
    [hiccup.util]
@@ -173,13 +173,19 @@
 
 (defmulti do-format (fn [ztx fmt block] fmt))
 
+
 (defmethod do-format
   :md
   [ztx fmt {data :data ann :annotations}]
   [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-   (zd.zentext/parse-block ztx data)
-   ;; (zd.markdown/parse ztx data)
-   ])
+   (zd.zentext/parse-block ztx data)])
+
+(defmethod do-format
+  :h
+  [ztx fmt {data :data ann :annotations pth :path}]
+  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
+   [:h2 (pr-str pth)]
+   (zd.zentext/parse-block ztx data)])
 
 (defmethod do-format
   :edn
@@ -251,8 +257,9 @@
 
 (defn links [ztx doc]
   [:div {:class (c [:px 4]  [:text :gray-600])}
-   (->>
-    (for [[pth links] [] #_(zd.parser/get-links ztx (:zd/name doc))]
+   [:pre (str/join "\n" (zd.db/get-refs ztx (:zd/name doc)))]
+   #_(->>
+    (for [[res links] ]
       [:div
        [:div  {:class (c :font-bold :text-xs :border-b)} (pr-str pth)]
        (into

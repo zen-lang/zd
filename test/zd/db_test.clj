@@ -13,6 +13,7 @@
   (sut/load-dirs ztx #{"docs"})
 
   (:zdb @ztx)
+  (:zrefs @ztx)
 
 
 

@@ -33,7 +33,7 @@
 
 
 (defn smart-assoc-in [m [k & ks] val]
-  (try 
+  (try
     (if ks
       (assoc (if (int? k) (or m []) m) k (smart-assoc-in (get m k) ks val))
       (assoc (if (int? k) (or m []) m) k val))

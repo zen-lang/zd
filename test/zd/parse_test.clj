@@ -14,7 +14,7 @@
  Which is multiline
  Realy
 
-^format :json
+^test/format :json
 :footer {:key \"val\"}
 
 :comments:0
