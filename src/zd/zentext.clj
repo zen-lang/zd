@@ -149,10 +149,22 @@
          :params line
          :lines []))
 
+(defmulti process-block (fn [tp args cnt] tp))
+
+(defmethod process-block "code" [_ args cnt]
+  [:pre {:class (str "lang-" args)} cnt])
+
+(defmethod process-block :default [tp args cnt]
+  [:block {:params args :tp tp} cnt])
+
 (defmethod apply-transition :block-end
   [_ {lns :lines params :params :as ctx} line]
-  (-> (update ctx :result conj (into [:block {:params params}] lns))
-      (assoc :state :none :lines [] :params nil)))
+  (let [block-params (str/split params #" " 2)
+        tp (subs (first block-params) 3)
+        args (second block-params)
+        result (process-block tp args (str/join "\n" lns))]
+    (-> (update ctx :result conj result #_(into [:block {:params params}] lns))
+        (assoc :state :none :lines [] :params nil))))
 
 
 (defmethod apply-transition :ul-start
@@ -214,6 +226,6 @@
 
 (defn parse-block [ztx s]
   (let [lines (get-lines s)
-        res (parse-block* ztx lines)]
+        res (into [:div] (parse-block* ztx lines))]
     (clojure.pprint/pprint res)
-    (into [:div] res)))
+    res))
