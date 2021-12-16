@@ -24,18 +24,17 @@
     [:style (garden.core/css common-style)]
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:meta {:charset "UTF-8"}]
-    [:link {:rel"stylesheet" :href "/static/gh.css"}]
+    [:link {:rel "stylesheet" :href "/static/gh.css"}]
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
-    [:script "hljs.highlightAll()"]]
+    [:script "hljs.highlightAll()"]
+    [:script (str (format "const closedClassName = '%s';\n" (name closed-node-style))
+                  (slurp "./src/js/tree.js"))]]
    [:body {:class (c [:bg :gray-100])}
-    content
-    ]])
+    content]])
 
 ;; (instance? java.util.Date. (java.util.Date.))
-
-
 (defn render-value [ztx k v]
   (cond
 
@@ -44,7 +43,7 @@
       "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}
               (zd.markdown/parse ztx (:content v))
               #_[:div.markdown-body
-               (hiccup.util/as-str (markdown.core/md-to-html-string (:content v)))]]
+                 (hiccup.util/as-str (markdown.core/md-to-html-string (:content v)))]]
       [:div "Unknown format " (:format v)
        [:pre (:content v)]])
 
@@ -56,8 +55,8 @@
 
     (symbol? v)
     [:a {:href (str v) :class (cond ;;(zd.parser/get-doc ztx v) (c [:text :blue-500])
-                                    (zen.core/get-symbol ztx v) (c [:text :green-500])
-                                    :else (c [:text :red-500]))} (str v)]
+                                (zen.core/get-symbol ztx v) (c [:text :green-500])
+                                :else (c [:text :red-500]))} (str v)]
 
     (string? v)
     (if (str/starts-with? v "http")
@@ -66,12 +65,14 @@
 
     (set? v)
     (->>
-      (for [x v]
-        (render-value ztx k x))
-      (into [:div {:class (c :flex [:space-x 2])} [:div {:class (c [:text :gray-500])} "#{"]]))
+     (for [x v]
+       (render-value ztx k x))
+     (into [:div {:class (c :flex [:space-x 2])} [:div {:class (c [:text :gray-500])} "#{"]]))
 
     :else
     [:div (pr-str v)]))
+
+
 
 (defn build-tree [ztx doc]
   (->>
@@ -84,11 +85,15 @@
                                               (count err))})))
            {})))
 
+
+
 (defn render-items [item & [k]]
-  [:div
+  [:div {:id  (str/lower-case k)
+         :class [(name closed-node-style)]}
    (if-let [h  (:href item)]
-     [:a {:href h :class (c [:text :blue-500])} (:title item) (when-let [e (:errors item)]
-                                                                [:span {:class (c [:text :red-500] :text-xs [:px 1])} e])]
+     [:a {:href h :class (c [:text :blue-500])}
+      (:title item) (when-let [e (:errors item)]
+                      [:span {:class (c [:text :red-500] :text-xs [:px 1])} e])]
      [:div k])
    (into [:div {:class (c [:pl 4])}]
          (for [[k it] (->> (:items item)
@@ -96,6 +101,7 @@
            (render-items it k)))])
 
 (defn navigation [ztx doc]
+  #_(clojure.pprint/pprint (build-tree ztx doc))
   [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
    (into [:div]
          (for [[k it] (->> (build-tree ztx doc)
