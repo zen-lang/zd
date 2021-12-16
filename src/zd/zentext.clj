@@ -33,7 +33,19 @@
     (and (= state :list) (contains? #{:block :blank} line-type)) :none
     :else :tbd))
 
+(defn process-current-state [ctx]
+  (cond
+    (= :p (:state ctx))
+    (into [:p] (:lines ctx))
+
+    (= :block (:state ctx))
+    (into [:pre] (:lines ctx))
+
+    :else
+    [:error ctx]))
+
 (defn update-context [ctx old-state new-state l]
+  ;; (println old-state new-state l)
   (cond
     (= [:none :p] [old-state new-state])
     (assoc ctx :lines [l] :state :p)
@@ -43,8 +55,23 @@
 
     (= [:p :none] [old-state new-state])
     (-> ctx
-        (update :res conj (into [:p] (:lines ctx)))
-        (assoc :status :none :lines []))
+        (update :res conj (process-current-state ctx))
+        (assoc :state new-state :lines []))
+
+    (and (not= :block old-state) (= :block  new-state))
+    (-> ctx
+        (update :res conj (process-current-state ctx))
+        (assoc :state new-state
+               :lines [(subs l 3)]))
+
+    (= [:block :block] [old-state new-state])
+    (update ctx :lines (fn [x] (conj (or x []) l)))
+
+    (= [:block :none] [old-state new-state])
+    (-> ctx
+        (update :res conj (process-current-state ctx))
+        (assoc :state :none :lines []))
+
     :else
     (assoc ctx :state new-state)))
 
