@@ -311,6 +311,14 @@
        (layout ztx)
        (to-html)))
 
+(defn render-not-found [ztx sym]
+  (->> [:div {:class (c [:p 4] :flex [:space-x 4])}
+        (navigation ztx nil)
+        [:div {:class (c [:w 260]  [:py 4] [:px 8] [:text :gray-600])}
+          (str "No page for '" sym)]]
+       (layout ztx)
+       to-html))
+
 (defn render-zen [ztx doc]
   (->> (generate-zen-page ztx doc)
        (layout ztx)

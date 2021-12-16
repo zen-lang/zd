@@ -10,7 +10,6 @@
 
 #_(remove-ns 'zd.zentext)
 
-
 (def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
 
 (defn call-inline-link [ztx s]
