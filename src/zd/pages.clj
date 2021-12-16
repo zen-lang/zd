@@ -9,14 +9,20 @@
    [clojure.string :as str]
    [stylo.core :refer [c]]
    [garden.core]
+   [stylo.rule  :refer [join-rules]]
    [clojure.string :as str]))
 
 (defn to-html [x] (hiccup/html x))
 
+
+(def closed-node-style (c [:bg :red-500]))
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
    [:h1 {:font-size "46px"
-         :font-weight "700"}]])
+         :font-weight "700"}]
+   [:.closed (join-rules [[:bg :red-500]])]])
+
+(garden.core/css common-style)
 
 (defn layout [ztx content]
   [:html
@@ -24,15 +30,13 @@
     [:style (garden.core/css common-style)]
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:meta {:charset "UTF-8"}]
-    [:link {:rel "stylesheet" :href "/static/gh.css"}]
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
-    [:script "hljs.highlightAll()"]
-    [:script (str (format "const closedClassName = '%s';\n" (name closed-node-style))
-                  (slurp "./src/js/tree.js"))]]
+    [:script "hljs.highlightAll()"]]
    [:body {:class (c [:bg :gray-100])}
-    content]])
+    content
+    [:script (slurp "./src/js/tree.js")]]])
 
 ;; (instance? java.util.Date. (java.util.Date.))
 (defn render-value [ztx k v]
@@ -89,7 +93,7 @@
 
 (defn render-items [item & [k]]
   [:div {:id  (str/lower-case k)
-         :class [(name closed-node-style)]}
+         :class ["closed"]}
    (if-let [h  (:href item)]
      [:a {:href h :class (c [:text :blue-500])}
       (:title item) (when-let [e (:errors item)]
