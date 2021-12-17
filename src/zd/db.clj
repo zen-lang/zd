@@ -91,8 +91,9 @@
                (seq tags)
                (assoc-in [:resource :zen/tags] tags))
         refs (collect-refs (symbol resource-name) (:resource data))
-        errors (:errors (zen/validate ztx #_(:zen/tags (:resource data))
-                                      (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))]
+        errors (->> (:errors (zen/validate ztx #_(:zen/tags (:resource data))
+                                           (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
+                    (remove #(= "unknown-key" (:type %))))]
     (create-resource
      ztx (cond-> data
            true
