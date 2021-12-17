@@ -156,7 +156,10 @@
 
 
 (defn page [ztx {doc :doc :as page}]
-  [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
+  [:div {:class (c [:w 230]
+                   [:w-max 230]
+                   [:bg :white] [:py 7] [:px 16] :shadow-md
+                   {:color "#3b454e"})}
    [:div {:class (c [:mb 4])}
     (->>
      (for [block doc]
@@ -170,19 +173,17 @@
       [:div {:class (c [:text :gray-600])}
        (->>
         (for [[attr links] grouped-refs]
-          [:div {:class (c [:py 4] :text-sm)}
-           [:span (str/join "" (mapv str attr))]
+          [:div {:class (c [:py 2] :text-sm)}
+           [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
+            (str/join "" (mapv str attr))]
            (for [l links]
-             [:div {:class (c :flex :flex-col)}
-              [:a {:href l
-                   :class (c [:text :blue-500])}
-               l]])])
-        (into [:div {:class (c [:bg :white] [:py 2] [:px 4] :shadow-md)}
+             [:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])])
+        (into [:div {:class (c  [:py 2] [:px 4] )}
                [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))])))
 
 
 (defn search [ztx doc]
-  [:div {:class (c :text-sm [:bg :white] [:py 2] [:px 4] :shadow-md [:text :gray-500])}
+  [:div {:class (c :text-sm [:py 2] [:px 4] [:text :gray-600] [:border :gray-400] :rounded [:hover [:bg :white]])}
    [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :black]])}
@@ -192,9 +193,11 @@
 
 (defn search-container [ztx doc]
   [:div#searchContainer
-   {:class (c :fixed {:z-index 2} [:w "30%"] :h-min-screen [:bg :gray-100] [:top 0] [:right 0] {:transition "transform 0.3s 0.3s" :visibility "hidden"} [:my 0])}
+   {:class (c :fixed {:z-index 2} [:w "30%"] :h-min-screen [:bg :gray-100] [:top 0]
+              [:text :gray-700]
+              [:right 0] {:transition "transform 0.3s 0.3s" :visibility "hidden"} [:my 0])}
    [:div {:class (c :flex :flex-col)}
-    [:div {:class (c :flex :items-center [:bg :white] [:p 1.5])}
+    [:div {:class (c :flex :items-center [:bg :white] [:pb 2] [:px 8] [:py 4])}
      [:span {:class (c [:mr 2] [:text :gray-500])} [:i.fas.fa-search]]
      [:input#searchInput
       {:placeholder "Search..."
@@ -209,11 +212,11 @@
 
 
 (defn generate-page [ztx doc]
-  [:div {:class (c [:p 4] :flex [:space-x 4])}
+  [:div {:class (c [:py 6] [:px 8] :flex [:space-x 4])}
    (navigation ztx doc)
    (page ztx doc)
    (search-container ztx doc)
-   [:div {:class (c [:w "15%"] :flex :flex-col [:space-y 4])}
+   [:div {:class (c  :flex :flex-col [:space-y 4] :flex-1)}
     (search ztx doc)
     (links ztx doc)]])
 

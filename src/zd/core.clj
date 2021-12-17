@@ -21,7 +21,7 @@
       {:status 200
        :body  (zd.pages/render-page ztx page)}
       {:status 404
-       :body  (zd.pages/render-not-found ztx sym)})))
+       :body  (zd.pages/render-page ztx {:zd/name sym})})))
 
 (defn start [ztx opts]
   (reload ztx opts)
