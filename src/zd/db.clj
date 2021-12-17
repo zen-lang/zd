@@ -82,6 +82,32 @@
              (clojure.set/union tags (:zd/child-tags (get-resource ztx doc-sym))))
            #{})))
 
+(defn enrich-doc-with-annotations [ztx {doc :doc :as page}]
+  (assoc
+   page
+   :doc
+   (mapv
+    (fn [block]
+      (let [schema-pth (->> (:path block)
+                            (mapv (fn [k]
+                                    (cond
+                                      (keyword? k) [:keys k]
+                                      (number? k) :every
+                                      :else (do
+                                              (println (str "ERROR: unknown key '" k " in keypath (zd.db/enrich-doc-with-annotations)"))
+                                              k))))
+                            flatten)]
+        (assoc block :annotations
+               (merge
+                (reduce
+                 (fn [anns tag]
+                   (println (zen/get-symbol ztx tag))
+                   (merge anns (:zd/annotations (get-in (zen/get-symbol ztx tag) schema-pth))))
+                 {}
+                 (get-in page [:resource :zen/tags]))
+                (:annotations block)))))
+    doc)))
+
 (defn load-content! [ztx path content]
   (let [resource-name (str/replace (str/replace path #"\.zd$" "") #"/" ".")
         data (zd.parse/parse ztx content)
@@ -92,6 +118,7 @@
                (seq tags)
                (assoc-in [:resource :zen/tags] tags))
         _ (mapv #(zen/read-ns ztx (symbol %)) namespaces)
+        data (enrich-doc-with-annotations ztx data)
         refs (collect-refs (symbol resource-name) (:resource data))
         errors (->> (:errors (zen/validate ztx (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
                     (remove #(= "unknown-key" (:type %))))]
