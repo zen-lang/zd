@@ -136,14 +136,14 @@ openedNodesIds.forEach(id =>
     document
         .getElementById(id)
         .getElementsByClassName("closableContent")[0]
-        .classList
+        ?.classList
         .toggle("closed"))
 
 openedNodesIds.forEach(id =>
     document
         .getElementById(id)
         .getElementsByClassName("toggler")[0]
-        .classList
+        ?.classList
         .toggle("rotateToggler"))
 
 const currentPathElms = document.location.pathname.slice(1).split(".")
@@ -169,7 +169,7 @@ togglerElms.forEach(node =>
                                     closableNodeParent
                                     .getElementsByClassName("closableContent")[0];
 
-                              const isClosed = closableNode.classList.contains("closed");
+                              const isClosed = closableNode?.classList.contains("closed");
 
                               isClosed ?
                                   window.sessionStorage.setItem(closableNodeParent.id, null)
