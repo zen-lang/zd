@@ -1,11 +1,12 @@
 (ns zd.parse-test
   (:require
    [zen.core :as zen]
+   [zd.methods]
    [zd.parse :as sut]
    [matcho.core :as matcho]
-   [clojure.test :as t]))
+   [clojure.test :refer :all]))
 
-(defmethod sut/annotation
+(defmethod zd.methods/annotation
   :test/format
   [_ param]
   {:content param})
@@ -35,7 +36,7 @@
 ")
 
 
-(t/deftest test-zd-parse
+(deftest test-zd-parse
 
   (matcho/match
    (sut/parse ztx case-1)
