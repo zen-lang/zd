@@ -12,7 +12,8 @@
    [clojure.string :as str]
    [stylo.core :refer [c c?]]
    [garden.core]
-   [stylo.rule  :refer [join-rules]]))
+   [stylo.rule  :refer [join-rules]]
+   [cheshire.core :as json]))
 
 (defn to-html [x] (hiccup/html x))
 
@@ -23,9 +24,9 @@
 
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
-   [:h1 {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"}]
-   [:h2 {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"}]
-   [:h3 {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"}]
+   [:h1 (c* [:mb 2] {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"})]
+   [:h2 (c* [:mb 2] {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"})]
+   [:h3 (c* [:mb 2] {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"})]
    [:ul {:list-style "inside"
          :line-height "24px"}
     [:li {:display "list-item"}]
@@ -33,21 +34,32 @@
    [:ol {:list-style "disk inside"
          :line-height "24px"}
     [:li {:display "list-item"}]
-    [:ol {:margin-left "2rem"}]]
-   [:p (c* [:my 2])]
+    [:ol (c* [:ml 4])]]
+   [:p (c* [:my 1])]
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
    [:.closed {:display "none"}]
+   [:.searchResult {:color "rgba(66,153,225,1)"
+                    :padding "5px"
+                    :display "block"}]
+   [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
    [:.toggler {:padding-left "4px"
                :padding-right "4px"
                :padding-top "2px"
                :padding-bottom "2px"}]
-   [:.rotateToggler {:transform "rotate(-90deg)"}]])
+   [:.rotateToggler {:transform "rotate(-90deg)"}]
+   [:.searchContainer {:position "fixed"
+                       :width "90%"
+                       :height "100%"
+                       :top 0
+                       :transition "transform 0.3s 0.3s"}]
+   ])
 
 
 (defn layout [ztx content]
+  (zd.db/index-refs ztx)
   [:html
    [:head
     [:style (garden.core/css common-style)]
@@ -58,9 +70,13 @@
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
     [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
     [:script "hljs.highlightAll()"]]
-   [:body {:class (c [:bg :gray-100])}
+   [:body {:class (c [:bg :gray-100] :w-max-full)}
     content
-    [:script (slurp "./src/js/tree.js")]]])
+    [:script (format "\nconst searchData = %s;\n%s"
+                     (json/encode (zd.db/index-refs ztx))
+                     (slurp "./src/js/tree.js"))]]])
+
+
 
 
 (defn build-tree [ztx doc]
@@ -118,16 +134,7 @@
     (->>
      (for [block doc]
        (or (zd.methods/render-key ztx block)
-           (zd.methods/render-block ztx block)))
-     (into [:div {:class (c )}]))]
-   (when (seq (:errors page))
-     [:div {:class (c [:bg :red-200] [:border :red-300] [:py 2] [:px 4])}
-      [:div {:class (c :font-bold :text-lg [:mb 2])} "Errors"]
-      (for [err (sort-by :type (:errors page))]
-        [:div {:class (c [:mb 1])}
-         [:span {:class (c)} (:message err) " "]
-         [:span {:class (c [:text :gray-600])} (str (:path err))]])])])
-
+           (zd.methods/render-block ztx block))))]])
 
 (defn links [ztx doc]
   (let [grouped-refs (zd.db/group-refs-by-attr ztx (:zd/name doc))]
@@ -146,11 +153,42 @@
                [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))])))
 
 
+(defn search [ztx doc]
+  [:div {:class (c :text-sm [:bg :white] [:py 2] [:px 4] :shadow-md
+                   [:text :gray-500])}
+   [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
+                                 {:transition "color 0.2s ease"}
+                                 [:hover :cursor-pointer [:text :black]])}
+    [:span [:i.fas.fa-search]]
+    [:span "Search..."]]])
+
+
+(defn search-container [ztx doc]
+  [:div#searchContainer
+   {:class (c :fixed [:w "30%"] :h-min-screen [:bg :gray-300] [:top 0] [:right 0] {:transition "transform 0.3s 0.3s" :visibility "hidden"} [:my 0])}
+   [:div {:class (c :flex :flex-col)}
+    [:div {:class (c :flex :items-center [:bg :white] [:p 1.5])}
+     [:span {:class (c [:mr 2] [:text :gray-500])} [:i.fas.fa-search]]
+     [:input#searchInput
+      {:placeholder "Search..."
+       :class (c [:h "30px"] :flex-1 :text-xl
+                 [:focus {:outline "none"}]
+                 [:placeholder :text-lg :gray-500 :text-xl])}]
+     [:span#searchContainerClose
+      {:class (c [:text :gray-500] [:mr 2] {:transition "color 0.2s ease"}
+                 [:hover :cursor-pointer [:text :black]])} "✕"]]
+    [:div#searchResults
+     {:class (c [:bg :gray-100] :flex :flex-col [:space-y 2] :h-max-screen :overflow-y-scroll)}]]])
+
+
 (defn generate-page [ztx doc]
   [:div {:class (c [:p 4] :flex [:space-x 4])}
    (navigation ztx doc)
    (page ztx doc)
-   (links ztx doc)])
+   (search-container ztx doc)
+   [:div {:class (c :flex :flex-col [:space-y 4])}
+    (search ztx doc)
+    (links ztx doc)]])
 
 (defn zen-page [ztx doc]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}

@@ -1,6 +1,85 @@
+//Search container stuff
+function throttle(func, ms) {
+
+  let isThrottled = false,
+    savedArgs,
+    savedThis;
+
+  function wrapper() {
+
+    if (isThrottled) { // (2)
+      savedArgs = arguments;
+      savedThis = this;
+      return;
+    }
+
+    func.apply(this, arguments); // (1)
+
+    isThrottled = true;
+
+    setTimeout(function() {
+      isThrottled = false; // (3)
+      if (savedArgs) {
+        wrapper.apply(savedThis, savedArgs);
+        savedArgs = savedThis = null;
+      }
+    }, ms);
+  }
+
+  return wrapper;
+}
+
+const removeChildElms = (node) =>
+      {while (node.firstChild)
+       {node.removeChild(node.lastChild)}}
+
+const searchHandler = (e) =>
+      {const searchValue = e.target.value
+       const foundResources =
+             Object
+             .entries(searchData)
+             .filter((v) =>
+               v[1].title.includes(searchValue)
+                 || v[1].summary.includes(searchValue))
+       removeChildElms(document.getElementById("searchResults"))
+       console.log(foundResources);
+       foundResources.forEach(res =>
+         {
+           let kpath, r;
+           [kpath, r] = res;
+           const link = document.createElement("a")
+           link.setAttribute("href", kpath)
+           link.classList.add("searchResult")
+           link.appendChild(document.createTextNode(r.title))
+
+           document
+             .getElementById("searchResults")
+             .appendChild(link)})}
+
+document
+  .getElementById("searchInput")
+  .addEventListener("input", throttle(searchHandler, 300))
+
+document
+  .getElementById("searchContainerClose")
+  .addEventListener("click", (_e) =>
+    document
+      .getElementById("searchContainer")
+      .classList
+      .remove("visible"))
+
+document
+  .getElementById("searchButton")
+  .addEventListener("click", (_e) =>
+    document
+      .getElementById("searchContainer")
+      .classList
+      .add("visible"))
+
+
+//Tree navigation stuff
 const openedNodesIds = Object.keys(window.sessionStorage);
 
-console.log(openedNodesIds);
 
 openedNodesIds.forEach(id =>
   document

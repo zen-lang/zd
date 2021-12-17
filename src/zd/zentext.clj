@@ -1,7 +1,6 @@
 (ns zd.zentext
   (:require
    [clojure.string :as str]
-   [sci.core]
    [zd.methods ]
    [edamame.core]
    [clojure.java.io :as io])

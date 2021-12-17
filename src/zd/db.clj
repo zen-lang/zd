@@ -11,6 +11,11 @@
 (defn create-resource [ztx res]
   (swap! ztx assoc-in [:zdb (:zd/name res)] res))
 
+(defn search [ztx filter]
+  (let [data (:zdb @ztx)]
+    (->> (take 5 (vals data))
+         (mapv :resource))))
+
 (defn update-refs [ztx refs]
   (swap! ztx update :zrefs deep-merge refs))
 
@@ -35,6 +40,15 @@
                []
                refs)))
      {} distinct-attrs)))
+
+
+(defn index-refs [ztx]
+  (reduce-kv
+   (fn [acc res-name {{title :title summary :summary} :resource}]
+     (assoc acc res-name
+            {:title (str/lower-case (str title))
+             :summary (str/lower-case (str summary))}))
+   {} (:zdb @ztx)))
 
 (defn get-page [ztx nm]
   (get-in @ ztx [:zdb nm]))
@@ -121,14 +135,11 @@
         data (enrich-doc-with-annotations ztx data)
         refs (collect-refs (symbol resource-name) (:resource data))
         errors (->> (:errors (zen/validate ztx (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
-                    (remove #(= "unknown-key" (:type %))))]
-    (create-resource
-     ztx (cond-> data
-           true
-           (assoc :zd/name (symbol resource-name)
-                  :zd/file path)
-           (seq errors)
-           (assoc :errors errors)))
+                    (remove #(= "unknown-key" (:type %))))
+        data (if (seq errors)
+               (update data :doc conj {:annotations {:block :zen/errors} :data errors})
+               data)]
+    (create-resource ztx (assoc data :zd/name (symbol resource-name) :zd/file path))
     (update-refs ztx refs)))
 
 (defn load-dirs [ztx dirs]

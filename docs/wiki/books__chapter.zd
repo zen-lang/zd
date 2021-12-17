@@ -8,7 +8,7 @@
   "Components of intellectual works"
   "Narrative units"]
 
-^h2 "Summary"
+^title "Summary"
 :summary /
 
   [[ns/ref niquola]]
@@ -19,7 +19,7 @@
   is any of the main thematic divisions within a writing of relative length, such as a book of prose, poetry, or law.
   A chapter book may have multiple chapters that respectively comprise discrete topics or themes. In each case, chapter
 
-^h2 "Summary"
+^title "Summary"
 :history /
 
   Many ancient books had neither word divisions nor chapter divisions.[1]

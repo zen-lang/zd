@@ -4,43 +4,58 @@
    [stylo.core :refer [c]]
    [zd.db]
    [zd.zentext]
+   [sci.core]
    [zd.methods :refer [annotation inline-method render-block render-content render-key process-block]]))
 
-(defmethod annotation
-  :default
+(defmethod annotation :default
   [nm params]
   (println ::missed-annotation nm)
   {:errors {nm {:params params
                 :message (str "No rule for " nm)}}})
 
-(defmethod annotation
-  :view-only
+(defmethod annotation :view-only
   [nm params]
   {:view-only true})
 
-(defmethod annotation
-  :badge
+(defmethod annotation :badge
   [nm params]
   {:block :badge
    :badge params})
 
-(defmethod annotation
-  :attribute
+(defmethod annotation :attribute
   [nm params]
   {:block :attribute
    :attribute params})
 
-(defmethod annotation
-  :hide
+(defmethod annotation :href
+  [nm params]
+  {:content :href})
+
+(defmethod annotation :img
+  [nm params]
+  {:content :img})
+
+(defmethod annotation :title
+  [nm params]
+  {:title params})
+
+(defmethod annotation :hide
   [nm params]
   {:block :none})
 
-(defmethod inline-method
-  :symbol-link
-  [ztx m s]
+(defmethod annotation :table
+  [nm params]
+  {:content :table
+   :table params})
+
+(defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
+    [:a {:href (str "/" s) :class (c [:text :blue-600])} (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
+
+(defmethod inline-method :symbol-link
+  [ztx m s]
+  (symbol-link ztx s))
 
 
 (defmethod inline-method
@@ -60,8 +75,7 @@
   [:a {:class (c [:text :green-600] :title "TODO")}
    (str arg)])
 
-(defmethod inline-method
-  :default
+(defmethod inline-method :default
   [ztx m arg]
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
@@ -91,17 +105,15 @@
   [:div {:class (c [:px 0] [:py 2] [:bg :white])}
    (zd.zentext/parse-block ztx data)])
 
-(defmethod render-content
-  :default
-  [ztx {data :data}]
+(defmethod render-content :default
+  [ztx {data :data :as block}]
   (cond
     (string? data) [:span data]
-    (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
+    (or (keyword? data) (boolean? data))
+    [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
-    (symbol? data) [:a {:href (str "/" data) :class (c [:text :blue-600])}
-                    (if-let [res (zd.db/get-resource ztx data)]
-                      (or (:title res) data)
-                      (str  data))]
+    (nil? data) ""
+    (symbol? data) (symbol-link ztx data)
     (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
                              [:div {:class (c [:text :gray-500])} "#{"]]
                             (mapv (fn [x] (render-content ztx {:data x}))data))
@@ -111,9 +123,11 @@
     [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
 
     (sequential? data)
-    (conj (into [:ul {:class (c)}]
-                (->> data
-                     (mapv (fn [x] [:li (render-content ztx {:data x})])))))
+    (if (keyword? (first data))
+      (render-content ztx (assoc-in block [:annotations :content] :hiccup))
+      (conj (into [:ul {:class (c)}]
+                  (->> data
+                       (mapv (fn [x] [:li (render-content ztx {:data x})]))))))
 
     (map? data)
     (conj (into [:ul {:class (c)}]
@@ -137,14 +151,18 @@
   :default
   [ztx {ann :annotations data :data path :path :as block}]
   [:div {:class (c [:py 2])}
+   (when-let [ann (:block ann)]
+     (println :missed-render-block ann)
+     [:div {:class (c [:text :red-800])}
+      (str "Missed render-block for " ann)])
    [(keyword (str "h" (inc (count path))))
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
    (render-content ztx block)])
 
-(defmethod render-block :none [ztx block])
+(defmethod render-block :none
+  [ztx block])
 
-(defmethod render-block
-  :badge
+(defmethod render-block :badge
   [ztx {data :data path :path :as block}]
   [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
    [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
@@ -152,11 +170,59 @@
    [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
     (render-content ztx block)]])
 
-(defmethod render-block
-  :attribute
+(defmethod render-block :attribute
   [ztx {data :data path :path :as block}]
   [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
    [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
     (subs (str (last path)) 1) ]
    [:div {:class (c )}
     (render-content ztx block)]])
+
+(defn table [ztx cfg data]
+  (if-let [headers (or (:columns cfg)
+                       (and (sequential? data) (map? (first data))
+                            (keys (first data))))]
+    [:table {:class (c :shadow-sm :rounded)}
+     [:thead
+      (into [:tr] (->> headers (mapv (fn [k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
+                                              (capitalize k)]))))]
+     (into [:tbody]
+           (->> data
+                (mapv (fn [x]
+                        (into [:tr]
+                              (->> headers
+                                   (mapv (fn [k]
+                                           [:td
+                                            {:class (c [:px 4] [:py 2] :border)}
+                                            (render-content ztx {:data (get x k)})]))))))))]
+    [:pre (pr-str data)]))
+
+(defmethod render-content :table
+  [ztx {ann :annotations data :data path :path :as block}]
+  (table ztx (or (:table ann) {}) data))
+
+
+(defmethod render-block :zen/errors
+  [ztx {ann :annotations errors :data path :path :as block}]
+  (when (seq errors)
+    [:div {:class (c [:text :red-700] [:py 2] [:px 4])}
+     [:ul {:class (c :font-bold :text-lg [:mb 2] :border-b)} "Errors"]
+     (for [err (sort-by :type errors)]
+       [:li {:class (c [:mb 1] :flex [:space-x 3])}
+        [:span {:class (c [:text :green-600])} (str (:path err))]
+        [:span {:class (c)} (:message err)]])]))
+
+
+
+(defmethod render-content :hiccup
+  [ztx {ann :annotations data :data path :path :as block}]
+  (let [ctx (sci.core/init {:bindings {'search (fn [filter] (zd.db/search ztx filter))
+                                       'table  (fn [data opts] (table ztx (or opts {}) data))}})
+        res (try (sci.core/eval-form ctx data)
+                 (catch Exception e
+                   [:div {:class (c [:text :red-600])}
+                    [:pre (pr-str data)]
+                    (pr-str e)]))]
+    (if (and (vector? res) (keyword? (first res)))
+      res
+      [:pre (pr-str res)])))
