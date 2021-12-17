@@ -17,12 +17,27 @@
 
 
 (def closed-node-style (c [:bg :red-500]))
+
+(defn c* [& args]
+  (join-rules args))
+
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
    [:h1 {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"}]
    [:h2 {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"}]
    [:h3 {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"}]
+   [:ul {:list-style "inside"
+         :line-height "24px"}
+    [:li {:display "list-item"}]
+    [:ul {:margin-left "2rem"}]]
+   [:ol {:list-style "disk inside"
+         :line-height "24px"}
+    [:li {:display "list-item"}]
+    [:ol {:margin-left "2rem"}]]
    [:p {:margin-bottom "1rem"}]
+   [:.hljs (c* [:bg :gray-100] :shadow-sm
+               :border)]
+   [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
    [:.closed {:display "none"}]
    [:.pl-4  {:padding-left "1rem"}]
    [:.toggler {:padding-left "4px"
@@ -53,10 +68,7 @@
 
     (and (map? v) (:format v))
     (case (:format v)
-      "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-              #_(zd.markdown/parse ztx (:content v))
-              #_[:div.markdown-body
-                 (hiccup.util/as-str (markdown.core/md-to-html-string (:content v)))]]
+      "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}]
       [:div "Unknown format " (:format v)
        [:pre (:content v)]])
 
@@ -193,14 +205,12 @@
 (defmethod do-block :default [& _] nil)
 
 
+
 (defmethod do-format
   :default
   [ztx fmt {data :data ann :annotations}]
   [:div (pr-str data)])
 
-(defn keypath [path]
-  (let [id (str/join path)]
-    [:a {:id id :class key-class :href (str "#" id)} id]))
 
 (defmulti render-key     (fn [ztx {pth :path}] pth))
 (defmulti render-block   (fn [ztx {{blk :block} :annotations}] (keyword blk)))
@@ -211,18 +221,18 @@
 (defmethod render-key
   [:title]
   [_ {title :data}]
-  [:h1 {:class (c [:mb 4] :border-b)} title])
+  [:h1 {:class (c [:mb 0] :border-b)} title])
 
 (defmethod render-key
   [:summary]
   [ztx block]
-  [:p {:class (c [:mb 4] [:text :gray-600])}
+  [:div {:class (c [:text :gray-600])}
    (render-content ztx block)])
 
 (defmethod render-content
   :md
   [ztx {data :data}]
-  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
+  [:div {:class (c [:px 0] [:py 2] [:bg :white])}
    (zd.zentext/parse-block ztx data)])
 
 (defmethod render-content
@@ -232,15 +242,34 @@
     (string? data) data
     (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
-    (symbol? data) [:a {:href (str "/" data)} (str :TBD data)]
+    (symbol? data) [:a {:href (str "/" data) :class (c [:text :blue-600])}
+                    (if-let [res (zd.db/get-resource ztx data)]
+                      (or (:title res) data)
+                      (str  data))]
+    (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
+                             [:div {:class (c [:text :gray-500])} "#{"]]
+                            (mapv (fn [x] (render-content ztx {:data x}))data))
+                      [:div {:class (c [:text :gray-500])} "}"])
     :else [:pre (pr-str data)]))
+
+(defn capitalize [k]
+  (let [s (if (keyword? k) (subs (str k) 1) (str k))]
+    (str/capitalize (str/replace s #"-" " "))))
+
+
+(defn keypath [path title]
+  (let [id (str/join path)]
+    [:a {:id id :href (str "#" id)} (or title id)]))
 
 (defmethod render-block
   :default
   [ztx {ann :annotations data :data path :path :as block}]
   [:div {:class (c [:py 2])}
-   [(keyword (str "h" (inc (count path)))) (or (:title ann) (let [k (last path)] (if (keyword? k) (subs (str k) 1) (str k))))]
+   [(keyword (str "h" (inc (count path))))
+    (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
    (render-content ztx block)])
+
+(defmethod render-block :none [ztx block])
 
 (defmethod render-block
   :badge
@@ -254,10 +283,10 @@
 (defmethod render-block
   :attribute
   [ztx {data :data path :path :as block}]
-  [:div {:class (c [:py 1] :flex :border-b)}
-   [:div {:class (c :inline-block [:px 2] [:py 0.5] [:text :gray-600] {:font-weight "500"})}
+  [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
+   [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
     (subs (str (last path)) 1) ]
-   [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
+   [:div {:class (c )}
     (render-content ztx block)]])
 
 

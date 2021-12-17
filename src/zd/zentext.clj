@@ -15,7 +15,7 @@
 (defn call-inline-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
-    [:span {:class (c [:text :red-600] [:bg :red-100])} (str "invalid link #" s)]))
+    [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
 (defmulti inline-method (fn [m arg] (keyword m)))
 
@@ -28,7 +28,8 @@
 (defmethod inline-method
   :src
   [m arg]
-  [:a {:class (c [:text :green-500])} (str "Code :" arg)])
+  [:a {:class (c [:text :green-600] :title "TODO")}
+   (str arg)])
 
 (defmethod inline-method
   :default
@@ -59,9 +60,12 @@
                       match (subs s (.start m) (.end m))]
                   (recur
                    (.end m)
-                   (conj res head (cond (str/starts-with? match "#")  (call-inline-link ztx  (subs match 1))
-                                        (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
-                                        (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2)))))))
+                   (conj res
+                         head
+                         (cond (str/starts-with? match "#")  (call-inline-link ztx  (subs match 1))
+                               (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
+                               (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2))))
+                         " ")))
                 (conj res (subs s start))))]
     (remove empty? res)))
 
@@ -154,7 +158,8 @@
          cnt]])
 
 (defmethod process-block :default [tp args cnt]
-  [:block {:params args :tp tp} cnt])
+  [:pre {:params args :tp tp}
+   [:code.hljs cnt]])
 
 (defmethod apply-transition :block-end
   [ztx _ {lns :lines params :params :as ctx} line]
@@ -212,7 +217,7 @@
 (defmethod apply-transition
   :default
   [ztx a ctx line]
-  (println :missed a)
+  (println ::missed-transition a)
   ctx)
 
 (defn parse-block* [ztx lines]
@@ -223,7 +228,7 @@
                                    (get-in block-parser [(:state ctx) :*])
                                    {:action :unknown :state (:state ctx) :token token})
                     new-ctx (apply-transition ztx action ctx l)]
-                (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
+                ;; (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
                 (if (not= :eof token)
                   (if (:push-back new-ctx)
                     (recur old-ls (dissoc new-ctx :push-back))
