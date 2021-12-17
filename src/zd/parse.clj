@@ -61,6 +61,7 @@
 (defmethod annotation
   :default
   [nm params]
+  (println ::missed-annotation nm)
   {:errors {nm {:params params
                 :message (str "No rule for " nm)}}})
 
@@ -80,6 +81,11 @@
   [nm params]
   {:block :attribute
    :attribute params})
+
+(defmethod annotation
+  :hide
+  [nm params]
+  {:block :none})
 
 (defn parse-annotations [acc ann]
   (->> ann

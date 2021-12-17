@@ -22,6 +22,12 @@
    [:h1 {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"}]
    [:h2 {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"}]
    [:h3 {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"}]
+   [:ul
+    {:list-style-type "disk"
+     :list-style-position "inside"
+     :line-height "24px"
+     :padding-left "32px"}
+    [:li]]
    [:p {:margin-bottom "1rem"}]
    [:.closed {:display "none"}]
    [:.pl-4  {:padding-left "1rem"}]
@@ -53,10 +59,7 @@
 
     (and (map? v) (:format v))
     (case (:format v)
-      "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-              #_(zd.markdown/parse ztx (:content v))
-              #_[:div.markdown-body
-                 (hiccup.util/as-str (markdown.core/md-to-html-string (:content v)))]]
+      "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}]
       [:div "Unknown format " (:format v)
        [:pre (:content v)]])
 
@@ -193,14 +196,12 @@
 (defmethod do-block :default [& _] nil)
 
 
+
 (defmethod do-format
   :default
   [ztx fmt {data :data ann :annotations}]
   [:div (pr-str data)])
 
-(defn keypath [path]
-  (let [id (str/join path)]
-    [:a {:id id :class key-class :href (str "#" id)} id]))
 
 (defmulti render-key     (fn [ztx {pth :path}] pth))
 (defmulti render-block   (fn [ztx {{blk :block} :annotations}] (keyword blk)))
@@ -235,12 +236,24 @@
     (symbol? data) [:a {:href (str "/" data)} (str :TBD data)]
     :else [:pre (pr-str data)]))
 
+(defn capitalize [k]
+  (let [s (if (keyword? k) (subs (str k) 1) (str k))]
+    (str/capitalize (str/replace s #"-" " "))))
+
+
+(defn keypath [path title]
+  (let [id (str/join path)]
+    [:a {:id id :href (str "#" id)} (or title id)]))
+
 (defmethod render-block
   :default
   [ztx {ann :annotations data :data path :path :as block}]
   [:div {:class (c [:py 2])}
-   [(keyword (str "h" (inc (count path)))) (or (:title ann) (let [k (last path)] (if (keyword? k) (subs (str k) 1) (str k))))]
+   [(keyword (str "h" (inc (count path))))
+    (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
    (render-content ztx block)])
+
+(defmethod render-block :none [ztx block])
 
 (defmethod render-block
   :badge

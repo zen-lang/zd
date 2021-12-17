@@ -116,15 +116,27 @@ github pages
 ```
 
 
+TODO:
+
+* hickup keypathes - eval - search/filters <- niquola (stylization)
+* search  <- apricotlace 
+* emacs <- max
+* zen integration + show errors (errors in menu) <- vlad
 
 
-```
+* Capitilize for headers (overide header)
+* sytles - list styles
+* table block
+* backrefs - sytle 
 
 
-^block :section
-:chapter:ch1 /
+* custom menu
+* search
+* devmode 
 
-  Here is the text
- 
+20:00 pm
 
-```
+Demo
+
+* existing
+* how to make knowledge base + how to extend (show on rpc)

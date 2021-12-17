@@ -25,7 +25,7 @@
       {:status 200
        :body  (zd.pages/render-page ztx doc)}
       {:status 404
-       :body  (zd.pages/render-not-found ztx sym) #_(str "No page for " sym)})))
+       :body  (zd.pages/render-not-found ztx sym)})))
 
 (defmethod zenbox.web.core/operation 'zd/render-zen
   [ztx op {{sym :sym ns :ns} :route-params :as req}]

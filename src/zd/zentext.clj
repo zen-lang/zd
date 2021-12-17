@@ -15,7 +15,7 @@
 (defn call-inline-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
-    [:span {:class (c [:text :red-600] [:bg :red-100])} (str "invalid link #" s)]))
+    [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
 (defmulti inline-method (fn [m arg] (keyword m)))
 
@@ -212,7 +212,7 @@
 (defmethod apply-transition
   :default
   [ztx a ctx line]
-  (println :missed a)
+  (println ::missed-transition a)
   ctx)
 
 (defn parse-block* [ztx lines]
@@ -223,7 +223,7 @@
                                    (get-in block-parser [(:state ctx) :*])
                                    {:action :unknown :state (:state ctx) :token token})
                     new-ctx (apply-transition ztx action ctx l)]
-                (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
+                ;; (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
                 (if (not= :eof token)
                   (if (:push-back new-ctx)
                     (recur old-ls (dissoc new-ctx :push-back))
