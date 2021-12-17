@@ -2,6 +2,8 @@
   (:require
    [zen.core :as zen]
    [zd.parse]
+   [sci.core]
+   [clj-yaml.core :as yaml]
    [zd.deep-merge :refer [deep-merge]]
    [clojure.java.io :as io]
    [clojure.string :as str]))
@@ -44,9 +46,10 @@
 
 (defn index-refs [ztx]
   (reduce-kv
-   (fn [acc res-name {{title :title summary :summary} :resource}]
+   (fn [acc res-name {zd-name :zd/name {title :title summary :summary} :resource}]
      (assoc acc res-name
-            {:title (str/lower-case (str title))
+            {:kpath zd-name
+             :title (str/lower-case (str title))
              :summary (str/lower-case (str summary))}))
    {} (:zdb @ztx)))
 
@@ -121,8 +124,50 @@
                 (:annotations block)))))
     doc)))
 
-(defn load-content! [ztx path content]
-  (let [resource-name (str/replace (str/replace path #"\.zd$" "") #"/" ".")
+(def macros
+  {'load (fn [ctx pth & [fmt]]
+           (println ctx pth fmt)
+           (let [dir (->> (str/split (:zd/path ctx) #"/")
+                          butlast
+                          (str/join "/"))
+                 content (slurp (str dir "/" pth))
+                 ]
+             (if (nil? content)
+               ^:error {:message (str "File " pth " not found")}
+               (cond
+                 (= :yaml fmt) (yaml/parse-string content)
+                 :else content))))})
+
+(defn process-macroses [ztx {doc :doc :as page}]
+  (assoc
+   page
+   :doc
+   (mapv
+    (fn [block]
+      (if (and (list? (:data block)) (contains? macros (first (:data block))))
+        (do
+          (println "MACROS:" block)
+          (let [ctx (sci.core/init {:bindings macros})
+                [fn-name & args] (:data block)
+                form (-> args
+                         (conj (assoc (dissoc block :data) :zd/path (:zd/path page) :zd/file (:zd/file page)))
+                         (conj  fn-name))
+                res (try
+                      (sci.core/eval-form ctx form)
+                         (catch Exception e
+                           ^:error
+                           {:message (.getMessage e)}))]
+            (if (and (map? res) (:error (meta res)))
+              (-> block
+                  (assoc :data res)
+                  (update :annotations merge {:block :error}))
+              (assoc block :data res))))
+        block))
+    doc)))
+
+
+(defn load-content! [ztx {:keys [resource-path path content]}]
+  (let [resource-name (str/replace (str/replace resource-path #"\.zd$" "") #"/" ".")
         data (zd.parse/parse ztx content)
         parent-tags (gather-parent-tags ztx resource-name)
         tags (clojure.set/union (get-in data [:resource :zen/tags] #{}) parent-tags)
@@ -131,14 +176,16 @@
                (seq tags)
                (assoc-in [:resource :zen/tags] tags))
         _ (mapv #(zen/read-ns ztx (symbol %)) namespaces)
+        data (assoc data :zd/name (symbol resource-name) :zd/file resource-path :zd/path path)
         data (enrich-doc-with-annotations ztx data)
+        data (process-macroses ztx data)
         refs (collect-refs (symbol resource-name) (:resource data))
         errors (->> (:errors (zen/validate ztx (or (:zen/tags (:resource data)) #{}) (:resource data)))
                     (remove #(= "unknown-key" (:type %))))
         data (if (seq errors)
                (update data :doc conj {:path [:zd/errors] :annotations {:block :zen/errors} :data errors})
                data)]
-    (create-resource ztx (assoc data :zd/name (symbol resource-name) :zd/file path))
+    (create-resource ztx data)
     (update-refs ztx refs)))
 
 (defn load-dirs [ztx dirs]
@@ -152,4 +199,6 @@
                      (not (str/starts-with? (.getName f) ".")))
             (let [resource-path (subs path (inc (count dir-path)))
                   content (slurp f)]
-              (load-content! ztx resource-path content))))))))
+              (load-content! ztx {:path path
+                                  :resource-path resource-path
+                                  :content content}))))))))
