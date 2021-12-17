@@ -160,8 +160,9 @@
    [:div {:class (c [:mb 4])}
     (->>
      (for [block doc]
-       (or (zd.methods/render-key ztx block)
-           (zd.methods/render-block ztx block))))]])
+       (let [block (assoc block :page page)]
+         (or (zd.methods/render-key ztx block)
+             (zd.methods/render-block ztx block)))))]])
 
 (defn links [ztx doc]
   (let [grouped-refs (zd.db/group-refs-by-attr ztx (:zd/name doc))]

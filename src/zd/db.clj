@@ -13,10 +13,14 @@
 (defn create-resource [ztx res]
   (swap! ztx assoc-in [:zdb (:zd/name res)] res))
 
+;; TODO: implement more filters
 (defn search [ztx filter]
   (let [data (:zdb @ztx)]
-    (->> (take 5 (vals data))
-         (mapv :resource))))
+    (->>  data
+          (vals)
+          (filterv (fn [res] (str/starts-with? (:zd/name res) (:namespace filter))))
+          (take 100)
+          (mapv :resource))))
 
 (defn update-refs [ztx refs]
   (swap! ztx update :zrefs deep-merge refs))
@@ -126,12 +130,10 @@
 
 (def macros
   {'load (fn [ctx pth & [fmt]]
-           (println ctx pth fmt)
            (let [dir (->> (str/split (:zd/path ctx) #"/")
                           butlast
                           (str/join "/"))
-                 content (slurp (str dir "/" pth))
-                 ]
+                 content (slurp (str dir "/" pth))]
              (if (nil? content)
                ^:error {:message (str "File " pth " not found")}
                (cond
@@ -146,7 +148,6 @@
     (fn [block]
       (if (and (list? (:data block)) (contains? macros (first (:data block))))
         (do
-          (println "MACROS:" block)
           (let [ctx (sci.core/init {:bindings macros})
                 [fn-name & args] (:data block)
                 form (-> args

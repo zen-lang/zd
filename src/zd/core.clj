@@ -2,12 +2,10 @@
   (:require
    [zen.core :as zen]
    [zd.db]
-   [zd.parser]
    [zd.pages]
    [zd.web]
    [clojure.walk]
-   [edamame.core]
-   [zenbox.rpc]))
+   [edamame.core]))
 
 
 (defn reload [ztx _opts]
@@ -46,7 +44,7 @@
 
   (def ztx (zen/new-context {:zd/paths [pth] :paths [pth]}))
 
-  (start ztx {:port 3031})
+  (start ztx {:port 3030})
 
   (stop ztx)
 

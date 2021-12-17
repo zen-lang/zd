@@ -115,8 +115,13 @@
    (zd.zentext/parse-block ztx data)])
 
 (defmethod render-content :img
-  [ztx {{img :img} :annotations data :data}]
-  [:img (merge img {:src data})])
+  [ztx {page :page {img :img} :annotations data :data}]
+  (let [path (str/join "/" (butlast (str/split (:zd/file page) #"/" )))
+        src (cond
+              (str/starts-with? data "http") data
+              (str/starts-with? data "/") data
+              :else (str path "/" data))]
+    [:img (merge img {:src src})]))
 
 (defmethod render-content :default
   [ztx {data :data :as block}]

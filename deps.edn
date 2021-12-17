@@ -1,42 +1,21 @@
 {:paths       ["zrc" "src"]
- :deps        {org.clojure/clojure             {:mvn/version "1.10.3"}
-               cheshire/cheshire               {:mvn/version "5.10.0"}
-               hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
-               zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
-                                                :sha "a376f197902330473cf688eb3ff02f69094677de"}
-
-               ;; zen-lang/zen-web                {:local/root "libs/zen-web"}
-
-               borkdude/edamame                {:mvn/version "0.0.11-alpha.16"}
-               hawk/hawk                       {:mvn/version "0.2.11"}
-               markdown-clj/markdown-clj       {:mvn/version "1.10.5"}
-               clj-time/clj-time               {:mvn/version "0.15.2"}
-
-               org.clojure/clojure       {:mvn/version "1.10.3"}
+ :deps        {org.clojure/clojure       {:mvn/version "1.10.3"}
+               borkdude/edamame          {:mvn/version "0.0.11-alpha.16"}
                cheshire/cheshire         {:mvn/version "5.10.0"}
                clj-commons/clj-yaml      {:mvn/version "0.7.106"}
-               com.cognitect/transit-clj {:mvn/version "1.0.324"}
-               http-kit/http-kit         {:mvn/version "2.5.3"}
-               ring/ring                 {:mvn/version "1.9.3"}
-               ring/ring-defaults        {:mvn/version "0.3.3"}
-               hiccup/hiccup             {:mvn/version "2.0.0-alpha2"}
-               zen-lang/zen              {:git/url "https://github.com/zen-lang/zen"
-                                          :sha "a376f197902330473cf688eb3ff02f69094677de"}
-
-               org.clojure/data.xml      {:mvn/version "0.2.0-alpha6"}
-
-               dsql/dsql                 {:git/url "https://github.com/HealthSamurai/dsql"
-                                          :sha "1086f64180d7f601ffff0335139594ccef2d2a7b"}
-
-               borkdude/edamame          {:mvn/version "0.0.11-alpha.16"}
                clj-time/clj-time         {:mvn/version "0.15.2"}
-
+               hawk/hawk                 {:mvn/version "0.2.11"}
+               hiccup/hiccup             {:mvn/version "2.0.0-alpha2"}
+               http-kit/http-kit         {:mvn/version "2.5.3"}
+               markdown-clj/markdown-clj {:mvn/version "1.10.5"}
+               org.clojure/data.xml      {:mvn/version "0.2.0-alpha6"}
                org.clojure/java.jdbc     {:mvn/version "0.7.12"}
                org.postgresql/postgresql {:mvn/version "42.2.22.jre7"}
-               com.zaxxer/HikariCP       {:mvn/version "4.0.3"}
-
-               stylo/stylo                     {:git/url "https://github.com/HealthSamurai/macrocss"
-                                                :sha "1d0cba81d545bc30a42f64f0e65ee4c2ae4d9767"}}
+               ring/ring                 {:mvn/version "1.9.3"}
+               ring/ring-defaults        {:mvn/version "0.3.3"}
+               stylo/stylo               {:git/url "https://github.com/HealthSamurai/macrocss" :sha "1d0cba81d545bc30a42f64f0e65ee4c2ae4d9767"}
+               zen-lang/zen              {:git/url "https://github.com/zen-lang/zen" :sha "a376f197902330473cf688eb3ff02f69094677de"}
+               }
  :aliases
  {:nrepl {:extra-paths ["dev" "docs" "test"]
           :extra-deps  {refactor-nrepl/refactor-nrepl       {:mvn/version "2.5.1"}
