@@ -10,6 +10,24 @@ and may be referenced from other resources
 * Resource may be described with zen tags
 
 
+
+## Setup zen docs for your project
+
+You have to have installed clojure cli.
+
+Run it in the root of your project
+
+```
+
+echo ":title My first zd/note" > docs/readme.zd
+
+clojure -Sdeps '{:deps {zen-lang/zd {:git/url "git@github.com:zen-lang/zd.git" :sha "2ffa5788e70d99c5ccd833a22266c70a6b4b90a1"}}}' -M -m zd.dev docs zrc
+```
+
+Open http://localhost:3030 and that's it. 
+
+## Syntax
+
 zd format is sugar for edn:
 
 ```edn
