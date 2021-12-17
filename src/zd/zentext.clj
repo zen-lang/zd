@@ -25,6 +25,11 @@
   (let [[src alt] (str/split arg #"\s+" 2)]
     [:img {:src src :alt alt}]))
 
+(defmethod inline-method :a
+  [m arg]
+  (let [[src text] (str/split arg #"\s+" 2)]
+    [:a {:href src :class (c [:text :blue-700])} (or src text)]))
+
 (defmethod inline-method
   :src
   [m arg]
