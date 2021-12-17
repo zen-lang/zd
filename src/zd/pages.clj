@@ -40,9 +40,11 @@
                :border)]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
    [:.closed {:display "none"}]
-   [:.searchResult {:color "rgba(66,153,225,1)"
-                    :padding "5px"
-                    :display "block"}]
+   [:.searchResultContainer (c* [:px 4] [:py 2] :flex :items-center
+                                [:hover :cursor-pointer [:bg :gray-200]])]
+   [:.searchResultContainerVBar (c* [:h "20px"] [:w "2px"]
+                                    :rounded [:mr 2] [:bg :blue-500])]
+   [:.searchResultTitle (c* [:text :blue-500])]
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
    [:.toggler {:padding-left "4px"
@@ -71,6 +73,9 @@
     [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
     [:script "hljs.highlightAll()"]]
    [:body {:class (c [:bg :gray-100] :w-max-full)}
+    [:div#overlay
+     {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
+                {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
     content
     [:script (format "\nconst searchData = %s;\n%s"
                      (json/encode (zd.db/index-refs ztx))
@@ -165,7 +170,7 @@
 
 (defn search-container [ztx doc]
   [:div#searchContainer
-   {:class (c :fixed [:w "30%"] :h-min-screen [:bg :gray-300] [:top 0] [:right 0] {:transition "transform 0.3s 0.3s" :visibility "hidden"} [:my 0])}
+   {:class (c :fixed {:z-index 2} [:w "30%"] :h-min-screen [:bg :gray-100] [:top 0] [:right 0] {:transition "transform 0.3s 0.3s" :visibility "hidden"} [:my 0])}
    [:div {:class (c :flex :flex-col)}
     [:div {:class (c :flex :items-center [:bg :white] [:p 1.5])}
      [:span {:class (c [:mr 2] [:text :gray-500])} [:i.fas.fa-search]]
@@ -178,7 +183,7 @@
       {:class (c [:text :gray-500] [:mr 2] {:transition "color 0.2s ease"}
                  [:hover :cursor-pointer [:text :black]])} "✕"]]
     [:div#searchResults
-     {:class (c [:bg :gray-100] :flex :flex-col [:space-y 2] :h-max-screen :overflow-y-scroll)}]]])
+     {:class (c :flex :flex-col :h-max-screen :overflow-y-scroll)}]]])
 
 
 (defn generate-page [ztx doc]
