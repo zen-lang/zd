@@ -52,8 +52,9 @@
   (def pth "/Users/ghrp/prog/sansara/box/docs")
 
   (def pth "/Users/ganshinv/hs/sansara/box/docs")
+  (def pth "/Users/niquola/sansara/box/docs")
 
-  (def ztx (zen/new-context {:zd/paths [pth]}))
+  (def ztx (zen/new-context {:zd/paths [pth] :paths [pth]}))
 
   (start ztx {})
 

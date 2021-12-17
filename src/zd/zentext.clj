@@ -2,8 +2,7 @@
   (:require
    [clojure.string :as str]
    [sci.core]
-   [zd.db]
-   [stylo.core :refer [c]]
+   [zd.methods ]
    [edamame.core]
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
@@ -12,47 +11,17 @@
 
 (def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
 
-(defn call-inline-link [ztx s]
-  (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
-    [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
-(defmulti inline-method (fn [m arg] (keyword m)))
-
-(defmethod inline-method
-  :img
-  [m arg]
-  (let [[src alt] (str/split arg #"\s+" 2)]
-    [:img {:src src :alt alt}]))
-
-(defmethod inline-method :a
-  [m arg]
-  (let [[src text] (str/split arg #"\s+" 2)]
-    [:a {:href src :class (c [:text :blue-700])} (or src text)]))
-
-(defmethod inline-method
-  :src
-  [m arg]
-  [:a {:class (c [:text :green-600] :title "TODO")}
-   (str arg)])
-
-(defmethod inline-method
-  :default
-  [m arg]
-  [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
-
-(defn call-inline-method [s]
+(defn call-inline-method [ztx s]
   (let [[method arg] (str/split s #"\s+" 2)]
-    (inline-method method arg)))
+    (zd.methods/inline-method ztx  method arg)))
 
 
-(defmulti inline-function (fn [m arg] (keyword m)))
-
-(defn call-inline-function [s]
+(defn call-inline-function [ztx s]
   (try
     (let [[method arg] (str/split s #"\s+" 2)
           arg (edamame.core/parse-string arg)]
-      (inline-function method arg))
+      (zd.methods/inline-function ztx method arg))
     (catch Exception e
       [:error (pr-str e)])))
 
@@ -67,9 +36,9 @@
                    (.end m)
                    (conj res
                          head
-                         (cond (str/starts-with? match "#")  (call-inline-link ztx  (subs match 1))
-                               (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
-                               (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2))))
+                         (cond (str/starts-with? match "#")  (zd.methods/inline-method ztx :symbol-link  (subs match 1))
+                               (str/starts-with? match "[[") (call-inline-method   ztx (subs match 2 (- (count match) 2)))
+                               (str/starts-with? match "((") (call-inline-function ztx (subs match 2 (- (count match) 2))))
                          " ")))
                 (conj res (subs s start))))]
     (remove empty? res)))
@@ -156,22 +125,13 @@
          :params line
          :lines []))
 
-(defmulti process-block (fn [tp args cnt] tp))
-
-(defmethod process-block "code" [_ lang cnt]
-  [:pre [:code {:class (str "language-" lang " hljs")} cnt]])
-
-(defmethod process-block :default [tp args cnt]
-  [:pre {:params args :tp tp}
-   [:code.hljs cnt]])
-
 (defmethod apply-transition :block-end
   [ztx _ {lns :lines params :params :as ctx} line]
   (let [block-params (str/split params #" " 2)
         tp (subs (first block-params) 3)
         args (second block-params)
-        result (process-block tp args (str/join "\n" lns))]
-    (-> (update ctx :result conj result #_(into [:block {:params params}] lns))
+        result (zd.methods/process-block ztx tp args (str/join "\n" lns))]
+    (-> (update ctx :result conj result)
         (assoc :state :none :lines [] :params nil))))
 
 

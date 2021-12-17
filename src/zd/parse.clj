@@ -3,12 +3,13 @@
    [clojure.string :as str]
    [clojure.java.io :as io]
    [zd.deep-merge :refer [deep-merge]]
+   [zd.methods :refer [annotation]]
    [edamame.core])
+
   (:import [java.io StringReader]))
 
 (defn get-lines [s]
   (line-seq (io/reader (StringReader. s))))
-
 
 (defn comment? [l]
   (str/starts-with? l ";"))
@@ -56,36 +57,6 @@
     {:status :error
      :line l}))
 
-(defmulti annotation (fn [nm params] (keyword nm)))
-
-(defmethod annotation
-  :default
-  [nm params]
-  (println ::missed-annotation nm)
-  {:errors {nm {:params params
-                :message (str "No rule for " nm)}}})
-
-(defmethod annotation
-  :view-only
-  [nm params]
-  {:view-only true})
-
-(defmethod annotation
-  :badge
-  [nm params]
-  {:block :badge
-   :badge params})
-
-(defmethod annotation
-  :attribute
-  [nm params]
-  {:block :attribute
-   :attribute params})
-
-(defmethod annotation
-  :hide
-  [nm params]
-  {:block :none})
 
 (defn parse-annotations [acc ann]
   (->> ann

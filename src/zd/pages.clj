@@ -3,6 +3,8 @@
    [zen.core :as zen]
    [zd.zentext]
    [zd.db]
+   [zd.methods]
+   [zd.impl]
    [hiccup.core :as hiccup]
    [hiccup.page]
    [hiccup.util]
@@ -10,11 +12,9 @@
    [clojure.string :as str]
    [stylo.core :refer [c c?]]
    [garden.core]
-   [stylo.rule  :refer [join-rules]]
-   [clojure.string :as str]))
+   [stylo.rule  :refer [join-rules]]))
 
 (defn to-html [x] (hiccup/html x))
-
 
 (def closed-node-style (c [:bg :red-500]))
 
@@ -62,42 +62,6 @@
     content
     [:script (slurp "./src/js/tree.js")]]])
 
-;; (instance? java.util.Date. (java.util.Date.))
-(defn render-value [ztx k v]
-  (cond
-
-    (and (map? v) (:format v))
-    (case (:format v)
-      "md"   [:div {:class (c [:px 0] [:py 4] [:bg :white])}]
-      [:div "Unknown format " (:format v)
-       [:pre (:content v)]])
-
-    (and (vector? v) (= :div (first v)))
-    [:div.markdown-body (eval v)]
-
-    (keyword? v)
-    [:span {:class (c [:text :green-600])} v]
-
-    (symbol? v)
-    [:a {:href (str v) :class (cond ;;(zd.parser/get-doc ztx v) (c [:text :blue-500])
-                                (zen.core/get-symbol ztx v) (c [:text :green-500])
-                                :else (c [:text :red-500]))} (str v)]
-
-    (string? v)
-    (if (str/starts-with? v "http")
-      [:a {:href v :class (c [:text :blue-500])} v]
-      [:div v])
-
-    (set? v)
-    (->>
-     (for [x v]
-       (render-value ztx k x))
-     (into [:div {:class (c :flex [:space-x 2])} [:div {:class (c [:text :gray-500])} "#{"]]))
-
-    :else
-    [:div (pr-str v)]))
-
-
 
 (defn build-tree [ztx doc]
   (->>
@@ -107,8 +71,7 @@
                (assoc-in acc parts {:title (or (get-in doc [:resource :title]) nm)
                                     :href (str nm)
                                     :errors (when-let [err (:zen/errors doc)]
-                                              (count err))})))
-           {})))
+                                              (count err))}))) {})))
 
 
 
@@ -146,164 +109,7 @@
                            (sort-by :title))]
            (render-items it k)))])
 
-
-;; (defmethod render-key [:zen/errors]
-;;   [ztx k v]
-;;   [:div {:class (c [:bg :red-100]  [:p 2])}
-;;    [:h3 {:class (c [:text :red-700] [:my 1] :text-xl)} "zen/errors"]
-;;    [:div.markdown-body
-;;     [:ul
-;;      (for [e v]
-;;        [:li {:class (c [:text :red-500] :text-xs)}
-;;         (:message e)
-;;         "  @ "
-;;         (pr-str (:path e))
-;;         (when (:schema e)
-;;           (str  " by "        (pr-str (:schema e))))])]]])
-
-;; (defmethod render-key :default
-;;   [ztx k v]
-;;   (if (:format v)
-;;     [:div  {:class (c {:border-bottom "1px solid #eaecef"})}
-;;      [:div {:class (c [:text :gray-600] :text-sm {:font-weight "400"})}
-;;       (str/join "~" k)]
-;;      (render-value ztx k v)]
-;;     [:div {:class (c :flex [:space-x 2] [:pt 1] [:pb 0.5]
-;;                      :items-center
-;;                      {:border-bottom "1px solid #eaecef"})}
-;;      [:div {:class (c [:text :gray-600] :text-sm [:w 40] {:font-weight "400"})}
-;;       (str/join "~" k)]
-;;      (render-value ztx k v)]))
-
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
-
-(defmulti do-format (fn [ztx fmt block] fmt))
-
-
-(defmethod do-format
-  :md
-  [ztx fmt {data :data ann :annotations}]
-  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-   (zd.zentext/parse-block ztx data)])
-
-(defmethod do-format
-  :h
-  [ztx fmt {data :data ann :annotations pth :path}]
-  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-   [:h2 (pr-str pth)]
-   (zd.zentext/parse-block ztx data)])
-
-(defmethod do-format
-  :edn
-  [ztx fmt {data :data ann :annotations}]
-  [:div {:class (c [:px 0] [:py 4] [:bg :white])}
-   [:pre
-    (clj-yaml.core/generate-string data)]])
-
-(defmulti do-block (fn [ztx k block] k))
-
-(defmethod do-block :default [& _] nil)
-
-
-
-(defmethod do-format
-  :default
-  [ztx fmt {data :data ann :annotations}]
-  [:div (pr-str data)])
-
-
-(defmulti render-key     (fn [ztx {pth :path}] pth))
-(defmulti render-block   (fn [ztx {{blk :block} :annotations}] (keyword blk)))
-(defmulti render-content (fn [ztx {{cnt :content} :annotations}] (keyword cnt)))
-
-(defmethod render-key :default [_ & _] nil)
-
-(defmethod render-key
-  [:title]
-  [_ {title :data}]
-  [:h1 {:class (c [:mb 0] :border-b)} title])
-
-(defmethod render-key
-  [:summary]
-  [ztx block]
-  [:div {:class (c [:text :gray-600])}
-   (render-content ztx block)])
-
-(defmethod render-content
-  :md
-  [ztx {data :data}]
-  [:div {:class (c [:px 0] [:py 2] [:bg :white])}
-   (zd.zentext/parse-block ztx data)])
-
-(defmethod render-content
-  :default
-  [ztx {data :data}]
-  (cond
-    (string? data) [:span data]
-    (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
-    ;; TODO: check link
-    (symbol? data) [:a {:href (str "/" data) :class (c [:text :blue-600])}
-                    (if-let [res (zd.db/get-resource ztx data)]
-                      (or (:title res) data)
-                      (str  data))]
-    (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
-                             [:div {:class (c [:text :gray-500])} "#{"]]
-                            (mapv (fn [x] (render-content ztx {:data x}))data))
-                      [:div {:class (c [:text :gray-500])} "}"])
-
-    (list? data)
-    [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
-
-    (sequential? data)
-    (conj (into [:ul {:class (c)}]
-                (->> data
-                     (mapv (fn [x] [:li (render-content ztx {:data x})])))))
-
-    (map? data)
-    (conj (into [:ul {:class (c)}]
-                (->> data
-                     (mapv (fn [[k v]]
-                             [:li [:b (str k)] " "
-                              (render-content ztx {:data v})])))))
-
-    :else [:pre (pr-str data)]))
-
-(defn capitalize [k]
-  (let [s (if (keyword? k) (subs (str k) 1) (str k))]
-    (str/capitalize (str/replace s #"-" " "))))
-
-
-(defn keypath [path title]
-  (let [id (str/join path)]
-    [:a {:id id :href (str "#" id)} (or title id)]))
-
-(defmethod render-block
-  :default
-  [ztx {ann :annotations data :data path :path :as block}]
-  [:div {:class (c [:py 2])}
-   [(keyword (str "h" (inc (count path))))
-    (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
-   (render-content ztx block)])
-
-(defmethod render-block :none [ztx block])
-
-(defmethod render-block
-  :badge
-  [ztx {data :data path :path :as block}]
-  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
-   [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
-    (subs (str (last path)) 1) ]
-   [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
-    (render-content ztx block)]])
-
-(defmethod render-block
-  :attribute
-  [ztx {data :data path :path :as block}]
-  [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
-   [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
-    (subs (str (last path)) 1) ]
-   [:div {:class (c )}
-    (render-content ztx block)]])
 
 
 (defn page [ztx {doc :doc :as page}]
@@ -311,8 +117,8 @@
    [:div {:class (c [:mb 4])}
     (->>
      (for [block doc]
-       (or (render-key ztx block)
-           (render-block ztx block)))
+       (or (zd.methods/render-key ztx block)
+           (zd.methods/render-block ztx block)))
      (into [:div {:class (c )}]))]
    (when (seq (:errors page))
      [:div {:class (c [:bg :red-200] [:border :red-300] [:py 2] [:px 4])}
@@ -321,7 +127,6 @@
         [:div {:class (c [:mb 1])}
          [:span {:class (c)} (:message err) " "]
          [:span {:class (c [:text :gray-600])} (str (:path err))]])])])
-
 
 
 (defn links [ztx doc]
@@ -377,12 +182,4 @@
        (layout ztx)
        (to-html)))
 
-(comment
 
-  (def ztx (zen/new-context {:zd/path "zd"}))
-  (def doc )
-
-  (render-page ztx 'zd.features.format "/tmp/format.html")
-  (render-page ztx 'zd "/tmp/zd.html")
-
-  )
