@@ -40,61 +40,86 @@ const capitalize = (str) => str
 
 const focusOnWordWithSurroundings = (word, text) => {
     const wordIndex = text.indexOf(word)
-    const leftPart = text.slice(0, wordIndex)
+    const leftPart = wordIndex > 201 ? text.slice(wordIndex - 100, wordIndex) : text.slice(0, wordIndex)
     const rightPart = text.slice(wordIndex, wordIndex + 50)
-    return leftPart + rightPart
+    const nodeText = leftPart
+          .concat(rightPart)
+          .toLowerCase()
+          .replaceAll(word, `<span class=bolder>${word}</span>`)
+    return `<p>${nodeText}</p>`
 }
 
 const searchHandler = (e) =>
-      {const searchValue = e.target.value
+      {const searchValue = e.target.value.toLowerCase()
        const foundResources =
              Object
              .entries(searchData)
-             // .map(v =>
-             //     {
-             //         const d = v[1];
-             //         if d.summary.includes(searchValue)
-             //         {return {indexOf: d.summary.indexOf(searchValue)
-             //                  focusedSummary: d.summary.slice()
-             //                 }}
-             //     })
-             .filter((v) =>
-                 v[1].title.includes(searchValue)
-                     || v[1].summary.includes(searchValue))
+             .map(v =>
+                 {
+                     const d = v[1];
+                     if (d.summary && d.summary.includes(searchValue))
+                     {return [v[0], {title: d.title,
+                                     focusedSummary: focusOnWordWithSurroundings(searchValue, d.summary)}]}
+                     else if (d.title.includes(searchValue) || d.kpath.includes(searchValue))
+                     {return [v[0], {title: d.title}]}
+                 })
+             .filter(x => x)
        removeChildElms(document.getElementById("searchResults"))
-       console.log(foundResources);
        foundResources.forEach(res =>
            {
                let kpath, r;
                [kpath, r] = res;
-               const div = document.createElement("div")
-               div.classList.add("searchResultContainer")
-               const vBar = document.createElement("div")
-               vBar.classList.add("searchResultContainerVBar")
-               div.appendChild(vBar)
-
                const link = document.createElement("a")
                link.setAttribute("href", kpath)
-               link.classList.add("searchResultTitle")
-               link.appendChild(document.createTextNode(capitalize(r.title)))
-
+               link.classList.add("searchResultContainer")
                const wrapperDiv = document.createElement("div")
-               wrapperDiv.appendChild(link)
+               wrapperDiv.classList.add("searchResultContainerRow")
+               const vBar = document.createElement("div")
+               vBar.classList.add("searchResultContainerVBar")
+               wrapperDiv.appendChild(vBar)
 
-               div.appendChild(wrapperDiv)
+               const title = document.createElement("span")
+               title.classList.add("searchResultTitle")
+               title.appendChild(document.createTextNode(capitalize(r.title)))
+
+               wrapperDiv.appendChild(title)
+               link.appendChild(wrapperDiv)
+
+               if (r.focusedSummary)
+               {   const summaryText = new DOMParser()
+                         .parseFromString(r.focusedSummary, 'text/html')
+                         .body
+                         .firstElementChild
+                   link.appendChild(summaryText) }
 
                document
                    .getElementById("searchResults")
-                   .appendChild(div)})}
+                   .appendChild(link)})}
 
 document
     .getElementById("searchInput")
     .addEventListener("input", throttle(searchHandler, 300))
 
 
-
 document
     .getElementById("searchContainerClose")
+    .addEventListener("click", (_e) =>
+        {
+            document
+                .getElementById("searchContainer")
+                .classList
+                .remove("visible")
+
+
+            document
+                .getElementById("overlay")
+                .classList
+                .remove("visible")
+
+        })
+
+document
+    .getElementById("overlay")
     .addEventListener("click", (_e) =>
         {
             document
@@ -125,6 +150,10 @@ document
                 .classList
                 .add("visible")
 
+            document
+                .getElementById("searchInput")
+                .focus()
+
         })
 
 
@@ -133,7 +162,6 @@ const openedNodesIds = Object.keys(window.sessionStorage);
 
 
 openedNodesIds.forEach(id => {
-    console.log(id);
     document
         .getElementById(id)
         ?.getElementsByClassName("closableContent")[0]

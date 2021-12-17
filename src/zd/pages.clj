@@ -40,11 +40,14 @@
                :border)]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
    [:.closed {:display "none"}]
-   [:.searchResultContainer (c* [:px 4] [:py 2] :flex :items-center
+   [:.bolder (c* :font-bold)]
+   [:.nlSaver {:white-space "pre-wrap"}]
+   [:.searchResultContainer (c* [:px 6] [:py 3] :flex :flex-col
                                 [:hover :cursor-pointer [:bg :gray-200]])]
-   [:.searchResultContainerVBar (c* [:h "20px"] [:w "2px"]
+   [:.searchResultContainerRow (c* :flex)]
+   [:.searchResultContainerSummaryRow (c* :border-t)]
+   [:.searchResultContainerVBar (c* [:h "30px"] [:w "2px"]
                                     :rounded [:mr 2] [:bg :blue-500])]
-   [:.searchResultTitle (c* [:text :blue-500])]
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
    [:.toggler {:padding-left "4px"

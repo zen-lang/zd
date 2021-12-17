@@ -46,9 +46,10 @@
 
 (defn index-refs [ztx]
   (reduce-kv
-   (fn [acc res-name {{title :title summary :summary} :resource}]
+   (fn [acc res-name {zd-name :zd/name {title :title summary :summary} :resource}]
      (assoc acc res-name
-            {:title (str/lower-case (str title))
+            {:kpath zd-name
+             :title (str/lower-case (str title))
              :summary (str/lower-case (str summary))}))
    {} (:zdb @ztx)))
 
