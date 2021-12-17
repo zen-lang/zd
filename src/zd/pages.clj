@@ -168,7 +168,7 @@
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :black]])}
     [:span [:i.fas.fa-search]]
-    [:span "Search..."]]])
+    [:span "Search... (alt + k)"]]])
 
 
 (defn search-container [ztx doc]
@@ -194,7 +194,7 @@
    (navigation ztx doc)
    (page ztx doc)
    (search-container ztx doc)
-   [:div {:class (c :flex :flex-col [:space-y 4])}
+   [:div {:class (c [:w "15%"] :flex :flex-col [:space-y 4])}
     (search ztx doc)
     (links ztx doc)]])
 
