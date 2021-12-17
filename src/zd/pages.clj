@@ -140,8 +140,8 @@
 (defn navigation [ztx doc]
   [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
    [:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
-    [:div {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
-    [:div {:class ["tab" tab-class] :for "nav-files"} "Files"]]
+    [:div#menuTab {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
+    [:div#fileTab {:class ["tab" tab-class] :for "nav-files"} "Files"]]
    [:div {:id "nav-menu"}
     (for [[k it] (build-menu ztx doc)]
       (render-items it k))]
