@@ -25,9 +25,9 @@
 
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
-   [:h1 {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"}]
-   [:h2 {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"}]
-   [:h3 {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"}]
+   [:h1 (c* [:mb 2] {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"})]
+   [:h2 (c* [:mb 2] {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"})]
+   [:h3 (c* [:mb 2] {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"})]
    [:ul {:list-style "inside"
          :line-height "24px"}
     [:li {:display "list-item"}]
@@ -35,8 +35,8 @@
    [:ol {:list-style "disk inside"
          :line-height "24px"}
     [:li {:display "list-item"}]
-    [:ol {:margin-left "2rem"}]]
-   [:p (c* [:my 2])]
+    [:ol (c* [:ml 4])]]
+   [:p (c* [:my 1])]
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]

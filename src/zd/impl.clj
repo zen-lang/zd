@@ -6,8 +6,7 @@
    [zd.zentext]
    [zd.methods :refer [annotation inline-method render-block render-content render-key process-block]]))
 
-(defmethod annotation
-  :default
+(defmethod annotation :default
   [nm params]
   (println ::missed-annotation nm)
   {:errors {nm {:params params
@@ -45,14 +44,17 @@
 
 (defmethod annotation :table
   [nm params]
-  {:block :table
+  {:content :table
    :table params})
 
-(defmethod inline-method :symbol-link
-  [ztx m s]
+(defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
+
+(defmethod inline-method :symbol-link
+  [ztx m s]
+  (symbol-link ztx s))
 
 
 (defmethod inline-method
@@ -72,8 +74,7 @@
   [:a {:class (c [:text :green-600] :title "TODO")}
    (str arg)])
 
-(defmethod inline-method
-  :default
+(defmethod inline-method :default
   [ztx m arg]
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
@@ -103,17 +104,13 @@
   [:div {:class (c [:px 0] [:py 2] [:bg :white])}
    (zd.zentext/parse-block ztx data)])
 
-(defmethod render-content
-  :default
+(defmethod render-content :default
   [ztx {data :data}]
   (cond
     (string? data) [:span data]
     (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
-    (symbol? data) [:a {:href (str "/" data) :class (c [:text :blue-600])}
-                    (if-let [res (zd.db/get-resource ztx data)]
-                      (or (:title res) data)
-                      (str  data))]
+    (symbol? data) (symbol-link ztx data)
     (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
                              [:div {:class (c [:text :gray-500])} "#{"]]
                             (mapv (fn [x] (render-content ztx {:data x}))data))
@@ -123,9 +120,11 @@
     [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
 
     (sequential? data)
-    (conj (into [:ul {:class (c)}]
-                (->> data
-                     (mapv (fn [x] [:li (render-content ztx {:data x})])))))
+    (if (keyword? (first data))
+      [:pre (pr-str data)]
+      (conj (into [:ul {:class (c)}]
+                  (->> data
+                       (mapv (fn [x] [:li (render-content ztx {:data x})]))))))
 
     (map? data)
     (conj (into [:ul {:class (c)}]
@@ -154,10 +153,10 @@
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
    (render-content ztx block)])
 
-(defmethod render-block :none [ztx block])
+(defmethod render-block :none
+  [ztx block])
 
-(defmethod render-block
-  :badge
+(defmethod render-block :badge
   [ztx {data :data path :path :as block}]
   [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
    [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
@@ -165,11 +164,30 @@
    [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
     (render-content ztx block)]])
 
-(defmethod render-block
-  :attribute
+(defmethod render-block :attribute
   [ztx {data :data path :path :as block}]
   [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
    [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
     (subs (str (last path)) 1) ]
    [:div {:class (c )}
     (render-content ztx block)]])
+
+(defmethod render-content :table
+  [ztx {ann :annotations data :data path :path :as block}]
+  (if-let [headers (or (get-in ann [:table :columns])
+                       (and (sequential? data) (map? (first data))
+                            (keys (first data))))]
+    [:table {:class (c :shadow-sm :rounded)}
+     [:thead
+      (into [:tr] (->> headers (mapv (fn [k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
+                                             (capitalize k)]))))]
+     (into [:tbody]
+           (->> data
+                (mapv (fn [x]
+                        (into [:tr]
+                              (->> headers
+                                   (mapv (fn [k]
+                                           [:td
+                                            {:class (c [:px 4] [:py 2] :border)}
+                                            (render-content ztx {:data (get x k)})]))))))))]
+    [:pre (pr-str data)]))
