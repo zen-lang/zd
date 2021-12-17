@@ -1,5 +1,6 @@
 {:paths       ["zrc" "src"]
  :deps        {org.clojure/clojure             {:mvn/version "1.10.3"}
+               cheshire/cheshire               {:mvn/version "5.10.0"}
                hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
                zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
                                                 :sha "a376f197902330473cf688eb3ff02f69094677de"}

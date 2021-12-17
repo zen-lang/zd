@@ -36,6 +36,15 @@
                refs)))
      {} distinct-attrs)))
 
+
+(defn index-refs [ztx]
+  (reduce-kv
+   (fn [acc res-name {{title :title summary :summary} :resource}]
+     (assoc acc res-name
+            {:title (str/lower-case (str title))
+             :summary (str/lower-case (str summary))}))
+   {} (:zdb @ztx)))
+
 (defn get-page [ztx nm]
   (get-in @ ztx [:zdb nm]))
 
