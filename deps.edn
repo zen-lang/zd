@@ -5,7 +5,10 @@
                zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
                                                 :sha "a376f197902330473cf688eb3ff02f69094677de"}
 
-               zen-lang/zen-web                {:local/root "libs/zen-web"}
+               zen-lang/zen-web               {:git/url "git@github.com:zen-lang/zen-web.git"
+                                               :sha "41a5c0d6129469818c50e480251662d15eec927b"}
+
+               org.babashka/sci {:mvn/version "0.2.8"}
 
                borkdude/edamame                {:mvn/version "0.0.11-alpha.16"}
                hawk/hawk                       {:mvn/version "0.2.11"}
@@ -20,7 +23,8 @@
                         cider/cider-nrepl                   {:mvn/version "LATEST"}
                         healthsamurai/matcho                {:mvn/version "0.3.8"}
                         hashp/hashp                         {:mvn/version "0.2.1"}
-                        zprint/zprint                       {:mvn/version "1.1.2"}}
+                        zprint/zprint                       {:mvn/version "1.1.2"}
+                        zen-lang/zen-web                {:local/root "libs/zen-web"}}
           :jvm-opts    ["-XX:-OmitStackTraceInFastThrow"]
           :main-opts   ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}
   
