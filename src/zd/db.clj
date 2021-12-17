@@ -103,14 +103,11 @@
         _ (mapv #(zen/read-ns ztx (symbol %)) namespaces)
         refs (collect-refs (symbol resource-name) (:resource data))
         errors (->> (:errors (zen/validate ztx (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
-                    (remove #(= "unknown-key" (:type %))))]
-    (create-resource
-     ztx (cond-> data
-           true
-           (assoc :zd/name (symbol resource-name)
-                  :zd/file path)
-           (seq errors)
-           (assoc :errors errors)))
+                    (remove #(= "unknown-key" (:type %))))
+        data (if (seq errors)
+               (update data :doc conj {:annotations {:block :zen/errors} :data errors})
+               data)]
+    (create-resource ztx (assoc data :zd/name (symbol resource-name) :zd/file path))
     (update-refs ztx refs)))
 
 (defn load-dirs [ztx dirs]

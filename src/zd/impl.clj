@@ -147,8 +147,11 @@
 (defmethod render-block
   :default
   [ztx {ann :annotations data :data path :path :as block}]
-  (when-let [ann (:block ann)] (println :missed-render-block ann))
   [:div {:class (c [:py 2])}
+   (when-let [ann (:block ann)]
+     (println :missed-render-block ann)
+     [:div {:class (c [:text :red-800])}
+      (str "Missed render-block for " ann)])
    [(keyword (str "h" (inc (count path))))
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
    (render-content ztx block)])
@@ -191,3 +194,13 @@
                                             {:class (c [:px 4] [:py 2] :border)}
                                             (render-content ztx {:data (get x k)})]))))))))]
     [:pre (pr-str data)]))
+
+(defmethod render-block :zen/errors
+  [ztx {ann :annotations errors :data path :path :as block}]
+  (when (seq errors)
+    [:div {:class (c [:text :red-700] [:py 2] [:px 4])}
+     [:ul {:class (c :font-bold :text-lg [:mb 2] :border-b)} "Errors"]
+     (for [err (sort-by :type errors)]
+       [:li {:class (c [:mb 1] :flex [:space-x 3])}
+        [:span {:class (c [:text :green-600])} (str (:path err))]
+        [:span {:class (c)} (:message err)]])]))

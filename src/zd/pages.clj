@@ -13,7 +13,6 @@
    [stylo.core :refer [c c?]]
    [garden.core]
    [stylo.rule  :refer [join-rules]]
-   [clojure.string :as str]
    [cheshire.core :as json]))
 
 (defn to-html [x] (hiccup/html x))
@@ -135,15 +134,7 @@
     (->>
      (for [block doc]
        (or (zd.methods/render-key ztx block)
-           (zd.methods/render-block ztx block)))
-     (into [:div {:class (c )}]))]
-   (when (seq (:errors page))
-     [:div {:class (c [:bg :red-200] [:border :red-300] [:py 2] [:px 4])}
-      [:div {:class (c :font-bold :text-lg [:mb 2])} "Errors"]
-      (for [err (sort-by :type (:errors page))]
-        [:div {:class (c [:mb 1])}
-         [:span {:class (c)} (:message err) " "]
-         [:span {:class (c [:text :gray-600])} (str (:path err))]])])])
+           (zd.methods/render-block ztx block))))]])
 
 (defn links [ztx doc]
   (let [grouped-refs (zd.db/group-refs-by-attr ztx (:zd/name doc))]
