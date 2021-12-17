@@ -3,8 +3,9 @@
 :author:title "Nikolai Ryzhikov"
 
 ^hide
-:menu [{:dir fhir    :title ""}
-       {:dir fhir-ru :title ""}]
+:menu [{:ref fhir    :title "FHIR"}
+       {:ref fhir-ru :title "Russia"}
+       {:ref presentation :title "Presentation"}]
 
 
 :summary:p1 md/

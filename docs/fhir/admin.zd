@@ -2,8 +2,10 @@
 
 :source "http://build.fhir.org/administration-module.html"
 
+^hide
 :menu
-[{}]
+[{:ref fhir.admin.organization :title "Organization"}
+ {:ref fhir.admin.practitioner :title "Practitioner"}]
 
 :intro /
 

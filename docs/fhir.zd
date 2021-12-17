@@ -1,0 +1,6 @@
+^hide
+:menu [{:ref fhir.about}
+       {:ref fhir.admin    :title "Administrative"}
+       {:ref fhir.clinical :title "Clinical"}]
+
+:title "FHIR"

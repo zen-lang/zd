@@ -90,28 +90,56 @@
    (reduce (fn [acc [nm doc]]
              (let [parts (interpose :items (str/split (name nm) #"\."))]
                (assoc-in acc parts {:title (or (get-in doc [:resource :title]) nm)
-                                    :href (str nm)
-                                    :errors (when-let [err (:zen/errors doc)]
-                                              (count err))}))) {})))
+                                    :href (str nm)}))) {})))
 
+(defn build-menu* [ztx {ref :ref :as item} doc]
+  (let [res  (zd.db/get-resource ztx ref)
+        title (or (:title item) (:title res)  (last (str/split (str ref) #"\.")))]
+    (merge item
+           {:title title
+            :broken (nil? res)
+            :href (str ref)
+            :items (when (:menu res)
+                     (->> (:menu res)
+                          (map-indexed (fn [i x] [i x]))
+                          (reduce (fn [acc [i x]]
+                                    (assoc acc i (build-menu* ztx x doc)))
+                                  {})))})))
 
+(defn build-menu [ztx doc]
+  (:items (build-menu* ztx {:ref 'readme} doc)))
+
+(defn render-menu-item [ztx it]
+  [:div
+   [:a {:href (str (:href it)) :class (if (:broken it)
+                                        (c :block [:py 1] [:text :red-700])
+                                        (c :block [:py 1]))} (:title it)]
+   (when-let [items (let [its (:items it)]
+                      (and (not (empty? its)) its))]
+     [:div {:class (c [:pl 4])}
+      (for [ch items]
+        (render-menu-item ztx ch))])])
 
 (defn render-items [item & [k depth]]
-  [:div {:id  (str/lower-case k)
-         :class ["closable"]}
-   [(if (:href item)
-      :a :div) {:href (:href item)
-                :class (c :inline-block :flex :items-center [:p 1] :rounded [:hover :cursor-pointer [:bg :gray-200]])}
-    (when (:items item)
-      [:span {:class (c [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg [:mr 0.5])}
-       [:i.fas.fa-caret-down.toggler.rotateToggler]])
+  [:div {:id  (str/lower-case k) :class ["closable"]}
+   [:a {:href (when-not (:broken item)
+                (:href item))
+        :class (->> [(when (:broken item) (c [:text :red-500]))
+                     (c :inline-block :flex :items-center [:p 1] :rounded [:hover :cursor-pointer [:bg :gray-200]])]
+                    (filter identity)
+                    (mapv name)
+                    (str/join " "))}
+    (if (:items item)
+      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg [:mr 0.5])}
+       [:i.fas.fa-caret-down.toggler.rotateToggler]]
+      [:span {:class (c [:w 6])}])
     (when (and depth (not (seq (:items item))))
       [:span {:class (c [:mr 0.5] {:padding-left "4px"
                                    :padding-right "4px"
                                    :padding-top "2px"
                                    :padding-bottom "2px"})}])
     (if (:href item)
-      [:span {:class (when (:href item) (c [:text :blue-500]))}
+      [:span #_{:class (when (:href item) (c [:text :gray-700]))}
        (:title item) (when-let [e (:errors item)]
                        [:span {:class [(c [:text :red-500] :text-xs [:px 1])]}
                         e])]
@@ -125,10 +153,13 @@
 
 (defn navigation [ztx doc]
   [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
-   (into [:div]
-         (for [[k it] (->> (build-tree ztx doc)
-                           (sort-by :title))]
-           (render-items it k)))])
+   [:div {:class "tab"}
+    (for [[k it] (build-menu ztx doc)]
+      (render-items it k))]
+   [:div {:style "display: none;" :class "tab"}
+    (for [[k it] (->> (build-tree ztx doc)
+                      (sort-by :title))]
+      (render-items it k))]])
 
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
 
