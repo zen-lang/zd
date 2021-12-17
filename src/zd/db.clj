@@ -6,6 +6,8 @@
    [clojure.java.io :as io]
    [clojure.string :as str]))
 
+#_(remove-ns 'zd.db)
+
 (defn create-resource [ztx res]
   (swap! ztx assoc-in [:zdb (:zd/name res)] res))
 
@@ -66,16 +68,36 @@
   ;; {target {source #{[:path] [:path]}}}
   (*collect-refs {} resource-name [] resource))
 
+
+
+(defn gather-parent-tags [ztx resource-name]
+  (->> (str/split resource-name #"\.")
+   (reduce (fn [doc-names nm-elem]
+             (if (empty? doc-names)
+               [nm-elem]
+               (conj doc-names (str (last doc-names) "." nm-elem))))
+           [])
+   (mapv symbol)
+   (reduce (fn [tags doc-sym]
+             (clojure.set/union tags (:child-tags (get-resource ztx doc-sym))))
+           #{})))
+
 (defn load-content! [ztx path content]
-  (let [resource-name (symbol (str/replace (str/replace path #"\.zd$" "") #"/" "."))
+  (let [resource-name (str/replace (str/replace path #"\.zd$" "") #"/" ".")
         data (zd.parse/parse ztx content)
-        refs (collect-refs resource-name (:resource data))
-        errors (:errors (zen/validate ztx #_(:zen/tags (:resource data))
-                                      (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))]
+        parent-tags (gather-parent-tags ztx resource-name)
+        tags (clojure.set/union (get-in data [:resource :zen/tags] #{}) parent-tags)
+        data (cond-> data
+               (seq tags)
+               (assoc-in [:resource :zen/tags] tags))
+        refs (collect-refs (symbol resource-name) (:resource data))
+        errors (->> (:errors (zen/validate ztx #_(:zen/tags (:resource data))
+                                           (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
+                    (remove #(= "unknown-key" (:type %))))]
     (create-resource
      ztx (cond-> data
            true
-           (assoc :zd/name resource-name
+           (assoc :zd/name (symbol resource-name)
                   :zd/file path)
            (seq errors)
            (assoc :errors errors)))

@@ -290,13 +290,21 @@
     (render-content ztx block)]])
 
 
-(defn page [ztx {doc :doc}]
+(defn page [ztx {doc :doc :as page}]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
-   (->>
-    (for [block doc]
-      (or (render-key ztx block)
-          (render-block ztx block)))
-    (into [:div {:class (c )}]))])
+   [:div {:class (c [:mb 4])}
+    (->>
+     (for [block doc]
+       (or (render-key ztx block)
+           (render-block ztx block)))
+     (into [:div {:class (c )}]))]
+   (when (seq (:errors page))
+     [:div {:class (c [:bg :red-200] [:border :red-300] [:py 2] [:px 4])}
+      [:div {:class (c :font-bold :text-lg [:mb 2])} "Errors"]
+      (for [err (sort-by :type (:errors page))]
+        [:div {:class (c [:mb 1])}
+         [:span {:class (c)} (:message err) " "]
+         [:span {:class (c [:text :gray-600])} (str (:path err))]])])])
 
 
 
