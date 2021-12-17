@@ -28,7 +28,8 @@
 (defmethod inline-method
   :src
   [m arg]
-  [:a {:class (c [:text :green-500])} (str "Code :" arg)])
+  [:a {:class (c [:text :green-600] :title "TODO")}
+   (str arg)])
 
 (defmethod inline-method
   :default
@@ -59,9 +60,12 @@
                       match (subs s (.start m) (.end m))]
                   (recur
                    (.end m)
-                   (conj res head (cond (str/starts-with? match "#")  (call-inline-link ztx  (subs match 1))
-                                        (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
-                                        (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2)))))))
+                   (conj res
+                         head
+                         (cond (str/starts-with? match "#")  (call-inline-link ztx  (subs match 1))
+                               (str/starts-with? match "[[") (call-inline-method   (subs match 2 (- (count match) 2)))
+                               (str/starts-with? match "((") (call-inline-function (subs match 2 (- (count match) 2))))
+                         " ")))
                 (conj res (subs s start))))]
     (remove empty? res)))
 
@@ -154,7 +158,8 @@
          cnt]])
 
 (defmethod process-block :default [tp args cnt]
-  [:block {:params args :tp tp} cnt])
+  [:pre {:params args :tp tp}
+   [:code.hljs cnt]])
 
 (defmethod apply-transition :block-end
   [ztx _ {lns :lines params :params :as ctx} line]
