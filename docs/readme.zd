@@ -6,7 +6,7 @@
        {:dir fhir-ru :title ""}
        (mapv menu-item (search {:tag "..."}))]
 
-^h2 "Summary"
+
 :summary:p1 md/
 
 Tblcoplugin exampleplugin example #this.is.a.ref

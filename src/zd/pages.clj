@@ -34,7 +34,7 @@
          :line-height "24px"}
     [:li {:display "list-item"}]
     [:ol {:margin-left "2rem"}]]
-   [:p {:margin-bottom "1rem"}]
+   [:p (c* [:my 2])]
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
@@ -239,7 +239,7 @@
   :default
   [ztx {data :data}]
   (cond
-    (string? data) data
+    (string? data) [:span data]
     (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
     (symbol? data) [:a {:href (str "/" data) :class (c [:text :blue-600])}
@@ -250,6 +250,22 @@
                              [:div {:class (c [:text :gray-500])} "#{"]]
                             (mapv (fn [x] (render-content ztx {:data x}))data))
                       [:div {:class (c [:text :gray-500])} "}"])
+
+    (list? data)
+    [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
+
+    (sequential? data)
+    (conj (into [:ul {:class (c)}]
+                (->> data
+                     (mapv (fn [x] [:li (render-content ztx {:data x})])))))
+
+    (map? data)
+    (conj (into [:ul {:class (c)}]
+                (->> data
+                     (mapv (fn [[k v]]
+                             [:li [:b (str k)] " "
+                              (render-content ztx {:data v})])))))
+
     :else [:pre (pr-str data)]))
 
 (defn capitalize [k]

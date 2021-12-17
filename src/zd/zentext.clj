@@ -159,8 +159,7 @@
 (defmulti process-block (fn [tp args cnt] tp))
 
 (defmethod process-block "code" [_ lang cnt]
-  [:pre [:code {:class (str "language-" lang " hljs")}
-         cnt]])
+  [:pre [:code {:class (str "language-" lang " hljs")} cnt]])
 
 (defmethod process-block :default [tp args cnt]
   [:pre {:params args :tp tp}

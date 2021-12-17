@@ -1,24 +1,27 @@
-:title "ZEN DOC"
+^badge
 :repository "https://github.com/zen-lang/zd"
+
+:title "ZEN DOC"
+:summary md/
+
+  Semantic knowlege base engine
 
 ^img
 :logo "zd.png"
 
-^h1 "Problem"
-:problem /
+:problem md/
 
-  How to create knowledge base as a data and docs under the git
+How to create knowledge base as a data and docs under the git
 
-  * What if OrgMode was developed by clojurians?
-  * What if (semantic) wiki was developed by clojurians?
+* What if OrgMode was developed by clojurians?
+* What if (semantic) wiki was developed by clojurians?
 
-  ((zen/schema 'symbol'))
+Data is Document - Document is Data!
 
-  Data is Document - Document is Data!
-
+^attribute
 :inspirations #{"OrgMode" "Jekyll" "Semantic WEB" "ROAM" "Notion" "zen-lang"}
 
-^table
+^table {:columns [:name :role]}
 :team
 [{:name "Николай Рыжиков" :role "engineer"}
  {:name "Максим Путинцев" :role "engineer"}
