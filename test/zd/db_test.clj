@@ -15,7 +15,8 @@
          block# (->> blocks#
                      (filter #(= ~pth (:path %)))
                      first)]
-     (matcho/match block# ~pattern)
+     (when ~pattern
+       (matcho/match block# ~pattern))
      block#))
 
 (defmethod zd.methods/annotation
@@ -35,11 +36,12 @@
 
   (zen/read-ns ztx 'aidbox)
 
-  (sut/load-content! ztx "team/vlad.zd" "
+  (sut/load-content! ztx {:resource-path "team/vlad.zd"
+                          :content "
 :zen/tags #{aidbox/person}
 :name \"Vlad Ganshin\"
 :birth-date \"1994-09-26\"
-")
+"})
 
   (find-block-and-match
    ztx 'team.vlad
@@ -48,10 +50,11 @@
 
 
   (do
-    (sut/load-content! ztx "team/noname.zd" "
+    (sut/load-content! ztx {:resource-path "team/noname.zd"
+                            :content  "
 :zen/tags #{aidbox/person}
 :some-field 123
-")
+"})
     (sut/get-page ztx 'team.noname)
     )
 
@@ -66,14 +69,16 @@
 
   (testing "tags inheritance test"
 
-    (sut/load-content! ztx "project.zd" "
-:zd/child-tags #{aidbox/project}")
+    (sut/load-content! ztx {:resource-path "project.zd"
+                            :content "
+:zd/child-tags #{aidbox/project}"})
 
-    (sut/load-content! ztx "project/obscure.zd" "
+    (sut/load-content! ztx {:resource-path "project/obscure.zd"
+                            :content "
 :zen/tags #{}
 :period:start \"2019-09-16\"
 
-")
+"})
 
 
 
@@ -106,7 +111,8 @@
                                                        :tip {:type zen/string  :zd/annotations {:block :tooltip :type "warn"}}}}}
                                 :expected-result {:type zen/string}}}})
 
-    (sut/load-content! ztx "aidbox.test.create-new-box.zd" "
+    (sut/load-content! ztx {:resource-path "aidbox.test.create-new-box.zd"
+                            :content "
 
 :zen/tags #{aidbox.test/testcase}
 
@@ -126,7 +132,7 @@
 
 :expected-result \"box created\"
 
-")
+"})
 
     (find-block-and-match
      ztx 'aidbox.test.create-new-box [:date]
@@ -140,8 +146,20 @@
      ztx 'aidbox.test.create-new-box [:steps 1 :tip]
      {:annotations {:block :tooltip :type "info"}})
 
+    (sut/get-page ztx 'readme)
 
+    (find-block-and-match
+     ztx 'readme [:loaded-yaml]
+     {:data {:name "Name" :email "Email"}})
 
+    (find-block-and-match
+     ztx 'readme [:loaded-txt]
+     {:data #"Simple text."})
+
+    (find-block-and-match
+     ztx 'readme [:not-loaded-file]
+     {:data {:message "docs/ups.yaml (No such file or directory)"},
+      :annotations {:block :error}})
 
 
     )

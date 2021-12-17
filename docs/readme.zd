@@ -171,3 +171,8 @@ will be parsed into
  [{:code "code" :display "display"}
   {:code "code" :display "display"}]
 
+:loaded-yaml (load "sample.yaml" :yaml)
+
+:loaded-txt (load "sample.txt")
+
+:not-loaded-file (load "ups.yaml" :yaml)
