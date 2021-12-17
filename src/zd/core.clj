@@ -4,7 +4,6 @@
    [zd.db]
    [zd.parser]
    [zd.pages]
-   [clojure.pprint]
    [clojure.walk]
    [edamame.core]
    [zenbox.rpc]

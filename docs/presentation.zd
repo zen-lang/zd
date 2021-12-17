@@ -33,7 +33,7 @@ Data is Document - Document is Data!
 ^hiccup
 :intro:schema (zen/schema 'symbol)
 
-^h1 "Features"
+^title "Features"
 :features
 
 :features:core        "Parser for zendoc and extensible markdown"

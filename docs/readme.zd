@@ -92,7 +92,7 @@ blcoplugin exampleplugin example
   ^table {:columns [:name :another-name]}
   ```
 
-^h2 "Parser"
+^title "Parser"
 :syntax:parser md/
 
   Scan document line by line
@@ -119,7 +119,7 @@ blcoplugin exampleplugin example
 :exaple (load-file "dict.csv" :yaml)
 
 ^hiccup
-^h2 "Authored docs:"
+^title "Authored docs:"
 :backrefs
 [:div (table (back-refs [:author]) {:columns [:title]})]
 

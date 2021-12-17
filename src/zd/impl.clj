@@ -13,30 +13,42 @@
   {:errors {nm {:params params
                 :message (str "No rule for " nm)}}})
 
-(defmethod annotation
-  :view-only
+(defmethod annotation :view-only
   [nm params]
   {:view-only true})
 
-(defmethod annotation
-  :badge
+(defmethod annotation :badge
   [nm params]
   {:block :badge
    :badge params})
 
-(defmethod annotation
-  :attribute
+(defmethod annotation :attribute
   [nm params]
   {:block :attribute
    :attribute params})
 
-(defmethod annotation
-  :hide
+(defmethod annotation :href
+  [nm params]
+  {:content :href})
+
+(defmethod annotation :img
+  [nm params]
+  {:content :img})
+
+(defmethod annotation :title
+  [nm params]
+  {:title params})
+
+(defmethod annotation :hide
   [nm params]
   {:block :none})
 
-(defmethod inline-method
-  :symbol-link
+(defmethod annotation :table
+  [nm params]
+  {:block :table
+   :table params})
+
+(defmethod inline-method :symbol-link
   [ztx m s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
@@ -136,6 +148,7 @@
 (defmethod render-block
   :default
   [ztx {ann :annotations data :data path :path :as block}]
+  (when-let [ann (:block ann)] (println :missed-render-block ann))
   [:div {:class (c [:py 2])}
    [(keyword (str "h" (inc (count path))))
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]

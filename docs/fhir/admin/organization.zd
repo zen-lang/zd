@@ -7,10 +7,10 @@
 :work-group fhir.groups.admin-resources
 
 ^chapter
-^h1 "Summary"
+^title "Summary"
 :summary {}
 
-^h1 "Scoupe"
+^title "Scoupe"
 ^chapter
 :scope {}
 
