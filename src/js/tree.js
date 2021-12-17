@@ -235,3 +235,6 @@ togglerElms.forEach(node =>
                               node.classList.toggle("rotateToggler")
 
                           }))
+
+const tabs = Array.from(document.getElementsByClassName("tab"));
+window.tabs = tabs;

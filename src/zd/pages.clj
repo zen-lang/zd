@@ -38,6 +38,7 @@
    [:p (c* [:my 1])]
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
+   [:.active-nav {:border-bottom "2px solid #666" :color "black"}]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
    [:.closed {:display "none"}]
    [:.bolder (c* :font-bold)]
@@ -145,12 +146,19 @@
                   (render-items it k true))]
             node-content)])])
 
+(def tab-class (c [:p 1] [:text :gray-600] :cursor-pointer
+                  {:margin-bottom "-2px"}
+                  [:hover [:text :gray-800]]))
+
 (defn navigation [ztx doc]
   [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
-   [:div {:class "tab"}
+   [:div {:class (c :flex [:space-x 2] :border-b :items-baseline)}
+    [:div {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
+    [:div {:class ["tab" tab-class] :for "nav-files"} "Files"]]
+   [:div {:id "nav-menu" :class "tab"}
     (for [[k it] (build-menu ztx doc)]
       (render-items it k))]
-   [:div {:style "display: none;" :class "tab"}
+   [:div {:id "nav-files" :style "display: none;" :class "tab"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by :title))]
       (render-items it k))]])
@@ -173,7 +181,7 @@
        (->>
         (for [[attr links] grouped-refs]
           [:div {:class (c [:py 4] :text-sm)}
-           [:span (->> attr (map (comp str/capitalize name #({:# "["} % %))) (str/join " "))]
+           [:span (str/join "" (mapv str attr))]
            (for [l links]
              [:div {:class (c :flex :flex-col)}
               [:a {:href l
@@ -184,8 +192,7 @@
 
 
 (defn search [ztx doc]
-  [:div {:class (c :text-sm [:bg :white] [:py 2] [:px 4] :shadow-md
-                   [:text :gray-500])}
+  [:div {:class (c :text-sm [:bg :white] [:py 2] [:px 4] :shadow-md [:text :gray-500])}
    [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :black]])}
