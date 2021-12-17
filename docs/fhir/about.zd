@@ -1,1 +1,4 @@
 :title "About"
+
+^img {:width "100px"}
+:log "fhir.png"

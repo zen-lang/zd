@@ -33,7 +33,8 @@
 
 (defmethod annotation :img
   [nm params]
-  {:content :img})
+  {:content :img
+   :img params})
 
 (defmethod annotation :title
   [nm params]
@@ -108,11 +109,14 @@
   [:div {:class (c [:text :gray-600])}
    (render-content ztx block)])
 
-(defmethod render-content
-  :md
+(defmethod render-content :md
   [ztx {data :data}]
   [:div {:class (c [:px 0] [:py 2] [:bg :white])}
    (zd.zentext/parse-block ztx data)])
+
+(defmethod render-content :img
+  [ztx {{img :img} :annotations data :data}]
+  [:img (merge img {:src data})])
 
 (defmethod render-content :default
   [ztx {data :data :as block}]

@@ -6,8 +6,8 @@
 
   Semantic knowlege base engine
 
-^img
-:logo "zd.png"
+^img {:width "50px"}
+:logo "zd.jpeg"
 
 :problem md/
 

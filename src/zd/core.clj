@@ -4,10 +4,10 @@
    [zd.db]
    [zd.parser]
    [zd.pages]
+   [zd.web]
    [clojure.walk]
    [edamame.core]
-   [zenbox.rpc]
-   [zenbox.web.core :as web]))
+   [zenbox.rpc]))
 
 
 (defn reload [ztx _opts]
@@ -16,36 +16,22 @@
     (zd.db/load-dirs ztx dirs))
   :ok)
 
-(defmethod zenbox.web.core/operation 'zd/render-symbol
-  [ztx op {{sym :symbol} :route-params :as req}]
+(defn dispatch [ztx {uri :uri}]
   (reload ztx {})
-  (let [sym (if sym (symbol sym) 'readme)]
+  (let [sym (symbol (subs uri 1))]
     (if-let [page (zd.db/get-page ztx sym)]
       {:status 200
        :body  (zd.pages/render-page ztx page)}
       {:status 404
        :body  (zd.pages/render-not-found ztx sym)})))
 
-(defmethod zenbox.web.core/operation 'zd/render-zen
-  [ztx op {{sym :sym ns :ns} :route-params :as req}]
-  (if-let [doc (zen.core/get-symbol ztx (symbol ns sym))]
-    {:status 200
-     :body  (zd.pages/render-zen ztx doc)}
-    {:status 404
-     :body  (str "No page for " sym)}))
-
-(defmethod zenbox.web.core/operation 'zd/render-static
-  [ztx op {params :route-params :as req}]
-  (println :static params)
-  {:status 200})
-
 (defn start [ztx opts]
   (reload ztx opts)
   (zen.core/read-ns ztx 'zd)
-  (web/start ztx))
+  (zd.web/start ztx opts dispatch))
 
 (defn stop [ztx]
-  (web/stop ztx))
+  (zd.web/stop ztx))
 
 (comment
 
@@ -60,7 +46,7 @@
 
   (def ztx (zen/new-context {:zd/paths [pth] :paths [pth]}))
 
-  (start ztx {})
+  (start ztx {:port 3031})
 
   (stop ztx)
 
