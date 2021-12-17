@@ -42,8 +42,6 @@
 
   (sut/get-page ztx 'team.noname)
 
-
-
   (testing "tags inheritance test"
 
     (sut/load-content! ztx "project.zd" "
