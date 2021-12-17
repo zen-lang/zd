@@ -237,27 +237,46 @@ togglerElms.forEach(node =>
                           }));
 
 const tabs = Array.from(document.getElementsByClassName("tab"));
-var currentTab = null;
-var currentTabCnt = null;
+
+var currentTab =
+    window.sessionStorage.getItem("currentlyActiveTab")
+    ? document.getElementById(window.sessionStorage.getItem("currentlyActiveTab"))
+    : null
+var currentTabCnt = document.getElementById(currentTab?.getAttribute("for"))
+
+const tabOpposites = {"menuTab": "fileTab",
+                      "fileTab": "menuTab"}
+
+if (currentTabCnt  && currentTab && currentTab.id !== "menuTab")
+{
+  const oppositeTab = document.getElementById(tabOpposites[window.sessionStorage.getItem("currentlyActiveTab")]);
+  const oppositeTabCnt = document.getElementById(oppositeTab?.getAttribute("for"))
+  oppositeTabCnt.style.display = "none"
+  oppositeTab.classList.toggle("active-nav")
+  var cnt = document.getElementById(currentTab.getAttribute("for"));
+  cnt && (cnt.style.display = "block");
+  currentTab.classList.toggle("active-nav");
+}
+
 tabs.forEach( node => {
-    if(node.classList.contains("active-nav")){
-        currentTab = node;
-        currentTabCnt = document.getElementById(node.getAttribute("for"));
-    }
-    node.addEventListener("click",
-                          (e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              var el = e.target;
-                              if(el == currentTab) {return;}
-                              currentTabCnt && (currentTabCnt.style.display = "none");
-                              currentTab && currentTab.classList.toggle("active-nav");
+  if(node.classList.contains("active-nav")){
+    currentTab = node;
+    currentTabCnt = document.getElementById(node.getAttribute("for"));
+  }
+  node.addEventListener("click",
+                        (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          var el = e.target;
+                          if(el == currentTab) {return;}
+                          currentTabCnt && (currentTabCnt.style.display = "none");
+                          currentTab && currentTab.classList.toggle("active-nav");
 
-                              var cnt = document.getElementById(el.getAttribute("for"));
-                              cnt && (cnt.style.display = "block");
-                              el.classList.toggle("active-nav");
-                              currentTabCnt = cnt;
-                              currentTab = el;
-
-                          });
+                          var cnt = document.getElementById(el.getAttribute("for"));
+                          cnt && (cnt.style.display = "block");
+                          el.classList.toggle("active-nav");
+                          currentTabCnt = cnt;
+                          currentTab = el;
+                          window.sessionStorage.setItem("currentlyActiveTab", currentTab.getAttribute("id"))
+                        });
 });
