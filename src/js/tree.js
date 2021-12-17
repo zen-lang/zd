@@ -50,51 +50,52 @@ const focusOnWordWithSurroundings = (word, text) => {
 }
 
 const searchHandler = (e) =>
-      {const searchValue = e.target.value.toLowerCase()
-       const foundResources =
-             Object
-             .entries(searchData)
-             .map(v =>
-                 {
-                     const d = v[1];
-                     if (d.summary && d.summary.includes(searchValue))
-                     {return [v[0], {title: d.title,
-                                     focusedSummary: focusOnWordWithSurroundings(searchValue, d.summary)}]}
-                     else if (d.title.includes(searchValue) || d.kpath.includes(searchValue))
-                     {return [v[0], {title: d.title}]}
-                 })
-             .filter(x => x)
-       removeChildElms(document.getElementById("searchResults"))
-       foundResources.forEach(res =>
-           {
-               let kpath, r;
-               [kpath, r] = res;
-               const link = document.createElement("a")
-               link.setAttribute("href", kpath)
-               link.classList.add("searchResultContainer")
-               const wrapperDiv = document.createElement("div")
-               wrapperDiv.classList.add("searchResultContainerRow")
-               const vBar = document.createElement("div")
-               vBar.classList.add("searchResultContainerVBar")
-               wrapperDiv.appendChild(vBar)
+      {
+          const searchValue = e.target.value.toLowerCase()
+          const foundResources =
+                Object
+                .entries(searchData)
+                .map(v =>
+                    {
+                        const d = v[1];
+                        if (d.summary && d.summary.includes(searchValue))
+                        {return [v[0], {title: d.title,
+                                        focusedSummary: focusOnWordWithSurroundings(searchValue, d.summary)}]}
+                        else if (d.title.includes(searchValue) || d.kpath.includes(searchValue))
+                        {return [v[0], {title: d.title}]}
+                    })
+                .filter(x => x)
+          removeChildElms(document.getElementById("searchResults"))
+          foundResources.forEach(res =>
+              {
+                  let kpath, r;
+                  [kpath, r] = res;
+                  const link = document.createElement("a")
+                  link.setAttribute("href", kpath)
+                  link.classList.add("searchResultContainer")
+                  const wrapperDiv = document.createElement("div")
+                  wrapperDiv.classList.add("searchResultContainerRow")
+                  const vBar = document.createElement("div")
+                  vBar.classList.add("searchResultContainerVBar")
+                  wrapperDiv.appendChild(vBar)
 
-               const title = document.createElement("span")
-               title.classList.add("searchResultTitle")
-               title.appendChild(document.createTextNode(capitalize(r.title)))
+                  const title = document.createElement("span")
+                  title.classList.add("searchResultTitle")
+                  title.appendChild(document.createTextNode(capitalize(r.title)))
 
-               wrapperDiv.appendChild(title)
-               link.appendChild(wrapperDiv)
+                  wrapperDiv.appendChild(title)
+                  link.appendChild(wrapperDiv)
 
-               if (r.focusedSummary)
-               {   const summaryText = new DOMParser()
-                         .parseFromString(r.focusedSummary, 'text/html')
-                         .body
-                         .firstElementChild
-                   link.appendChild(summaryText) }
+                  if (r.focusedSummary)
+                  {   const summaryText = new DOMParser()
+                            .parseFromString(r.focusedSummary, 'text/html')
+                            .body
+                            .firstElementChild
+                      link.appendChild(summaryText) }
 
-               document
-                   .getElementById("searchResults")
-                   .appendChild(link)})}
+                  document
+                      .getElementById("searchResults")
+                      .appendChild(link)})}
 
 document
     .getElementById("searchInput")
@@ -156,6 +157,30 @@ document
 
         })
 
+document.onkeyup = (e) => {
+    if (e.altKey && (e.code === "KeyK"))
+    {
+
+        e.stopPropagation()
+        document
+            .getElementById("searchContainer")
+            .classList
+            .add("visible")
+
+
+        document
+            .getElementById("overlay")
+            .classList
+            .add("visible")
+
+
+        document
+            .getElementById("searchInput")
+            .focus()
+    }
+
+}
+
 
 //Tree navigation stuff
 const openedNodesIds = Object.keys(window.sessionStorage);
@@ -164,16 +189,16 @@ const openedNodesIds = Object.keys(window.sessionStorage);
 openedNodesIds.forEach(id => {
     document
         .getElementById(id)
-        ?.getElementsByClassName("closableContent")[0]
-        ?.classList
+    ?.getElementsByClassName("closableContent")[0]
+    ?.classList
         .toggle("closed");
 });
 
 openedNodesIds.forEach(id =>
     document
         .getElementById(id)
-        ?.getElementsByClassName("toggler")[0]
-        ?.classList
+    ?.getElementsByClassName("toggler")[0]
+    ?.classList
         .toggle("rotateToggler"))
 
 const currentPathElms = document.location.pathname.slice(1).split(".")
