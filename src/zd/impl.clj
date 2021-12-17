@@ -4,6 +4,7 @@
    [stylo.core :refer [c]]
    [zd.db]
    [zd.zentext]
+   [sci.core]
    [zd.methods :refer [annotation inline-method render-block render-content render-key process-block]]))
 
 (defmethod annotation :default
@@ -49,7 +50,7 @@
 
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c [:text :blue-600])} s]
+    [:a {:href (str "/" s) :class (c [:text :blue-600])} (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
 (defmethod inline-method :symbol-link
@@ -105,11 +106,13 @@
    (zd.zentext/parse-block ztx data)])
 
 (defmethod render-content :default
-  [ztx {data :data}]
+  [ztx {data :data :as block}]
   (cond
     (string? data) [:span data]
-    (keyword? data) [:span {:class (c [:text :green-600])} (str data)]
+    (or (keyword? data) (boolean? data))
+    [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
+    (nil? data) ""
     (symbol? data) (symbol-link ztx data)
     (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
                              [:div {:class (c [:text :gray-500])} "#{"]]
@@ -121,7 +124,7 @@
 
     (sequential? data)
     (if (keyword? (first data))
-      [:pre (pr-str data)]
+      (render-content ztx (assoc-in block [:annotations :content] :hiccup))
       (conj (into [:ul {:class (c)}]
                   (->> data
                        (mapv (fn [x] [:li (render-content ztx {:data x})]))))))
@@ -175,15 +178,14 @@
    [:div {:class (c )}
     (render-content ztx block)]])
 
-(defmethod render-content :table
-  [ztx {ann :annotations data :data path :path :as block}]
-  (if-let [headers (or (get-in ann [:table :columns])
+(defn table [ztx cfg data]
+  (if-let [headers (or (:columns cfg)
                        (and (sequential? data) (map? (first data))
                             (keys (first data))))]
     [:table {:class (c :shadow-sm :rounded)}
      [:thead
       (into [:tr] (->> headers (mapv (fn [k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
-                                             (capitalize k)]))))]
+                                              (capitalize k)]))))]
      (into [:tbody]
            (->> data
                 (mapv (fn [x]
@@ -195,6 +197,11 @@
                                             (render-content ztx {:data (get x k)})]))))))))]
     [:pre (pr-str data)]))
 
+(defmethod render-content :table
+  [ztx {ann :annotations data :data path :path :as block}]
+  (table ztx (or (:table ann) {}) data))
+
+
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
   (when (seq errors)
@@ -204,3 +211,18 @@
        [:li {:class (c [:mb 1] :flex [:space-x 3])}
         [:span {:class (c [:text :green-600])} (str (:path err))]
         [:span {:class (c)} (:message err)]])]))
+
+
+
+(defmethod render-content :hiccup
+  [ztx {ann :annotations data :data path :path :as block}]
+  (let [ctx (sci.core/init {:bindings {'search (fn [filter] (zd.db/search ztx filter))
+                                       'table  (fn [data opts] (table ztx (or opts {}) data))}})
+        res (try (sci.core/eval-form ctx data)
+                 (catch Exception e
+                   [:div {:class (c [:text :red-600])}
+                    [:pre (pr-str data)]
+                    (pr-str e)]))]
+    (if (and (vector? res) (keyword? (first res)))
+      res
+      [:pre (pr-str res)])))

@@ -11,6 +11,11 @@
 (defn create-resource [ztx res]
   (swap! ztx assoc-in [:zdb (:zd/name res)] res))
 
+(defn search [ztx filter]
+  (let [data (:zdb @ztx)]
+    (->> (take 5 (vals data))
+         (mapv :resource))))
+
 (defn update-refs [ztx refs]
   (swap! ztx update :zrefs deep-merge refs))
 
