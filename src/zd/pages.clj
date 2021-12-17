@@ -125,29 +125,20 @@
 
 (defn render-items [item & [k depth]]
   [:div {:id  (str/lower-case k) :class ["closable"]}
-   [:a {:href (when-not (:broken item)
-                (:href item))
-        :class (->> [(when (:broken item) (c [:text :red-500]))
-                     (c :inline-block :flex :items-center [:p 1] :rounded [:hover :cursor-pointer [:bg :gray-200]])]
-                    (filter identity)
-                    (mapv name)
-                    (str/join " "))}
+   [:a {:href (when-not (:broken item) (:href item))
+        :class (->> [(c :inline-block :flex :items-center [:py 1] :rounded [:hover :cursor-pointer [:bg :white] [:text :gray-700]])
+                     (when (:broken item) (c [:text :red-500]))]
+                    (filterv identity)
+                    (mapv name))}
     (if (:items item)
-      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg [:mr 0.5])}
+      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center)}
        [:i.fas.fa-caret-down.toggler.rotateToggler]]
-      [:span {:class (c [:w 6])}])
-    (when (and depth (not (seq (:items item))))
-      [:span {:class (c [:mr 0.5] {:padding-left "4px"
-                                   :padding-right "4px"
-                                   :padding-top "2px"
-                                   :padding-bottom "2px"})}])
-    (if (:href item)
-      [:span #_{:class (when (:href item) (c [:text :gray-700]))}
-       (:title item) (when-let [e (:errors item)]
-                       [:span {:class [(c [:text :red-500] :text-xs [:px 1])]}
-                        e])]
-      [:div {:class (c :inline-block)} k])]
-   (into [:div {:class ["closed" "closableContent" "pl-4"]}
+      [:span {:class (c [:w 6] [:h 6] :flex :items-center :justify-center [:text :gray-300])}
+       [:i.fa.fa-file]])
+
+    [:span (:title item)
+     (when-let [e (:errors item)] [:span {:class [(c [:text :red-500] :text-xs [:px 1])]} e])]]
+   (into [:div {:class ["closed" "closableContent" (name (c :border-l [:ml 3]))]}
           (let [node-content
                 (for [[k it] (->> (:items item)
                                   (sort-by :title))]
