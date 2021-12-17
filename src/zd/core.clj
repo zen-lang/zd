@@ -34,6 +34,11 @@
     {:status 404
      :body  (str "No page for " sym)}))
 
+(defmethod zenbox.web.core/operation 'zd/render-static
+  [ztx op {params :route-params :as req}]
+  (println :static params)
+  {:status 200})
+
 (defn start [ztx opts]
   (reload ztx opts)
   (zen.core/read-ns ztx 'zd)

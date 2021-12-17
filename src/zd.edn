@@ -25,11 +25,15 @@
  render-zen
  {:zen/tags #{zenbox/op}}
 
+ render-static
+ {:zen/tags #{zenbox/op}}
+
  api
  {:zen/tags #{zenbox/api},
   :GET {:operation render-symbol}
   [:symbol] {:GET {:operation render-symbol}}
-  [:ns] {[:sym] {:GET {:operation render-zen}}}}
+  [:ns] {[:sym] {:GET {:operation render-zen}}}
+  [:path*] {:GET {:operation render-static}}}
 
  server
  {:zen/tags    #{zenbox/server}

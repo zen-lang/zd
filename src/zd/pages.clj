@@ -93,7 +93,7 @@
    (sort-by first (:zdb @ztx))
    (reduce (fn [acc [nm doc]]
              (let [parts (interpose :items (str/split (name nm) #"\."))]
-               (assoc-in acc parts {:title (or (get-in doc [:resource :title]) nm)
+               (assoc-in acc parts {:title (last parts)
                                     :href (str nm)}))) {})))
 
 (defn build-menu* [ztx {ref :ref :as item} doc]
@@ -113,17 +113,6 @@
 (defn build-menu [ztx doc]
   (:items (build-menu* ztx {:ref 'readme} doc)))
 
-(defn render-menu-item [ztx it]
-  [:div
-   [:a {:href (str (:href it)) :class (if (:broken it)
-                                        (c :block [:py 1] [:text :red-700])
-                                        (c :block [:py 1]))} (:title it)]
-   (when-let [items (let [its (:items it)]
-                      (and (not (empty? its)) its))]
-     [:div {:class (c [:pl 4])}
-      (for [ch items]
-        (render-menu-item ztx ch))])])
-
 (defn render-items [item & [k depth]]
   [:div {:id  (str/lower-case k) :class ["closable"]}
    [:a {:href (when-not (:broken item) (:href item))
@@ -137,7 +126,7 @@
       [:span {:class (c [:w 6] [:h 6] :flex :items-center :justify-center [:text :gray-300])}
        [:i.fa.fa-file]])
 
-    [:span (:title item)
+    [:span (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class [(c [:text :red-500] :text-xs [:px 1])]} e])]]
    (into [:div {:class ["closed" "closableContent" (name (c :border-l [:ml 3]))]}
           (let [node-content
@@ -148,17 +137,17 @@
 
 (def tab-class (c [:p 1] [:text :gray-600] :cursor-pointer
                   {:margin-bottom "-2px"}
-                  [:hover [:text :gray-800]]))
+                  [:hover [:text :gray-800] {:border-bottom "2px solid #888"}]))
 
 (defn navigation [ztx doc]
   [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
-   [:div {:class (c :flex [:space-x 2] :border-b :items-baseline)}
+   [:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
     [:div {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
     [:div {:class ["tab" tab-class] :for "nav-files"} "Files"]]
-   [:div {:id "nav-menu" :class "tab"}
+   [:div {:id "nav-menu"}
     (for [[k it] (build-menu ztx doc)]
       (render-items it k))]
-   [:div {:id "nav-files" :style "display: none;" :class "tab"}
+   [:div {:id "nav-files" :style "display: none;"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by :title))]
       (render-items it k))]])
