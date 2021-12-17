@@ -86,7 +86,10 @@
   (let [resource-name (str/replace (str/replace path #"\.zd$" "") #"/" ".")
         data (zd.parse/parse ztx content)
         parent-tags (gather-parent-tags ztx resource-name)
-        data (update-in data [:resource :zen/tags] clojure.set/union parent-tags)
+        tags (clojure.set/union (get-in data [:resource :zen/tags] #{}) parent-tags)
+        data (cond-> data
+               (seq tags)
+               (assoc-in [:resource :zen/tags] tags))
         refs (collect-refs (symbol resource-name) (:resource data))
         errors (:errors (zen/validate ztx #_(:zen/tags (:resource data))
                                       (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))]
