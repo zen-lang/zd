@@ -132,17 +132,19 @@ document
 const openedNodesIds = Object.keys(window.sessionStorage);
 
 
-openedNodesIds.forEach(id =>
+openedNodesIds.forEach(id => {
+    console.log(id);
     document
         .getElementById(id)
-        .getElementsByClassName("closableContent")[0]
+        ?.getElementsByClassName("closableContent")[0]
         ?.classList
-        .toggle("closed"))
+        .toggle("closed");
+});
 
 openedNodesIds.forEach(id =>
     document
         .getElementById(id)
-        .getElementsByClassName("toggler")[0]
+        ?.getElementsByClassName("toggler")[0]
         ?.classList
         .toggle("rotateToggler"))
 

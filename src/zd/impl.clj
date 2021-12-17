@@ -48,6 +48,15 @@
   {:content :table
    :table params})
 
+(defmethod annotation :hiccup
+  [nm params]
+  {:content :huccup
+   :huccup params})
+
+(defmethod annotation :edn
+  [nm params]
+  {:content :edn})
+
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c [:text :blue-600])} (or (:title res) s)]
@@ -211,7 +220,6 @@
        [:li {:class (c [:mb 1] :flex [:space-x 3])}
         [:span {:class (c [:text :green-600])} (str (:path err))]
         [:span {:class (c)} (:message err)]])]))
-
 
 
 (defmethod render-content :hiccup

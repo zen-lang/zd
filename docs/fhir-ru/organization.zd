@@ -76,7 +76,7 @@
 :examples:хеликс
 ~:desc "Пример ......."
 
-^format :edn
+^edn
 ~:data
   {:resourceType "Organization",
   :name "Научно-производственная Фирма \"ХЕЛИКС\"",

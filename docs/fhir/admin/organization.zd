@@ -6,41 +6,28 @@
 :use "Draft"
 :work-group fhir.groups.admin-resources
 
-^chapter
-^title "Summary"
 :summary {}
 
-^title "Scoupe"
-^chapter
 :scope {}
 
-^chapter
 :boundaries {}
 
-^chapter
 :references {}
 
-^chapter
 :content {}
 
-^chapter "Title"
 :content:profile {}
 
-^chapter
 :content:terminology {}
 
-^chapter
 :content:constraints {}
 
-^chapter
 :notes {}
 
-^chapter
 :examples {}
 :examples:example-1 {}
 :examples:example-2 {}
 
-^chapter
 :search-params {}
 :search-params:active {}
 :search-params:name {}

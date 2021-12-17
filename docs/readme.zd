@@ -2,9 +2,9 @@
 :date "2021-12-10"
 :author:title "Nikolai Ryzhikov"
 
+^hide
 :menu [{:dir fhir    :title ""}
-       {:dir fhir-ru :title ""}
-       (mapv menu-item (search {:tag "..."}))]
+       {:dir fhir-ru :title ""}]
 
 
 :summary:p1 md/
@@ -57,7 +57,7 @@ blcoplugin exampleplugin example
   :summary /
     Here is some text
 
-^format :edn
+^edn
 :summary:example:result
   {:title "Example document"
    :summary "Here is some text"}
@@ -125,10 +125,6 @@ blcoplugin exampleplugin example
 
 :sample (load-file "sample.yaml")
 
-^graviz
-:visualize-deps [{}]
-
-
 ^hiccup
 :refs
   [:ul (for [res (search {:category #{'fhir.admin}}
@@ -143,23 +139,22 @@ blcoplugin exampleplugin example
 
 :syntax:strings md/
 
-  Doublequoted strings are inherited from END
-  After special symbol `/` everything until next unidented line will be collected as a string
-  For example:
+Doublequoted strings are inherited from END
+After special symbol `/` everything until next unidented line will be collected as a string
+For example:
 
-  ```zd
-  :title / Some text .....
-  :text /
-    Here is
-    multiline string
-  ```
-  will be parsed into
+```zd
+ :title / Some text .....
+ :text /
+  Here is
+  multiline string
+```
+will be parsed into
 
-  ```edn
-  {:title "...." :text "...."}
-  ```
+```edn
+{:title "...." :text "...."}
+```
 
-^zd.view/comments {:collapse true}
 :syntax:comments:a
 ~:author people.niquola
 ~:date "2021-12-10"
@@ -171,21 +166,8 @@ blcoplugin exampleplugin example
 
  This is just a footer
 
+^table
 :data
  [{:code "code" :display "display"}
   {:code "code" :display "display"}]
 
-
-:patient
-~:resourceType "Patient"
-~:active true
-~:bithDate "1956-02-03"
-:patient:name:0
-~:family "John"
-~:given:0 "Jackson"
-:patient:identifier:#
-~:system "pid"
-~:value "12345"
-:patient:identifier:#
-~:system "mpi"
-~:value "12345"

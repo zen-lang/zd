@@ -59,9 +59,7 @@ Data is Document - Document is Data!
  (for [star (search {:tag #{xmas.stars} :project xmas.zen-doc})]
    [:div (:user star)])]
 
-
-
-
+:macros (load-file "sample.yaml" :yaml)
 
 
 
