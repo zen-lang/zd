@@ -13,7 +13,8 @@
    [stylo.core :refer [c c?]]
    [garden.core]
    [stylo.rule  :refer [join-rules]]
-   [cheshire.core :as json]))
+   [cheshire.core :as json]
+   [clojure.java.io :as io]))
 
 (defn to-html [x] (hiccup/html x))
 
@@ -83,10 +84,7 @@
     content
     [:script (format "\nconst searchData = %s;\n%s"
                      (json/encode (zd.db/index-refs ztx))
-                     (slurp "./src/js/tree.js"))]]])
-
-
-
+                     (slurp (io/resource "js/tree.js")))]]])
 
 (defn build-tree [ztx doc]
   (->>

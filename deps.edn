@@ -11,6 +11,7 @@
                org.clojure/data.xml      {:mvn/version "0.2.0-alpha6"}
                org.clojure/java.jdbc     {:mvn/version "0.7.12"}
                org.postgresql/postgresql {:mvn/version "42.2.22.jre7"}
+               org.babashka/sci          {:mvn/version "0.2.8"}
                ring/ring                 {:mvn/version "1.9.3"}
                ring/ring-defaults        {:mvn/version "0.3.3"}
                stylo/stylo               {:git/url "https://github.com/HealthSamurai/macrocss" :sha "1d0cba81d545bc30a42f64f0e65ee4c2ae4d9767"}
