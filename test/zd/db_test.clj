@@ -3,6 +3,7 @@
    [zen.core :as zen]
    [zd.db :as sut]
    [zd.methods]
+   [zd.impl]
    [matcho.core :as matcho]
    [clojure.java.io :as io]
    [clojure.test :refer :all]))
@@ -40,22 +41,28 @@
 :birth-date \"1994-09-26\"
 ")
 
-  (is (empty? (:errors (sut/get-page ztx 'team.vlad))))
+  (find-block-and-match
+   ztx 'team.vlad
+   [:zd/errors]
+   nil?)
 
-  (sut/load-content! ztx "team/noname.zd" "
+
+  (do
+    (sut/load-content! ztx "team/noname.zd" "
 :zen/tags #{aidbox/person}
+:some-field 123
 ")
+    (sut/get-page ztx 'team.noname)
+    )
 
-  (is (first (:errors (sut/get-page ztx 'team.noname))))
+  (find-block-and-match
+   ztx 'team.noname
+   [:zd/errors]
+   {:data [{:message ":name is required"
+            :type "require"
+            :path [:name]}]})
 
-  (matcho/match
-   (sut/get-page ztx 'team.noname)
-   {:errors [{:message ":name is required"
-              :type "require"
-              :path [:name]}
-             nil?]})
-
-  (sut/get-page ztx 'team.noname)
+  (zen.core/get-symbol ztx 'aidbox/person)
 
   (testing "tags inheritance test"
 

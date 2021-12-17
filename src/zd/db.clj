@@ -115,7 +115,6 @@
                (merge
                 (reduce
                  (fn [anns tag]
-                   (println (zen/get-symbol ztx tag))
                    (merge anns (:zd/annotations (get-in (zen/get-symbol ztx tag) schema-pth))))
                  {}
                  (get-in page [:resource :zen/tags]))
@@ -134,10 +133,10 @@
         _ (mapv #(zen/read-ns ztx (symbol %)) namespaces)
         data (enrich-doc-with-annotations ztx data)
         refs (collect-refs (symbol resource-name) (:resource data))
-        errors (->> (:errors (zen/validate ztx (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
+        errors (->> (:errors (zen/validate ztx (or (:zen/tags (:resource data)) #{}) (:resource data)))
                     (remove #(= "unknown-key" (:type %))))
         data (if (seq errors)
-               (update data :doc conj {:annotations {:block :zen/errors} :data errors})
+               (update data :doc conj {:path [:zd/errors] :annotations {:block :zen/errors} :data errors})
                data)]
     (create-resource ztx (assoc data :zd/name (symbol resource-name) :zd/file path))
     (update-refs ztx refs)))
