@@ -21,11 +21,11 @@
   [ztx op {{sym :symbol} :route-params :as req}]
   (reload ztx {})
   (let [sym (if sym (symbol sym) 'readme)]
-    (if-let [doc (zd.db/read-resource ztx sym)]
+    (if-let [page (zd.db/get-page ztx sym)]
       {:status 200
-       :body  (zd.pages/render-page ztx doc)}
+       :body  (zd.pages/render-page ztx page)}
       {:status 404
-       :body  (zd.pages/render-not-found ztx sym) #_(str "No page for " sym)})))
+       :body  (zd.pages/render-not-found ztx sym)})))
 
 (defmethod zenbox.web.core/operation 'zd/render-zen
   [ztx op {{sym :sym ns :ns} :route-params :as req}]

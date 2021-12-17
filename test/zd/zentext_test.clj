@@ -1,12 +1,14 @@
 (ns zd.zentext-test
   (:require [zd.zentext :as sut]
             [zd.db]
+            [zen.core :as zen]
             [matcho.core :as matcho]
             [clojure.test :as t]))
 
 #_(remove-ns 'zd.zentext-test)
 
 (defonce ztx (zen.core/new-context))
+#_(def ztx (zen.core/new-context))
 
 (defmacro match [md & [pattern]]
   `(let [res# (sut/parse-block ztx ~md)]
@@ -262,13 +264,60 @@ select 1
    (sut/parse-block ztx sample))
 
   (zd.db/load-content ztx "team/vlad.zd" "
-:title \"Vlad Ganshin\"
+:zen/tags #{aidbox.team/person}
+:name \"Vlad Ganshin\"
 :birth-date \"1994-09-26\"
+
 ")
+
+  (zd.db/load-content ztx "projects/relatient-scheduling.zd" "
+:zen/tags #{aidbox.team/person}
+:title \"Relatient Scheduling\"
+:participants #{team.vlad}
+")
+
+  (do
+    (def ztx (zen/new-context))
+
+    (zen/read-ns ztx 'aidbox.team)
+
+    (zd.db/load-content ztx "team/vlad.zd" "
+:zen/tags #{aidbox.team/person}
+:name \"Vlad Ganshin\"
+:birth-date \"1994-09-26\"
+
+")
+
+    (zd.db/load-content ztx "team/mike.zd" "
+:zen/tags #{aidbox.team/person}
+:name \"Mike Pravilenko\"
+:mentor aidbox.team/vlad
+"))
+
+  (do
+    (def ztx (zen/new-context))
+    (zen/read-ns ztx 'aidbox.team)
+    @ztx
+    (zen/validate ztx #{'aidbox.team/person} (zen/get-symbol ztx 'aidbox.team/vlad))
+    ;; @ztx
+    )
+
+  (zen/validate ztx
+                #{}
+                (zd.db/get-resource ztx ))
 
   (zd.db/get-resource ztx 'team.vlad)
 
+  (zen/read-ns (zen/new-context) 'aidbox.team)
+
+
+  (zen/get-symbol ztx 'aidbox.team/person)
+
+
+  (zen/get-symbol ztx 'aidbox.team/vlad)
+
   (zd.db/get-page ztx 'team.vlad)
+
 
   (match "
 #team.vlad
@@ -283,6 +332,17 @@ select 1
    [:div [:ul [:li [:a {:href "/team.vlad"} "team.vlad"]]]])
 
 
+
+
+
+  (zen/load-ns ztx )
+
+
+(zd.db/load-content ztx "team/vlad.zd" "
+:zen/tags #{aidbox.team/person}
+:title \"Vlad Ganshin\"
+:birth-date \"1994-09-26\"
+")
 
 
 

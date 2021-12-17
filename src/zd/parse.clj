@@ -139,16 +139,25 @@
   (let [lines (get-lines s)
         ctx (loop [ctx  start-ctx
                    [l & ls] lines]
-              (if (nil? l)
+              (cond
+                (nil? l)
                 (parse-keypath ctx)
-                (if (comment? l)
-                  (recur ctx ls)
-                  (if (or (annotation? l) (keypath? l))
-                    (let [ctx (parse-keypath ctx)]
-                      (->
-                       (if (annotation? l)
-                         (update ctx :annotations conj l)
-                         (assoc ctx :keypath l))
-                       (recur ls)))
-                    (recur (update ctx :lines conj l) ls )))))]
+
+                (comment? l)
+                (recur ctx ls)
+
+                (annotation? l)
+                (-> (parse-keypath ctx)
+                    (update :annotations conj l)
+                    (recur ls))
+
+                (keypath? l)
+                (-> (parse-keypath ctx)
+                    (assoc :keypath l)
+                    (recur ls))
+
+                :else
+                (-> ctx
+                    (update :lines conj l)
+                    (recur ls))))]
     (select-keys ctx [:doc :resource])))

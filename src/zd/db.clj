@@ -34,10 +34,6 @@
                refs)))
      {} distinct-attrs)))
 
-(defn read-resource [ztx nm]
-  (println "DEPRECATED: zd.db/read-resource. Use zd.db/get-page or zd.db/get-resource or zd.db/get-doc")
-  (get-in @ ztx [:zdb nm]))
-
 (defn get-page [ztx nm]
   (get-in @ ztx [:zdb nm]))
 
@@ -70,14 +66,19 @@
   ;; {target {source #{[:path] [:path]}}}
   (*collect-refs {} resource-name [] resource))
 
-(defn load-content [ztx path cnt]
+(defn load-content! [ztx path content]
   (let [resource-name (symbol (str/replace (str/replace path #"\.zd$" "") #"/" "."))
-        data (zd.parse/parse ztx cnt)
-        refs (collect-refs resource-name (:resource data))]
+        data (zd.parse/parse ztx content)
+        refs (collect-refs resource-name (:resource data))
+        errors (:errors (zen/validate ztx #_(:zen/tags (:resource data))
+                                      (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))]
     (create-resource
-     ztx (assoc data
-                :zd/name resource-name
-                :zd/file path))
+     ztx (cond-> data
+           true
+           (assoc :zd/name resource-name
+                  :zd/file path)
+           (seq errors)
+           (assoc :errors errors)))
     (update-refs ztx refs)))
 
 (defn load-dirs [ztx dirs]
@@ -90,12 +91,5 @@
           (when (and (str/ends-with? path ".zd")
                      (not (str/starts-with? (.getName f) ".")))
             (let [resource-path (subs path (inc (count dir-path)))
-                  resource-name (symbol (str/replace (str/replace resource-path #"\.zd$" "") #"/" "."))
-                  content (slurp f)
-                  data (zd.parse/parse ztx content)
-                  refs (collect-refs resource-name (:resource data))]
-              (create-resource
-               ztx (assoc data
-                          :zd/name resource-name
-                          :zd/file resource-path))
-              (update-refs ztx refs))))))))
+                  content (slurp f)]
+              (load-content! ztx resource-path content))))))))
