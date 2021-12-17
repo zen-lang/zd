@@ -79,7 +79,7 @@
            [])
    (mapv symbol)
    (reduce (fn [tags doc-sym]
-             (clojure.set/union tags (:child-tags (get-resource ztx doc-sym))))
+             (clojure.set/union tags (:zd/child-tags (get-resource ztx doc-sym))))
            #{})))
 
 (defn load-content! [ztx path content]
@@ -87,12 +87,13 @@
         data (zd.parse/parse ztx content)
         parent-tags (gather-parent-tags ztx resource-name)
         tags (clojure.set/union (get-in data [:resource :zen/tags] #{}) parent-tags)
+        namespaces (keep namespace tags)
         data (cond-> data
                (seq tags)
                (assoc-in [:resource :zen/tags] tags))
+        _ (mapv #(zen/read-ns ztx (symbol %)) namespaces)
         refs (collect-refs (symbol resource-name) (:resource data))
-        errors (->> (:errors (zen/validate ztx #_(:zen/tags (:resource data))
-                                           (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
+        errors (->> (:errors (zen/validate ztx (conj (or (:zen/tags (:resource data)) #{}) 'zen/any) (:resource data)))
                     (remove #(= "unknown-key" (:type %))))]
     (create-resource
      ztx (cond-> data
