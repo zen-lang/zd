@@ -37,7 +37,7 @@
 
   (def pth "docs")
 
-  (def pth "/Users/ghrp/prog/sansara/box/docs")
+  (def pth "/Users/ghrp/prog/zd/docs")
 
   (def pth "/Users/ganshinv/hs/sansara/box/docs")
   (def pth "/Users/niquola/sansara/box/docs")
