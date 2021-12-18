@@ -1,2 +1,26 @@
-:title "Hiccup"
+^badge
 :author team.niquola
+
+:title "Hiccup"
+:summary "Support for dynamic hiccup"
+
+
+
+:intro md/
+
+Parts of document can be generated dynamically with ^hiccup expressions
+
+This expressions may use a lot of useful functions and helpers
+
+```code colojure
+  ^hiccup
+  :team [:div "Hello"]
+```
+
+^hiccup
+:team
+[:div (for [mem (search {:namespace "team."})]
+        [:div {:style "display: flex; padding: 1rem; border-bottom: 1px solid #ddd;"}
+         [:img {:src (:avatar mem) :style "width:40px; margin-left: 2rem; margin-right:2rem;"}]
+         [:b (:title mem)]])]
+
