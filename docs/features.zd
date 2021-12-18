@@ -11,5 +11,6 @@
  {:ref features.search }
  {:ref features.navigation }
  {:ref features.emacs :title "Emacs"}
+ {:ref features.schemas :title "Schemas"}
  ]
 
