@@ -45,7 +45,7 @@ Let's create a test case in zen doc. Name aidbox.testcase.create-new-box
 
 ```
 
-Finally you will see an error which says that :expected-result is required field. Profit!
+Finally, you will see an error which says that :expected-result is required field. Profit!
 
 
 :tag-inheritance md/
