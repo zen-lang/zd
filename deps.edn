@@ -1,6 +1,6 @@
 {:paths       ["zrc" "src"]
  :deps        {org.clojure/clojure       {:mvn/version "1.10.3"}
-               borkdude/edamame          {:mvn/version "0.0.11-alpha.16"}
+               borkdude/edamame          {:mvn/version "0.0.18"}
                cheshire/cheshire         {:mvn/version "5.10.0"}
                clj-commons/clj-yaml      {:mvn/version "0.7.106"}
                clj-time/clj-time         {:mvn/version "0.15.2"}

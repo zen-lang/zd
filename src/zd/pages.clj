@@ -138,17 +138,21 @@
                   [:hover [:text :gray-800] {:border-bottom "2px solid #888"}]))
 
 (defn navigation [ztx doc]
-  [:div {:class (c [:px 4] [:w 80] [:text :gray-600]  :text-sm)}
-   [:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
-    [:div#menuTab {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
-    [:div#fileTab {:class ["tab" tab-class] :for "nav-files"} "Files"]]
-   [:div {:id "nav-menu"}
-    (for [[k it] (build-menu ztx doc)]
-      (render-items it k))]
-   [:div {:id "nav-files" :style "display: none;"}
-    (for [[k it] (->> (build-tree ztx doc)
-                      (sort-by :title))]
-      (render-items it k))]])
+  (let [root (zd.db/get-resource ztx 'readme)]
+    [:div {:class (c [:pr 4] [:w 80] [:text :gray-600]  :text-sm)}
+     [:div  {:class (c [:py 2]  [:mb 2] :flex [:space-x 4] :items-center)}
+      [:img {:src "/logo.png" :class (c [:h 8])}]
+      [:div {:class (c :text-xl :font-bold)}(:title root)]]
+     [:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
+      [:div#menuTab {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
+      [:div#fileTab {:class ["tab" tab-class] :for "nav-files"} "Files"]]
+     [:div {:id "nav-menu"}
+      (for [[k it] (build-menu ztx doc)]
+        (render-items it k))]
+     [:div {:id "nav-files" :style "display: none;"}
+      (for [[k it] (->> (build-tree ztx doc)
+                        (sort-by :title))]
+        (render-items it k))]]))
 
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
 
