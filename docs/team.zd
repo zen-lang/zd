@@ -1,1 +1,2 @@
 :title "Team"
+:zd/child-tags #{boxdoc/person}
