@@ -1,11 +1,14 @@
+^href
 ^badge
 :repository "https://github.com/zen-lang/zd"
 ^hide
-:menu [{:ref features  :title "Features"}
-       {:ref releases  :title "Releases"}
-       {:ref uc        :title "Use Cases"}
-       {:ref team      :title "Team"}
-       {:ref history   :title "History"}]
+:menu [{:ref features     :title "Features"}
+       {:ref install      :title "Installation"}
+       {:ref releases     :title "Releases"}
+       {:ref extensions   :title "Extensions"}
+       {:ref uc           :title "Use Cases"}
+       {:ref team         :title "Team"}
+       {:ref history      :title "History"}]
 
 
 :title "ZEN DOC"
