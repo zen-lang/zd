@@ -58,12 +58,24 @@ Keypathes may be annotated with `^name params`.
   ^img {:style "height:20px"}
   :image "/logo.png"
 
+  ^table {:columns [:id :name]}
+  :table
+  [{:id "1" :name "col 1"}
+    {:id "2" :name "col 1"}
+    {:id "3" :name "col 1"}]
+
 ```
 
 ^badge
-:author  "Ivan"
+:example:a:author  "Ivan"
 ^img {:style "height:20px"}
-:image "/logo.png"
+:example:a:image "/logo.png"
+
+^table {:columns [:id :name]}
+:example:a:table
+[{:id "1" :name "col 1"}
+ {:id "2" :name "col 1"}
+ {:id "3" :name "col 1"}]
 
 :zentext md/
 
