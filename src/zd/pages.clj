@@ -101,7 +101,7 @@
            {:title title
             :broken (nil? res)
             :href (str ref)
-            :items (when (:menu res)
+            :items (when (and (:menu res) (sequential? (:menu res)))
                      (->> (:menu res)
                           (map-indexed (fn [i x] [i x]))
                           (reduce (fn [acc [i x]]

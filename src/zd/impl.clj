@@ -5,7 +5,7 @@
    [zd.db]
    [zd.zentext]
    [sci.core]
-   [zd.methods :refer [annotation inline-method render-block render-content render-key process-block]]))
+   [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block]]))
 
 (defmethod annotation :default
   [nm params]
@@ -243,3 +243,8 @@
     (if (and (vector? res) (keyword? (first res)))
       res
       [:pre (pr-str res)])))
+
+(defmethod inline-function
+  :echo
+  [ztx m args]
+  [:span "((" m (pr-str args) "))"])

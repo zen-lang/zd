@@ -1,1 +1,13 @@
 :title "Installation"
+
+
+:run-with-clj md/
+
+
+```code bash
+  git clone zd repos/zd
+  mkdir mywiki
+  clojure -Sdeps \
+   '{:deps {zen-lang/zd {:local/root "/repos/zd"}}}' \
+    -M -m zd.dev mywiki
+```

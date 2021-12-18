@@ -2,8 +2,7 @@
 ^badge
 :repository "https://github.com/zen-lang/zd"
 ^hide
-:menu [
-       {:ref index }
+:menu [{:ref index }
        {:ref features     :title "Features"}
        {:ref install      :title "Installation"}
        {:ref releases     :title "Releases"}
@@ -65,11 +64,6 @@ Data is Document - Document is Data!
   * Incidents
   * Documentation
   * Team
-
-:stars
-[:div
- (for [star (search {:tag #{xmas.stars} :project xmas.zen-doc})]
-   [:div (:user star)])]
 
 :macros (load-file "sample.yaml" :yaml)
 
