@@ -1,5 +1,9 @@
 :title "Features"
 ^hide
-:menu [{:ref features.syntax       :title "Syntax"}
-       {:ref features.emacs        :title "Emacs"}
-       ]
+:menu
+[
+ {:ref features.logo }
+ {:ref features.syntax }
+ {:ref features.emacs :title "Emacs"}
+ ]
+

@@ -1,2 +1,24 @@
-:title "Logo"
+^badge
 :authror team.zlata
+
+:title "Logo"
+:summary md/
+
+Logo was develped by 12 year designer #team.zlata after school classes
+
+Vectorized by #team.niquola
+
+
+^img {:style "height: 180px;"}
+:version:current "/logo.png"
+
+^img {:style "height: 240px;"}
+:versions:v1 "v0.jpg"
+^img {:style "height: 240px;"}
+:versions:v1 "v1.jpg"
+^img {:style "height: 240px;"}
+:versions:v1 "v2.jpg"
+^img {:style "height: 240px;"}
+:versions:v1 "v3.jpg"
+^img {:style "height: 240px;"}
+:versions:v1 "v4.jpg"

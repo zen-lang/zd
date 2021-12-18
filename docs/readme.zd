@@ -2,7 +2,9 @@
 ^badge
 :repository "https://github.com/zen-lang/zd"
 ^hide
-:menu [{:ref features     :title "Features"}
+:menu [
+       {:ref index }
+       {:ref features     :title "Features"}
        {:ref install      :title "Installation"}
        {:ref releases     :title "Releases"}
        {:ref extensions   :title "Extensions"}
