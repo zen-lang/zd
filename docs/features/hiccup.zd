@@ -17,9 +17,10 @@ This expressions may use a lot of useful functions and helpers
   :team [:div "Hello"]
 ```
 
+
 ^hiccup
 :team
-[:div (for [mem (search {:namespace "team."})]
+[:div (for [mem (search {:namespace ""})]
         [:div {:style "display: flex; padding: 1rem; border-bottom: 1px solid #ddd;"}
          [:img {:src (:avatar mem) :style "width:40px; margin-left: 2rem; margin-right:2rem;"}]
          [:b (:title mem)]])]

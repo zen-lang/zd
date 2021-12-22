@@ -72,7 +72,7 @@
   :zen/tags #{zen/schema zen/tag}
   :type zen/map
   :confirms #{doc}
-  :require #{:name}
+  :require #{:name :telgram}
   :keys {:name     {:type zen/string}
          :telegram {:type zen/string :zd/annotations {:block :badge}}
          :github   {:type zen/string :zd/annotations {:block :badge}}
