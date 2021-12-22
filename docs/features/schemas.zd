@@ -1,1 +1,62 @@
+^badge
+:author team.vganshin
+
 :title "Apply Schema"
+
+:summary md/
+
+As far as zd-file is a valid zen-resource you can tag it with :zen/tag.
+
+
+:tutorial md/
+
+Let's create a schema for test cases
+
+```
+{ns aidbox.test
+
+ testcase
+ {:zen/tags #{zen/schema zen/tag}
+  :type zen/map
+  :require #{:id :steps :expected-result}
+  :keys {:id {:type zen/string}
+         :steps {:type zen/vector
+                 :every {:type zen/map
+                         :keys {:desc {:type zen/string}
+                                :tip {:type zen/string :zd/annotations {:block :tooltip :type :warn}}}}}
+         :expected-result {:type zen/string}}}}
+```
+
+Let's create a test case in zen doc. Name aidbox.testcase.create-new-box
+
+```code clojure
+  ;; :zd/file aidbox.create-new-box
+  ;; :zd/path aidbox/create-new-box.zd
+
+  :title "Create new box on aidbox.app"
+  :zen/tags #{aidbox.test/testcase}
+
+  :id "create-new-box"
+  ;;  ^tooltip :warn will taken from zen-schema
+  :steps:0:tip "Check your internet connection"
+  :steps:0:desc "Open https://aidbox.app"
+
+  ^tooltip :info
+  :steps:1:tip "Create new box"
+  :steps:1:desc "Create new box"
+
+```
+
+Finally, you will see an error which says that :expected-result is required field. Profit!
+
+
+:tag-inheritance md/
+
+You can create doc aidbox.zd with :zd/child-tags and all child docs will be marked with corresponding tags. So you don't have to specify same tag every time in all near docs.
+
+```code clojure
+  ;; :zd/file aidbox
+  ;; :zd/path aidbox.zd
+
+  :zd/child-tags #{aidbox.test/tase-case}
+```
