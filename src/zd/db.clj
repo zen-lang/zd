@@ -13,12 +13,23 @@
 (defn create-resource [ztx res]
   (swap! ztx assoc-in [:zdb (:zd/name res)] res))
 
+
 ;; TODO: implement more filters
 (defn search [ztx filter]
   (let [data (:zdb @ztx)]
+    (cond->>
+        (->>  data
+              (vals)
+              (filterv (fn [res] (str/starts-with? (:zd/name res) (:namespace filter))))
+              (take 100)
+              (mapv (fn [x] (assoc (:resource x) :zd/name (:zd/name x)))))
+      (:sort filter) (sort-by (fn [x] (str (get-in x (:sort filter))))))))
+
+(defn select [ztx filter]
+  (let [data (:zdb @ztx)]
     (->>  data
           (vals)
-          (filterv (fn [res] (str/starts-with? (:zd/name res) (:namespace filter))))
+          (filterv filter)
           (take 100)
           (mapv :resource))))
 
@@ -129,7 +140,9 @@
     doc)))
 
 (def macros
-  {'load (fn [ctx pth & [fmt]]
+  {'users (fn [& usrs] (->> usrs (mapv #(symbol (str "aidbox.team." %)))
+                           (into #{})))
+   'load (fn [ctx pth & [fmt]]
            (let [dir (->> (str/split (:zd/path ctx) #"/")
                           butlast
                           (str/join "/"))

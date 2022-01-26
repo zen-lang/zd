@@ -11,6 +11,7 @@
 (defn reload [ztx _opts]
   (swap! ztx dissoc :zdb)
   (let [dirs (:zd/paths @ztx)]
+    (println "load dirs: " dirs)
     (zd.db/load-dirs ztx dirs))
   :ok)
 

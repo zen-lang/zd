@@ -27,6 +27,11 @@
   {:block :attribute
    :attribute params})
 
+(defmethod annotation :attr
+  [nm params]
+  {:block :attribute
+   :attribute params})
+
 (defmethod annotation :href
   [nm params]
   {:content :href})
@@ -231,9 +236,15 @@
         [:span {:class (c)} (:message err)]])]))
 
 
+(def c-macro ^:sci/macro
+  (fn [_&form _&env & rules]
+    (apply stylo.core/c' rules)))
+
 (defmethod render-content :hiccup
   [ztx {ann :annotations data :data path :path :as block}]
   (let [ctx (sci.core/init {:bindings {'search (fn [filter] (zd.db/search ztx filter))
+                                       'select (fn [fltr] (zd.db/select ztx fltr))
+                                       'c  c-macro
                                        'table  (fn [data opts] (table ztx (or opts {}) data))}})
         res (try (sci.core/eval-form ctx data)
                  (catch Exception e
