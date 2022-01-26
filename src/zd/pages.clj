@@ -112,12 +112,13 @@
   (:items (build-menu* ztx {:ref 'readme} doc)))
 
 (defn render-items [item & [k depth]]
-  [:div {:id  (str/lower-case k) :class ["closable"]}
+  [:div {:id  (str/lower-case k) :class "closable"}
    [:a {:href (when-not (:broken item) (:href item))
         :class (->> [(c :inline-block :flex :items-center [:py 1] :rounded [:hover :cursor-pointer [:bg :white] [:text :gray-700]])
                      (when (:broken item) (c [:text :red-500]))]
                     (filterv identity)
-                    (mapv name))}
+                    (mapv name)
+                    (str/join " "))}
     (if (:items item)
       [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center)}
        [:i.fas.fa-caret-down.toggler.rotateToggler]]
@@ -125,8 +126,10 @@
        [:i.fa.fa-file]])
 
     [:span (or (:title item) (:href item) k)
-     (when-let [e (:errors item)] [:span {:class [(c [:text :red-500] :text-xs [:px 1])]} e])]]
-   (into [:div {:class ["closed" "closableContent" (name (c :border-l [:ml 3]))]}
+     (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
+                                                      (str/join " "))} e])]]
+   (into [:div {:class (->> ["closed" "closableContent" (name (c :border-l [:ml 3]))]
+                            (str/join " "))}
           (let [node-content
                 (for [[k it] (->> (:items item)
                                   (sort-by :title))]
@@ -143,13 +146,13 @@
      [:div  {:class (c [:py 2]  [:mb 2] :flex [:space-x 4] :items-center)}
       [:img {:src "/logo.png" :class (c [:h 8])}]
       [:div {:class (c :text-xl :font-bold)}(:title root)]]
-     [:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
+     #_[:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
       [:div#menuTab {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
       [:div#fileTab {:class ["tab" tab-class] :for "nav-files"} "Files"]]
-     [:div {:id "nav-menu"}
+     #_[:div {:id "nav-menu"  :style "display: none;"}
       (for [[k it] (build-menu ztx doc)]
         (render-items it k))]
-     [:div {:id "nav-files" :style "display: none;"}
+     [:div {:id "nav-files"}
       (for [[k it] (->> (build-tree ztx doc)
                         (sort-by :title))]
         (render-items it k))]]))

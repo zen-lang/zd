@@ -47,33 +47,6 @@
   (start ztx {:port 3030})
 
   (stop ztx)
-
-  (def projects
-    ["aidbox dashboard"
-     "fhir emr"
-     "health me samurai"
-
-     "photos"
-     "zenjute"
-     "zendoc"
-     "eventbox"
-
-     "scrubbox"
-     "cssrvanka"
-     "mixpannel"])
-
-  (shuffle projects)
-
-  ["photos"
-   "fhir emr"
-   "health me samurai"
-   "zenjute"
-   "aidbox dashboard"
-   ;; pause
-   "cssrvanka"
-   "zendoc"
-   "scrubbox"
-   "eventbox"
-   "mixpannel"]
+  
 
   )
