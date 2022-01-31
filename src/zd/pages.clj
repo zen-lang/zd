@@ -91,7 +91,9 @@
    (sort-by first (:zdb @ztx))
    (reduce (fn [acc [nm doc]]
              (let [parts (interpose :items (str/split (name nm) #"\."))]
-               (assoc-in acc parts {:title (last parts)
+               (assoc-in acc parts {:title (or (get-in doc [:resource :title])
+                                               (last parts))
+                                    :name      (last parts)
                                     :href (str nm)}))) {})))
 
 (defn build-menu* [ztx {ref :ref :as item} doc]
@@ -160,17 +162,34 @@
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
 
 
-(defn page [ztx {doc :doc :as page}]
-  [:div {:class (c [:w 230]
-                   [:w-max 230]
-                   [:bg :white] [:py 7] [:px 16] :shadow-md
-                   {:color "#3b454e"})}
-   [:div {:class (c [:mb 4])}
-    (->>
-     (for [block doc]
-       (let [block (assoc block :page page)]
-         (or (zd.methods/render-key ztx block)
-             (zd.methods/render-block ztx block)))))]])
+(defn breadcrump [ztx name]
+  (let [parts (str/split (str name) #"\.")]
+    (->> (range (count parts))
+         (mapv (fn [x]
+                 (let [pth (into [] (take (inc x) parts))
+                       nm  (str/join "." pth)]
+                   [:a {:href (str "/" nm)
+                        :class (c [:text :blue-500] [:px 2] {:border-right "1px solid #ddd"})}
+                    (last pth)])))
+         (into [:div {:class (c :flex :flex-1)}]))))
+
+(defn page [ztx {doc :doc res :resource :as page}]
+  [:div 
+   [:div {:class (c :flex [:py 1])}
+    (breadcrump ztx (:zd/name page))
+    [:div {:class (c :text-sm [:text :gray-600])}
+     (:zd/name page)]]
+   [:div {:class (c [:w 230]
+                    [:w-max 230]
+                    [:bg :white] [:py 4] [:px 16] :shadow-md
+                    {:color "#3b454e"})}
+    
+    [:div {:class (c [:mb 4])}
+     (->>
+      (for [block doc]
+        (let [block (assoc block :page page)]
+          (or (zd.methods/render-key ztx block)
+              (zd.methods/render-block ztx block)))))]]])
 
 (defn links [ztx doc]
   (let [grouped-refs (zd.db/group-refs-by-attr ztx (:zd/name doc))]
