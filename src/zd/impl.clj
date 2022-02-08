@@ -5,6 +5,7 @@
    [zd.db]
    [zd.zentext]
    [sci.core]
+   [clj-yaml.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block]]))
 
 (defmethod annotation :default
@@ -63,6 +64,10 @@
   [nm params]
   {:content :edn})
 
+(defmethod annotation :yaml
+  [nm params]
+  {:content :yaml})
+
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c [:text :blue-600])} (or (:title res) s)]
@@ -82,7 +87,7 @@
 (defmethod inline-method :a
   [ztx m arg]
   (let [[src text] (str/split arg #"\s+" 2)]
-    [:a {:href src :class (c [:text :blue-700])} (or src text)]))
+    [:a {:href src :class (c [:text :blue-700])} " " (or text src)]))
 
 (defmethod inline-method
   :src
@@ -95,7 +100,8 @@
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
 (defmethod process-block "code" [ztx _ lang cnt]
-  [:pre [:code {:class (str "language-" lang " hljs")} cnt]])
+  [:pre {:class (c :text-sm)}
+   [:code {:class (str "language-" lang " hljs")} cnt]])
 
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
@@ -225,6 +231,11 @@
   (table ztx (or (:table ann) {}) data))
 
 
+(defmethod render-content :yaml
+  [ztx {ann :annotations data :data path :path :as block}]
+  [:pre {:class (c :text-sm)}
+   [:code {:class (str "language-yaml hljs")} (clj-yaml.core/generate-string data)]])
+
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
   (when (seq errors)
@@ -238,7 +249,7 @@
 
 (def c-macro ^:sci/macro
   (fn [_&form _&env & rules]
-    (apply stylo.core/c' rules)))
+    #_(apply stylo.core/c' rules)))
 
 (defmethod render-content :hiccup
   [ztx {ann :annotations data :data path :path :as block}]

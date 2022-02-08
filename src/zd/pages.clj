@@ -93,6 +93,7 @@
              (let [parts (interpose :items (str/split (name nm) #"\."))]
                (assoc-in acc parts {:title (or (get-in doc [:resource :title])
                                                (last parts))
+                                    :menu-order (get-in doc [:resource :menu-order] 10)
                                     :name      (last parts)
                                     :href (str nm)}))) {})))
 
@@ -134,7 +135,7 @@
                             (str/join " "))}
           (let [node-content
                 (for [[k it] (->> (:items item)
-                                  (sort-by :title))]
+                                  (sort-by (fn [[_ x]] (get x :menu-order 10))))]
                   (render-items it k true))]
             node-content)])])
 
@@ -156,7 +157,7 @@
         (render-items it k))]
      [:div {:id "nav-files"}
       (for [[k it] (->> (build-tree ztx doc)
-                        (sort-by :title))]
+                        (sort-by (fn [[_ x]] (get x :menu-order 10))))]
         (render-items it k))]]))
 
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
