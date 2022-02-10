@@ -37,6 +37,10 @@
   [nm params]
   {:content :href})
 
+(defmethod annotation :link
+  [nm params]
+  {:content :link})
+
 (defmethod annotation :img
   [nm params]
   {:content :img
@@ -143,6 +147,7 @@
     ;; TODO: check link
     (nil? data) ""
     (symbol? data) (symbol-link ztx data)
+    (number? data) (str data)
     (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
                              [:div {:class (c [:text :gray-500])} "#{"]]
                             (mapv (fn [x] (render-content ztx {:data x}))data))
@@ -250,6 +255,10 @@
 (def c-macro ^:sci/macro
   (fn [_&form _&env & rules]
     #_(apply stylo.core/c' rules)))
+
+(defmethod render-content :link
+  [ztx {ann :annotations data :data path :path :as block}]
+  [:a {:href data :class (c [:text :blue-600])} data])
 
 (defmethod render-content :hiccup
   [ztx {ann :annotations data :data path :path :as block}]
