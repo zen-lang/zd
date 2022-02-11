@@ -74,7 +74,10 @@
 
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c [:text :blue-600])} (or (:title res) s)]
+    [:a {:href (str "/" s) :class (c [:text :blue-600])}
+     (when-let [img (or (get-in res [:avatar]) (get-in res [:logo]))]
+       [:img {:src img :class (c [:h 4] :inline-block [:mr 1] {:border-radius "100%" :margin-bottom "1px"})}])
+     (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
 (defmethod inline-method :symbol-link

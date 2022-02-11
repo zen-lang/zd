@@ -94,6 +94,7 @@
              (let [parts (interpose :items (str/split (name nm) #"\."))]
                (assoc-in acc parts {:title (or (get-in doc [:resource :title])
                                                (last parts))
+                                    :avatar      (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
                                     :menu-order (get-in doc [:resource :menu-order] 10)
                                     :name      (last parts)
                                     :href (str nm)}))) {})))
@@ -126,8 +127,10 @@
     (if (:items item)
       [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center)}
        [:i.fas.fa-caret-down.toggler.rotateToggler]]
-      [:span {:class (c [:w 6] [:h 6] :flex :items-center :justify-center [:text :gray-300])}
-       [:i.fa.fa-file]])
+      (if-let [ava (:avatar item)]
+        [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
+        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center [:text :gray-300])}
+         [:i.fa.fa-file]]))
 
     [:span (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
@@ -147,7 +150,7 @@
 (defn navigation [ztx doc]
   (let [root (zd.db/get-resource ztx 'readme)]
     [:div {:class (c [:pr 4] [:w 80] [:text :gray-600]  :text-sm)}
-     [:div  {:class (c [:py 2]  [:mb 2] :flex [:space-x 4] :items-center)}
+     #_[:div  {:class (c [:py 2]  [:mb 2] :flex [:space-x 4] :items-center)}
       [:img {:src "/logo.png" :class (c [:h 8])}]
       [:div {:class (c :text-xl :font-bold)}(:title root)]]
      #_[:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
