@@ -62,6 +62,7 @@
                        :height "100%"
                        :top 0
                        :transition "transform 0.3s 0.3s"}]
+   [:p (c* [:mb 4] {:line-height "1.7rem"})]
    ])
 
 
