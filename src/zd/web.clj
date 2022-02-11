@@ -9,7 +9,8 @@
    [ring.middleware.head]
    [clj-yaml.core]
    [clojure.walk]
-   [ring.middleware.content-type])
+   [ring.middleware.content-type]
+   [ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
   (:use [ring.middleware.resource]
         [ring.middleware.file]
         [ring.middleware.not-modified]))
@@ -53,6 +54,7 @@
                     (first))]
     (ring.util.response/file-response (.getPath f))))
 
+
 (defn mk-handler [ztx dispatch]
   (fn [req]
     (if (= :options (:request-method req))
@@ -63,6 +65,18 @@
               resp (dispatch ztx req)]
           (-> resp (allow req)))))))
 
+
+(defn auth-handler [opts]
+  (let [{:keys [basic-user basic-password]} opts]
+    (cond
+      (and basic-user basic-password)
+      (fn [req]
+        (wrap-basic-authentication req
+                                   (fn [u p] (and (= u basic-user)
+                                                  (= p basic-password)))))
+
+      :else identity)))
+
 (defn stop [ztx]
   (when-let  [srv (get-in @ztx [:zd/web :server])]
     (println :stop srv)
@@ -72,7 +86,9 @@
   [ztx opts dispatch]
   (stop ztx)
   (let [handler (mk-handler ztx dispatch)
-        srv (http-kit/run-server handler (merge {:port 3030} opts))]
+        srv (http-kit/run-server (-> handler
+                                     ((auth-handler opts)))
+                                 (merge {:port 3030} opts))]
     (println :start (merge {:port 3030} opts))
     (swap! ztx assoc-in [:zd/web] {:server srv :handler handler}))
   ::started)
