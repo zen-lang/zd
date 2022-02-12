@@ -116,6 +116,8 @@
 (defn build-menu [ztx doc]
   (:items (build-menu* ztx {:ref 'readme} doc)))
 
+(defn menu-item-sort [[_ x]] (format "%07d %s" (get x :menu-order 10) (:title x)))
+
 (defn render-items [item & [k depth]]
   [:div {:id  (str/lower-case k) :class "closable"}
    [:a {:href (when-not (:broken item) (:href item))
@@ -139,7 +141,7 @@
                             (str/join " "))}
           (let [node-content
                 (for [[k it] (->> (:items item)
-                                  (sort-by (fn [[_ x]] (get x :menu-order 10))))]
+                                  (sort-by menu-item-sort))]
                   (render-items it k true))]
             node-content)])])
 
@@ -148,21 +150,11 @@
                   [:hover [:text :gray-800] {:border-bottom "2px solid #888"}]))
 
 (defn navigation [ztx doc]
-  (let [root (zd.db/get-resource ztx 'readme)]
-    [:div {:class (c [:pr 4] [:w 80] [:text :gray-600]  :text-sm)}
-     #_[:div  {:class (c [:py 2]  [:mb 2] :flex [:space-x 4] :items-center)}
-      [:img {:src "/logo.png" :class (c [:h 8])}]
-      [:div {:class (c :text-xl :font-bold)}(:title root)]]
-     #_[:div {:class (c :flex [:space-x 2] :border-b :items-baseline [:mb 4])}
-      [:div#menuTab {:class ["tab" tab-class "active-nav"] :for "nav-menu"} "Menu"]
-      [:div#fileTab {:class ["tab" tab-class] :for "nav-files"} "Files"]]
-     #_[:div {:id "nav-menu"  :style "display: none;"}
-      (for [[k it] (build-menu ztx doc)]
-        (render-items it k))]
-     [:div {:id "nav-files"}
-      (for [[k it] (->> (build-tree ztx doc)
-                        (sort-by (fn [[_ x]] (get x :menu-order 10))))]
-        (render-items it k))]]))
+  [:div {:class (c [:pr 4] [:w 80] [:text :gray-600]  :text-sm)}
+   [:div {:id "nav-files"}
+    (for [[k it] (->> (build-tree ztx doc)
+                      (sort-by menu-item-sort))]
+      (render-items it k))]])
 
 (def key-class (c [:text :orange-600] {:font-weight "400"}))
 
@@ -196,19 +188,18 @@
           (or (zd.methods/render-key ztx block)
               (zd.methods/render-block ztx block)))))]]])
 
-(defn links [ztx doc]
-  (let [grouped-refs (zd.db/group-refs-by-attr ztx (:zd/name doc))]
-    (when (seq grouped-refs)
-      [:div {:class (c [:text :gray-600])}
-       (->>
-        (for [[attr links] grouped-refs]
-          [:div {:class (c [:py 2] :text-sm)}
-           [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
-            (str/join "" (mapv str attr))]
-           (for [l links]
-             [:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])])
-        (into [:div {:class (c  [:py 2] [:px 4] )}
-               [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))])))
+(defn links [ztx link-groups]
+  (when (seq link-groups)
+    [:div {:class (c [:text :gray-600])}
+     (->>
+      (for [[attr links] link-groups]
+        [:div {:class (c [:py 2] :text-sm)}
+         [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
+          (str/join "" (mapv str attr))]
+         (for [l (sort links)]
+           [:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])])
+      (into [:div {:class (c  [:py 2] [:px 4] )}
+             [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))]))
 
 
 (defn search [ztx doc]
@@ -241,13 +232,14 @@
 
 
 (defn generate-page [ztx doc]
-  [:div {:class (c [:py 6] [:px 8] :flex [:space-x 4])}
-   (navigation ztx doc)
-   (page ztx doc)
-   (search-container ztx doc)
-   [:div {:class (c  :flex :flex-col [:space-y 4] :flex-1)}
-    (search ztx doc)
-    (links ztx doc)]])
+  (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
+    [:div {:class (c [:py 6] [:px 8] :flex [:space-x 4])}
+     (navigation ztx doc)
+     (page ztx (assoc doc :backrefs link-groups))
+     (search-container ztx doc)
+     [:div {:class (c  :flex :flex-col [:space-y 4] :flex-1)}
+      (search ztx doc)
+      (links ztx link-groups)]]))
 
 (defn zen-page [ztx doc]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}

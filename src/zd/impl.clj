@@ -202,9 +202,9 @@
 (defmethod render-block :badge
   [ztx {data :data path :path :as block}]
   [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
-   [:div {:class (c :inline-block [:px 2] [:bg :gray-200] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
+   [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
     (subs (str (last path)) 1) ]
-   [:div {:class (c [:px 2] [:py 0.5] :inline-block)}
+   [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
     (render-content ztx block)]])
 
 (defmethod render-block :attribute
