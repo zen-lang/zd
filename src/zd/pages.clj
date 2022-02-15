@@ -77,7 +77,8 @@
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
     [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
-    [:script "hljs.highlightAll()"]]
+    [:script "hljs.highlightAll()"]
+    ]
    [:body {:class (c [:bg :gray-100] :w-max-full)}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
@@ -85,7 +86,10 @@
     content
     [:script (format "\nconst searchData = %s;\n%s"
                      (json/encode (zd.db/index-refs ztx))
-                     (slurp (io/resource "js/tree.js")))]]])
+                     (slurp (io/resource "js/tree.js")))]
+
+    [:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
+    [:script "mermaid.initialize({startOnLoad:true});"]]])
 
 (defn build-tree [ztx doc]
   (->>
