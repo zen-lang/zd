@@ -16,7 +16,8 @@
   :ok)
 
 (defn dispatch [ztx {uri :uri}]
-  (reload ztx {})
+  (when-not (get-in @ztx [:zd/opts :production])
+    (reload ztx {}))
   (let [sym (symbol (subs uri 1))]
     (if-let [page (zd.db/get-page ztx sym)]
       {:status 200
@@ -25,6 +26,7 @@
        :body  (zd.pages/render-page ztx {:zd/name sym})})))
 
 (defn start [ztx opts]
+  (swap! ztx assoc :zd/opts opts)
   (reload ztx opts)
   (zen.core/read-ns ztx 'zd)
   (zd.web/start ztx opts dispatch))
