@@ -282,3 +282,16 @@
   :echo
   [ztx m args]
   [:span "((" m (pr-str args) "))"])
+
+(defmethod annotation :mermaid
+  [nm params]
+  {:content :mermaid :mermaid params})
+
+
+(defmethod render-content :mermaid
+  [ztx {{params :mermaid} :annotations data :data path :path}]
+  [:div.mermaid data])
+
+(defmethod render-content :mm
+  [ztx {{params :mermaid} :annotations data :data path :path}]
+  [:div.mermaid data])
