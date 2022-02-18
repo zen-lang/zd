@@ -16,6 +16,7 @@
                ring/ring-defaults        {:mvn/version "0.3.3"}
                stylo/stylo               {:git/url "https://github.com/HealthSamurai/macrocss" :sha "1d0cba81d545bc30a42f64f0e65ee4c2ae4d9767"}
                zen-lang/zen              {:git/url "https://github.com/zen-lang/zen" :sha "a376f197902330473cf688eb3ff02f69094677de"}
+               ;; we do not need this dep - three lines of code
                ring-basic-authentication/ring-basic-authentication {:mvn/version "1.0.5"}
                }
  :aliases
