@@ -6,7 +6,7 @@
    [zd.zentext]
    [sci.core]
    [clj-yaml.core]
-   [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block]]))
+   [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
 (defmethod annotation :default
   [nm params]
@@ -151,10 +151,9 @@
     (nil? data) ""
     (symbol? data) (symbol-link ztx data)
     (number? data) (str data)
-    (set? data) (conj (into [:div {:class (c :flex [:space-x 4])}
-                             [:div {:class (c [:text :gray-500])} "#{"]]
-                            (mapv (fn [x] (render-content ztx {:data x}))data))
-                      [:div {:class (c [:text :gray-500])} "}"])
+    (set? data) (conj (into [:div {:class (c :flex [:space-x 3] {:flex-wrap "wrap"})}
+                             [:div {:class (c [:text :gray-500] :text-sm )} "#"]]
+                            (mapv (fn [x] (render-content ztx {:data x}))data)))
 
     (list? data)
     [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
@@ -184,6 +183,8 @@
   (let [id (str/join path)]
     [:a {:id id :href (str "#" id)} (or title id)]))
 
+(defmethod key-data :default [ztx path data] data)
+
 (defmethod render-block
   :default
   [ztx {ann :annotations data :data path :path :as block}]
@@ -194,10 +195,9 @@
       (str "Missed render-block for " ann)])
    [(keyword (str "h" (inc (count path))))
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
-   (render-content ztx block)])
+   (render-content ztx (update block :data (fn [d] (key-data ztx path d))))])
 
-(defmethod render-block :none
-  [ztx block])
+(defmethod render-block :none [ztx block])
 
 (defmethod render-block :badge
   [ztx {data :data path :path :as block}]
