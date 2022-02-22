@@ -1,0 +1,50 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "zendoc",
+    "patterns": [
+        {
+            "include": "#blocks"
+        },
+        {
+            "include": "#keywords"
+        },
+        {
+            "include": "#strings"
+        }
+    ],
+    "repository": {
+        "blocks":{
+            "patterns": [
+                {
+                    "name": "text",
+                    "begin": "[a-z]+/$",
+                    "end": "(?=^:)"
+                }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.zd",
+                    "match": "^:[^ ]+\\s"
+                },
+                {
+                    "name": "keyword.control.zd",
+                    "match": "\\b:[^ ]+\\b"
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.zd",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.zd",
+                    "match": "\\\\."
+                }
+            ]
+        }
+    },
+    "scopeName": "source.zd"
+}

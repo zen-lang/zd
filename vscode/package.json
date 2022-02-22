@@ -1,0 +1,25 @@
+{
+    "name": "zendoc",
+    "displayName": "zendoc",
+    "description": "semantic wiki syntax",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.64.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "zd",
+            "aliases": ["zendoc", "zd"],
+            "extensions": [".zd"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "zd",
+            "scopeName": "source.zd",
+            "path": "./syntaxes/zd.tmLanguage.json"
+        }]
+    }
+}
