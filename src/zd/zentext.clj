@@ -8,7 +8,7 @@
 
 #_(remove-ns 'zd.zentext)
 
-(def inline-regex #"(#[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))")
+(def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)")
 
 
 (defn call-inline-method [ztx s]
@@ -36,7 +36,11 @@
                    (conj res
                          head
                          (cond (str/starts-with? match "#")  (zd.methods/inline-method ztx :symbol-link  (subs match 1))
+                               (str/starts-with? match "@")  (zd.methods/inline-method ztx :mention      (subs match 1))
+                               (str/starts-with? match "`")  (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
+                               (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)))
                                (str/starts-with? match "[[") (call-inline-method   ztx (subs match 2 (- (count match) 2)))
+                               (str/starts-with? match "[")  (zd.methods/inline-method ztx :md/link     (subs match 1 (- (count match) 1)))
                                (str/starts-with? match "((") (call-inline-function ztx (subs match 2 (- (count match) 2))))
                          " ")))
                 (conj res (subs s start))))]

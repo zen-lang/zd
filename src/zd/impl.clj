@@ -7,6 +7,7 @@
    [sci.core]
    [clj-yaml.core]
    [clojure.pprint]
+   [markdown.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
 (defmethod annotation :default
@@ -87,7 +88,7 @@
 
 (defmethod inline-method :code
   [ztx m s]
-  [:code {:class (c [:px 1] [:py 0.5] [:bg :gray-200]
+  [:code {:class (c [:px 1] [:py 0] [:bg :gray-200]
                     {:border-radius "2px"
                      :font-family "ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace"})} s])
 
@@ -127,10 +128,6 @@
 
 (defmethod render-key :default [_ & _] nil)
 
-(defmethod render-key
-  [:title]
-  [_ {title :data}]
-  [:h1 {:class (c [:mb 0] :border-b)} title])
 
 (defmethod render-key
   [:summary]
@@ -327,3 +324,30 @@
      (with-out-str (clojure.pprint/pprint (get-in block [:page :resource])))]]])
 
 (defmethod render-key [:menu-order] [_ _block] [:div])
+
+(defmethod inline-method :mention
+  [ztx m s]
+  (symbol-link ztx (symbol (str "people." s))))
+
+(defmethod inline-method :bold
+  [ztx m s]
+  [:b s])
+
+(defmethod inline-method :md/link
+  [ztx m s]
+  (let [[txt href] (str/split s #"\]\(" 2)]
+    [:a {:href href :class (c [:text :blue-600])} txt]))
+
+(defmethod render-content :markdown
+  [ztx {data :data}]
+  [:div {:class (c [:px 0] [:py 2] [:bg :white])}
+   (markdown.core/md-to-html-string data)])
+
+
+(defmethod render-key
+  [:title]
+  [_ {title :data :as block}]
+  [:h1 {:class (c [:mb 0] :border-b)}
+   (when-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
+     [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}])
+   title])

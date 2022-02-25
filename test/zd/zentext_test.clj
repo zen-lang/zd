@@ -260,23 +260,21 @@ select 1
      [:li "ul 1-2"]]])
 
 
-  (clojure.pprint/pprint
-   (sut/parse-block ztx sample))
+  
+;;   (zd.db/load-content ztx "team/vlad.zd" "
+;; :zen/tags #{aidbox.team/person}
+;; :name \"Vlad Ganshin\"
+;; :birth-date \"1994-09-26\"
 
-  (zd.db/load-content ztx "team/vlad.zd" "
-:zen/tags #{aidbox.team/person}
-:name \"Vlad Ganshin\"
-:birth-date \"1994-09-26\"
+;; ")
 
-")
+;;   (zd.db/load-content ztx "projects/relatient-scheduling.zd" "
+;; :zen/tags #{aidbox.team/person}
+;; :title \"Relatient Scheduling\"
+;; :participants #{team.vlad}
+;; ")
 
-  (zd.db/load-content ztx "projects/relatient-scheduling.zd" "
-:zen/tags #{aidbox.team/person}
-:title \"Relatient Scheduling\"
-:participants #{team.vlad}
-")
-
-  (do
+  #_(do
     (def ztx (zen/new-context))
 
     (zen/read-ns ztx 'aidbox.team)
@@ -333,12 +331,15 @@ select 1
 
 
 
+  (match-inline "@niquola")
+  (match-inline "Here is inline code `funciton()`")
+  (match-inline "Here is **bold**")
+  (match-inline "Here is [text](link)")
 
 
-  (zen/load-ns ztx )
 
 
-(zd.db/load-content ztx "team/vlad.zd" "
+#_(zd.db/load-content ztx "team/vlad.zd" "
 :zen/tags #{aidbox.team/person}
 :title \"Vlad Ganshin\"
 :birth-date \"1994-09-26\"
