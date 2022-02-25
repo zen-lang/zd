@@ -207,3 +207,13 @@ Demo
 
 * existing
 * how to make knowledge base + how to extend (show on rpc)
+
+## vscode
+
+Publish https://code.visualstudio.com/api/working-with-extensions/publishing-extension
+
+```
+vsce login zendoc-vs
+vsce publish
+
+```
