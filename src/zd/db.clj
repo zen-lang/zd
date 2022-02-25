@@ -74,6 +74,10 @@
 (defn get-resource [ztx nm]
   (get-in @ ztx [:zdb nm :resource]))
 
+(defn get-resources [ztx]
+  (->> (get-in @ ztx [:zdb])
+       (map (fn [[id {res :resource}]] (assoc res :zd/name id)))))
+
 (defn get-doc [ztx nm]
   (get-in @ ztx [:zdb nm :doc]))
 
