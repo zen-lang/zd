@@ -335,6 +335,8 @@ select 1
   (match-inline "Here is inline code `funciton()`")
   (match-inline "Here is **bold**")
   (match-inline "Here is [text](link)")
+  (match-inline "Here is ![text](link)")
+  (match-inline "Here is __italic__")
 
 
 

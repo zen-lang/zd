@@ -291,6 +291,14 @@
   [ztx m args]
   [:span "((" m (pr-str args) "))"])
 
+
+(defmethod inline-function
+  :resource
+  [ztx m [sym & path]]
+  (if-let [sym (zd.db/get-resource ztx sym)]
+    (get-in sym path)
+    [:div "Could not find " (pr-str sym)]))
+
 (defmethod annotation :mermaid
   [nm params]
   {:content :mermaid :mermaid params})
@@ -333,10 +341,19 @@
   [ztx m s]
   [:b s])
 
+(defmethod inline-method :italic
+  [ztx m s]
+  [:i s])
+
 (defmethod inline-method :md/link
   [ztx m s]
   (let [[txt href] (str/split s #"\]\(" 2)]
     [:a {:href href :class (c [:text :blue-600])} txt]))
+
+(defmethod inline-method :md/img
+  [ztx m s]
+  (let [[txt href] (str/split s #"\]\(" 2)]
+    [:img {:src href :alt txt}]))
 
 (defmethod render-content :markdown
   [ztx {data :data}]

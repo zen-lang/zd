@@ -6,9 +6,8 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
-#_(remove-ns 'zd.zentext)
 
-(def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\)")
+(def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
 
 
 (defn call-inline-method [ztx s]
@@ -19,7 +18,7 @@
 (defn call-inline-function [ztx s]
   (try
     (let [[method arg] (str/split s #"\s+" 2)
-          arg (edamame.core/parse-string arg)]
+          arg (edamame.core/parse-string (str "[" arg "]"))]
       (zd.methods/inline-function ztx method arg))
     (catch Exception e
       [:error (pr-str e)])))
@@ -35,13 +34,15 @@
                    (.end m)
                    (conj res
                          head
-                         (cond (str/starts-with? match "#")  (zd.methods/inline-method ztx :symbol-link  (subs match 1))
-                               (str/starts-with? match "@")  (zd.methods/inline-method ztx :mention      (subs match 1))
-                               (str/starts-with? match "`")  (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
+                         (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1))
+                               (str/starts-with? match "@")   (zd.methods/inline-method ztx :mention      (subs match 1))
+                               (str/starts-with? match "`")   (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
                                (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)))
-                               (str/starts-with? match "[[") (call-inline-method   ztx (subs match 2 (- (count match) 2)))
-                               (str/starts-with? match "[")  (zd.methods/inline-method ztx :md/link     (subs match 1 (- (count match) 1)))
-                               (str/starts-with? match "((") (call-inline-function ztx (subs match 2 (- (count match) 2))))
+                               (str/starts-with? match "__")  (zd.methods/inline-method ztx :italic       (subs match 2 (- (count match) 2)))
+                               (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)))
+                               (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)))
+                               (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)))
+                               (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2))))
                          " ")))
                 (conj res (subs s start))))]
     (remove empty? res)))
