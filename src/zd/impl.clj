@@ -368,3 +368,17 @@
    (when-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
      [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}])
    title])
+
+(defmethod render-key
+  [:toc]
+  [_ {{doc :doc} :page :as block}]
+  [:div {:class (c :text-sm)}
+   (for [b doc]
+     (when-not (or (contains? #{[:menu-order] [:title] [:avatar]} (:path b))(get-in b [:annotations :hide]))
+       [:div {:class (c :flex [:space-x 2])}
+        (for [_ (range (count (:path b)))]
+          [:div {:class (c [:w 2])}])
+        [:div {:class (c [:text :gray-400])} "●"]
+        [:a {:href (str "#" (str/join (:path b))) :class (c [:text :blue-600])}
+         (or (get-in b [:annotations :title])
+             (capitalize (name (last (:path b)))))]]))])
