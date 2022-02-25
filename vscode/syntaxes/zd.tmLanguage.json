@@ -3,6 +3,9 @@
     "name": "zendoc",
     "patterns": [
         {
+            "include": "#annotation"
+        },
+        {
             "include": "#blocks"
         },
         {
@@ -17,8 +20,14 @@
             "patterns": [
                 {
                     "name": "text",
-                    "begin": "[a-z]+/$",
-                    "end": "(?=^:)"
+                    "begin": "([a-z]+/)$",
+                    "end": "(?=(^:|^\\^))",
+                    "patterns": [
+                        {
+                            "include": "#codeblock"
+                        }
+                        
+                    ]
                 }
             ]
         },
@@ -26,11 +35,14 @@
             "patterns": [
                 {
                     "name": "keyword.control.zd",
-                    "match": "^:[^ ]+\\s"
-                },
-                {
-                    "name": "keyword.control.zd",
-                    "match": "\\b:[^ ]+\\b"
+                    "match": "^:[^ ]+\\s",
+                    "patterns": [
+                        {
+                            "match": "#",
+                            "name": "comment"
+                        }
+                        
+                    ]
                 }
             ]
         },
@@ -44,6 +56,19 @@
                     "match": "\\\\."
                 }
             ]
+        },
+        "codeblock": {
+            "name": "string.quoted.double.zd",
+            "begin": "^```",
+            "end": "^```"
+        },
+        "content": {
+            "name": "string.quoted.double.zd",
+            "match": "[a-z]*/$"
+        },
+        "annotation": {
+            "name": "variable.language.zd",
+            "match": "^\\^[-a-z0-9]+"
         }
     },
     "scopeName": "source.zd"

@@ -45,9 +45,11 @@
   (def pth "/Users/ganshinv/hs/sansara/box/docs")
   (def pth "/Users/niquola/sansara/box/docs")
 
+  (def pth "/Users/niquola/hs-kb/libs/zd/docs")
+
   (def ztx (zen/new-context {:zd/paths [pth] :paths [pth]}))
 
-  (start ztx {:port 3030})
+  (start ztx {:port 3031})
 
   (stop ztx)
   

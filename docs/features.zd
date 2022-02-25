@@ -1,16 +1,1 @@
 :title "Features"
-^hide
-:menu
-[
- {:ref features.logo      :title "Logo"}
- {:ref features.project   :title "Project"}
- {:ref features.syntax    :title "Syntax"}
- {:ref features.macros    :title "Macros"}
- {:ref features.zentext }
- {:ref features.hiccup }
- {:ref features.search }
- {:ref features.navigation }
- {:ref features.emacs :title "Emacs"}
- {:ref features.schemas :title "Schemas"}
- ]
-

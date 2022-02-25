@@ -1,0 +1,146 @@
+:menu-order 2
+^badge
+:authors #{team.niquola}
+
+:title "Basics"
+
+:summary md/
+
+Zendoc is data annotated to look like structured dynamic text, which may use other data
+
+^table
+:key [{:person team.niquola}]
+
+:document md/
+
+Each document got its name from path in file system
+starting from project root.
+To get name from path - strip [[code .zd]] and replace [[code /]] with [[code .]].
+
+For example path [[code mywiki/people/niquola.zd]] will be translated into name [[code mywiki.people.niquola]]
+This name as a symbol may be used to reference doc/resource.
+Each document is loaded into database as data (resource), and can be accessed from other documents.
+
+:diagram mm/
+
+flowchart TB
+zendoc-->document
+zendoc-->resource
+resource-->db
+document-->db
+db[(Database)]
+
+:syntax md/
+
+zendoc syntax is a superset of [[a https://github.com/edn-format/edn EDN]]
+
+
+```code edn
+  ;; PRIMITIVES
+  "string"   ;; string
+  100.0      ;; number
+  true       ;; boolean
+  :my-ns/key ;; keyword
+  my-ns/symb ;; symbol
+
+  ;; COLLECTIONS
+  {:key "value" :age 10} ;; map
+  [1 2 3 4]   ;; vector
+  #{:a :b :c} ;; set
+  (plus 1 2)  ;; list
+
+```
+
+Each document in zendoc consists of sequence of keys (keypaths), values and annotations.
+
+Let's take a look at sample document:
+
+```code edn
+ :title "My Page"
+ ^badge
+ :status :draft
+ ^table
+ :authors [{:person people.niquola}]
+ :example (load "file.json")
+ :content md/
+   Here is some text content...
+ :nested#:key "value"
+  
+```
+
+Document loaded in two forms as [[b a Resource]] and as [[b a Page]].
+
+Resource is data representation of document,
+where each keypath and value is inserted into a map (dictionary, object).
+
+```code edn
+{:zd/name my.document
+ :title "MyPage"
+ :status :draft
+ :authors [{:person people.niquola}]
+ :example {}
+ :content "Here is some text content..."
+ :nested {:key "value"}}
+
+```
+
+Resource is stored into in-memory database and can be accessed by name or with filter.
+
+Another representation of document is a page. Page is used for rendering.
+Page consists of sequence of blocks, each block has [[code :key, :value, :annotations]] keys
+
+
+```code edn
+[{:key [:title]   :value "My Page"}
+ {:key [:status]  :value :draft :annotations {:block :badge}}
+ {:key [:authors] :value [{:person people.niquola}] :annotations {:block :table}}
+ {:key [:example] :value {}}
+ {:key [:content] :value "Here is some text content..."}
+ {:key [:nested :key] :value "value"}]
+```
+
+Grammar for zendoc
+
+```code bnf
+  document = block+
+  block = (annotation)* keypath value
+  annotation = '^' annotation-name edn-data
+  keypath = key ( '#' key) 
+  key = ':[a-z]+'
+  value = edn-data | multi-string
+  multi-string = content-type '/$' string ;; till next annotation or keypath
+
+```
+
+:macros md/
+
+```code edn 
+  :title "Example"
+  ^yaml
+  :example (load "data.json")
+```
+
+:dynamic-content md/
+
+
+```code edn 
+ ^hiccup
+ :team
+  [:div
+    (for [mem (search {:namespace "team.*"})]
+      [:div {}
+        [:img {:src (:avatar mem)}]
+        [:b (:title mem)]])]
+```
+
+:extensibility md/
+
+:extensibility:annotation
+:extensibility:render-key
+:extensibility:render-block
+:extensibility:render-content
+:extensibility:key-data
+
+:zd/resource
+
+:zd/page

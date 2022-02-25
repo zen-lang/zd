@@ -1,5 +1,6 @@
 {
     "name": "zendoc",
+    "publisher": "zendoc-vs",
     "displayName": "zendoc",
     "description": "semantic wiki syntax",
     "version": "0.0.1",

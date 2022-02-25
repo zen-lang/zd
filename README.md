@@ -1,14 +1,66 @@
 # zd (zen docs)
 
-Semantic knowledge base
+Semantic knowledge base engine.
+
+* every document is a data with qualified name
+* all documents is your database
+* access database from your document
+* annotate data for representation
+* add schemas
+
+Every document is a data. Let's call it resource.  Resource is a ordered set of keys and values (map in clojure terms).
+More precisely set of keypaths and values
+
+Top level keys starts on new line from ':' and value in EDN after
+
+```
+:this-is-a-key "value"
+```
+
+To flatten nested structure keypath expression may be used - keys separated with `#`
+which means insert value into resource at path `[:key, :nested-key]`
+
+```
+:name#:given "???"
+:name#:family "???"
+;; same as
+:name {:given "???" :family "???"}
+
+```
+
+Each keypath may have annotations (metadata).
+Annotation starts with '^' following name and optional EDN value after
+
+```
+^table {:columns [:id]}
+:items [{:id "p1"}, {:id "p2"}]
+
+```
+
+For multi-line strings there is special notation, which starts form `:key [content-type]/`
+and ends at newline with keypath or annotation (i.e. ^: or ^^)
+
+```
+:content markdown/
+
+Here is some markdown
+* item 1
+
+:another-key "..."
 
 
-* Knowledge base consists of structured resources.
-* Each resource is file in zd format.
-* Full name of resource calculated from project root dirictory: /myns/resource.zd => myns.resource
-and may be referenced from other resources
-* Resource may be described with zen tags
+```
 
+Parser read the document and builds two data one as data and second for 
+
+
+
+## zd syntax
+
+* Keypath
+* Data
+* Multiline string
+* Annotations
 
 
 ## Setup zen docs for your project

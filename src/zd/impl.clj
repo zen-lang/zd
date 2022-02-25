@@ -6,6 +6,7 @@
    [zd.zentext]
    [sci.core]
    [clj-yaml.core]
+   [clojure.pprint]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
 (defmethod annotation :default
@@ -83,6 +84,16 @@
 (defmethod inline-method :symbol-link
   [ztx m s]
   (symbol-link ztx s))
+
+(defmethod inline-method :code
+  [ztx m s]
+  [:code {:class (c [:px 1] [:py 0.5] [:bg :gray-200]
+                    {:border-radius "2px"
+                     :font-family "ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace"})} s])
+
+(defmethod inline-method :b
+  [ztx m s]
+  [:b s])
 
 
 (defmethod inline-method
@@ -295,3 +306,24 @@
 (defmethod render-content :mm
   [ztx {{params :mermaid} :annotations data :data path :path}]
   [:div.mermaid data])
+
+
+(defmethod render-key
+  [:zd/page]
+  [_ {data :data :as block}]
+  [:div 
+   [:h3 "Debug:Page"]
+   [:pre {:class (c :text-sm)}
+    [:code {:class (str "language-edn hljs")}
+     (with-out-str (clojure.pprint/pprint (get-in block [:page :doc])))]]])
+
+(defmethod render-key
+  [:zd/resource]
+  [_ {data :data :as block}]
+  [:div 
+   [:h3 "Debug:Resource"]
+   [:pre {:class (c :text-sm)}
+    [:code {:class (str "language-edn hljs")}
+     (with-out-str (clojure.pprint/pprint (get-in block [:page :resource])))]]])
+
+(defmethod render-key [:menu-order] [_ _block] [:div])
