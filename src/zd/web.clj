@@ -47,11 +47,12 @@
     resp))
 
 (defn handle-static [ztx {meth :request-method uri :uri :as req}]
-  (when-let [f (->> (get @ztx :zd/paths)
-                    (map (fn [path]
-                            (let [f (io/file (str path uri))]
-                              (when (.exists f) f))))
-                    (first))]
+  (when-let [f (or (io/resource (str/replace uri #"^/" ""))
+                   (->> (get @ztx :zd/paths)
+                        (map (fn [path]
+                               (let [f (io/file (str path uri))]
+                                 (when (.exists f) f))))
+                        (first)))]
     (ring.util.response/file-response (.getPath f))))
 
 

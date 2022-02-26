@@ -8,6 +8,7 @@
    [clj-yaml.core]
    [clojure.pprint]
    [markdown.core]
+   [cheshire.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
 (defmethod annotation :default
@@ -382,3 +383,54 @@
         [:a {:href (str "#" (str/join (:path b))) :class (c [:text :blue-600])}
          (or (get-in b [:annotations :title])
              (capitalize (name (last (:path b)))))]]))])
+
+
+(defmethod process-block "table" [ztx _ _ args]
+  (let [[cols & rows] (->> (str/split-lines args) (mapv (fn [x] (str/split x #"\|"))))]
+    [:table {:class (c :shadow-sm :rounded)}
+     [:thead
+      (into [:tr] (->> cols (mapv (fn [k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])} k]))))]
+     (into [:tbody]
+           (->> rows
+                (mapv (fn [x]
+                        (into [:tr]
+                              (->> x (mapv (fn [v] [:td {:class (c [:px 4] [:py 2] :border)} v]))))))))]))
+
+
+(defn mindmap-stack [stack lvl]
+  (loop [[[slvl idx] & is :as st] stack]
+    (if (nil? slvl)
+      (list [lvl (inc (or (second (first stack)) -1))])
+      (cond
+        (< slvl lvl)  (conj st [lvl 0])
+        (= slvl lvl)  (conj is [lvl (inc idx)])
+        (> slvl lvl)  (recur is)))))
+
+(defn mindmap-assoc [res stack content]
+  (let [path (->> stack
+                  reverse
+                  (mapcat (fn [[_ idx]] [:children idx])))]
+    (assoc-in res path {:name content :children []})))
+
+(defn parse-mindmap [txt]
+  (let [[root & lns] (->> (str/split-lines txt) (remove str/blank?))]
+    (loop [[l & lns] lns 
+           stack     (list)
+           res       {:name (str/trim root) :children []}]
+      (if (nil? l)
+        res
+        (if (str/blank? l)
+          (recur lns stack res)
+          (let [len (count l)
+                data (str/replace l #"^\s*\*" "")
+                lvl (- len (count data))
+                stack' (mindmap-stack stack lvl)]
+            (recur lns stack' (mindmap-assoc res stack' (str/replace data #"^\s*" "")))))))))
+
+(defmethod render-content :mindmap
+  [ztx {ann :annotations data :data path :path :as block}]
+  (let [id (str (gensym))]
+    [:div
+     [:svg.mindmap {:id id :width "900" :height "600"}]
+     [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
+

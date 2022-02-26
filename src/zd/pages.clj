@@ -63,6 +63,18 @@
                        :top 0
                        :transition "transform 0.3s 0.3s"}]
    [:p (c* [:mb 4] {:line-height "1.7rem"})]
+
+   [:.mindmap
+    [:.node
+     [:circle {:fill "#aaa"}]
+     [:text {}]]
+    [:.node--internal [:circle {:fill "#999"}]]
+    [:.link {:fill "none"
+             :stroke "#aaa"
+             :stroke-opacity "0.4"
+             :stroke-width "1.5px"}]]
+
+
    ])
 
 
@@ -77,6 +89,8 @@
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
     [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
+    [:script {:src "/js/d3.js"}]
+    [:script {:src "/js/mindmap.js"}]
     [:script "hljs.highlightAll()"]
     ]
    [:body {:class (c [:bg :gray-100] :w-max-full)}
@@ -180,8 +194,8 @@
     (breadcrump ztx (:zd/name page))
     [:div {:class (c :text-sm [:text :gray-600])}
      (:zd/name page)]]
-   [:div {:class (c [:w 230]
-                    [:w-max 230]
+   [:div {:class (c [:w 280]
+                    [:w-max 280]
                     [:bg :white] [:py 4] [:px 16] :shadow-md
                     {:color "#3b454e"})}
     
