@@ -25,9 +25,11 @@
 
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;"}
-   [:h1 (c* [:mb 2] {:font-size "46px" :font-weight "700" :border-bottom "1px solid #f1f1f1"})]
-   [:h2 (c* [:mb 2] {:font-size "32px" :font-weight "700" :line-height "40px" :border-bottom "1px solid #f1f1f1"})]
-   [:h3 (c* [:mb 2] {:font-size "24px" :font-weight "700" :line-height "36px" :border-bottom "1px solid #f1f1f1"})]
+   [:h1 (c* :border-b {:font-size "32px" :margin-top "10px" :margin-bottom "16px" :font-weight "600"})]
+   [:h2 (c* :border-b {:font-size "24px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "30px"})]
+   [:h3 (c* {:font-size "20px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "25px"})]
+   [:h4 (c* {:font-size "16px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "20px"})]
+   [:h5 (c* {:font-size "14px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "16px"})]
    [:ul {:list-style "inside"
          :line-height "24px"}
     [:li {:display "list-item"}]
@@ -36,7 +38,9 @@
          :line-height "24px"}
     [:li {:display "list-item"}]
     [:ol (c* [:ml 4])]]
-   [:p (c* [:my 1])]
+
+   [:p (c* [:mb 4] {:line-height "1.5rem"})]
+
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
    [:.active-nav {:border-bottom "2px solid #666" :color "black"}]
@@ -62,7 +66,7 @@
                        :height "100%"
                        :top 0
                        :transition "transform 0.3s 0.3s"}]
-   [:p (c* [:mb 4] {:line-height "1.7rem"})]
+   
 
    [:.mindmap
     [:.node
@@ -73,6 +77,18 @@
              :stroke "#aaa"
              :stroke-opacity "0.4"
              :stroke-width "1.5px"}]]
+
+   [:.zd-toggle [:.zd-content {:height "0"
+                               :transform "scaleY(0) "
+                               :transform-origin "top"
+                               :transition "all 0.26s ease"}]]
+   [:.zd-toggle.zd-open
+    [:.zd-content {:transform "scaleY(1)"
+                   :height "auto"}]
+    [:.zd-block-title [:.fas {:transform "rotate(90deg)"
+                              :transition "all 0.26s"}]]
+    ]
+   
 
 
    ])
@@ -91,8 +107,8 @@
     [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
     [:script {:src "/js/d3.js"}]
     [:script {:src "/js/mindmap.js"}]
-    [:script "hljs.highlightAll()"]
-    ]
+    [:script {:src "/js/zendoc.js"}]
+    [:script "hljs.highlightAll()"]]
    [:body {:class (c [:bg :gray-100] :w-max-full)}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden

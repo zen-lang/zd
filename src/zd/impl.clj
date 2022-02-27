@@ -93,8 +93,9 @@
 
 (defmethod inline-method :code
   [ztx m s]
-  [:code {:class (c [:px 1] [:py 0] [:bg :gray-200]
-                    {:border-radius "2px"
+  [:code {:class (c [:px 1.5] [:py 1] [:bg :gray-200]
+                    :text-sm
+                    {:border-radius "4px"
                      :font-family "ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace"})} s])
 
 (defmethod inline-method :b
@@ -142,7 +143,7 @@
 
 (defmethod render-content :md
   [ztx {data :data}]
-  [:div {:class (c [:px 0] [:py 2] [:bg :white])}
+  [:div {:class (c [:px 0] [:py 1] [:bg :white])}
    (zd.zentext/parse-block ztx data)])
 
 (defmethod render-content :img
@@ -200,14 +201,19 @@
 
 (defmethod render-block :default
   [ztx {ann :annotations data :data path :path :as block}]
-  [:div.zd-block {:class (name (c [:py 2]))}
+  [:div.zd-block {:class (str
+                          " "
+                          (when (:collapse ann) "zd-toggle")
+                              " "
+                              (when (get-in ann [:collapse :open]) "zd-open"))}
    (when-let [ann (:block ann)]
      (println :missed-render-block ann)
      [:div {:class (c [:text :red-800])}
       (str "Missed render-block for " ann)])
-   [(keyword (str "h" (inc (count path))))
+   [(keyword (str "h" (inc (count path)))) {:class "zd-block-title"}
     (when (:collapse ann)
-      [:i.fas.fa-chevron-right {:class (name (c [:mr 2] [:text :gray-500])) :on-click (str "zdtoggle()" )}])
+      [:i.fas.fa-chevron-right {:class (name (c [:mr 2] [:text :gray-500] :cursor-pointer
+                                                [:hover [:text :gray-600]]))}])
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
    [:div.zd-content (render-content ztx (update block :data (fn [d] (key-data ztx path d))))]])
 
@@ -370,7 +376,7 @@
 (defmethod render-key
   [:title]
   [_ {title :data :as block}]
-  [:h1 {:class (c [:mb 0] :border-b)}
+  [:h1 {}
    (when-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
      [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}])
    title])
@@ -380,7 +386,9 @@
   [_ {{doc :doc} :page :as block}]
   [:div {:class (c :text-sm)}
    (for [b doc]
-     (when-not (or (contains? #{[:menu-order] [:title] [:avatar]} (:path b))(get-in b [:annotations :hide]))
+     (when-not 
+       (or (contains? #{[:menu-order] [:title] [:avatar] [:toc]} (:path b))
+           (get-in b [:annotations :block]))
        [:div {:class (c :flex [:space-x 2])}
         (for [_ (range (count (:path b)))]
           [:div {:class (c [:w 2])}])
