@@ -11,6 +11,10 @@
    [cheshire.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
+(defmethod annotation :collapse
+  [nm params]
+  {:collapse (or params {})})
+
 (defmethod annotation :default
   [nm params]
   (println ::missed-annotation nm)
@@ -194,17 +198,18 @@
 
 (defmethod key-data :default [ztx path data] data)
 
-(defmethod render-block
-  :default
+(defmethod render-block :default
   [ztx {ann :annotations data :data path :path :as block}]
-  [:div {:class (c [:py 2])}
+  [:div.zd-block {:class (name (c [:py 2]))}
    (when-let [ann (:block ann)]
      (println :missed-render-block ann)
      [:div {:class (c [:text :red-800])}
       (str "Missed render-block for " ann)])
    [(keyword (str "h" (inc (count path))))
+    (when (:collapse ann)
+      [:i.fas.fa-chevron-right {:class (name (c [:mr 2] [:text :gray-500])) :on-click (str "zdtoggle()" )}])
     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
-   (render-content ztx (update block :data (fn [d] (key-data ztx path d))))])
+   [:div.zd-content (render-content ztx (update block :data (fn [d] (key-data ztx path d))))]])
 
 (defmethod render-block :none [ztx block])
 
@@ -433,4 +438,5 @@
     [:div
      [:svg.mindmap {:id id :width "900" :height "600"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
+
 
