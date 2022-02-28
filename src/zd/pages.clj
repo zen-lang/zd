@@ -156,13 +156,15 @@
 (defn render-items [item & [k depth]]
   [:div {:id  (str/lower-case k) :class "closable"}
    [:a {:href (when-not (:broken item) (:href item))
-        :class (->> [(c :inline-block :flex :items-center [:py 1] :rounded [:hover :cursor-pointer [:bg :white] [:text :gray-700]])
+        :class (->> [(c :inline-block :flex :items-center [:py 1]
+                        [:pl 0.5]
+                        :rounded [:hover :cursor-pointer [:bg :white] [:text :gray-700]])
                      (when (:broken item) (c [:text :red-500]))]
                     (filterv identity)
                     (mapv name)
                     (str/join " "))}
     (if (:items item)
-      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center)}
+      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center {:margin-left "-2px"})}
        [:i.fas.fa-caret-down.toggler.rotateToggler]]
       (if-let [ava (:avatar item)]
         [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
@@ -170,7 +172,7 @@
           [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:text :gray-400])}
            [:i {:class (str/join " " (map name ico))}]])))
 
-    [:span (or (:title item) (:href item) k)
+    [:span {:class (c [:ml 0.5])} (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
                                                       (str/join " "))} e])]]
    (into [:div {:class (->> ["closed" "closableContent" (name (c :border-l [:ml 3]))]
