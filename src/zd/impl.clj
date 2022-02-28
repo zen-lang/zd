@@ -262,7 +262,7 @@
 (defmethod render-content :yaml
   [ztx {ann :annotations data :data path :path :as block}]
   [:pre {:class (c :text-sm)}
-   [:code {:class (str "language-yaml hljs")} (clj-yaml.core/generate-string data)]])
+   [:code {:class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]])
 
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
@@ -452,7 +452,7 @@
   [ztx {ann :annotations data :data path :path :as block}]
   (let [id (str (gensym))]
     [:div
-     [:svg.mindmap {:id id :width "900" :height "600"}]
+     [:svg.mindmap {:id id :width "912" :height "600" :margin "0px -30px"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
 
 

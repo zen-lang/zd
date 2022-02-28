@@ -53,11 +53,14 @@ function drawTree(svg,root, pos) {
         });
 
     node.append("text")
-        .attr("dy", -14)
+        .attr("dy", -10)
         .style("text-anchor", "middle")
         .text(function(d) {
             return d.data.name;
-        });
+        })
+        .style("font-size", "10px")
+        .style("font-size", function(d) { return (2 * d.r - 10) / this.getComputedTextLength() * 10 + "px"; })
+    ;
 }
 
 function mindmap(id, data) {

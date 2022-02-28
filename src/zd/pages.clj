@@ -30,13 +30,18 @@
    [:h3 (c* {:font-size "20px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "25px"})]
    [:h4 (c* {:font-size "16px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "20px"})]
    [:h5 (c* {:font-size "14px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "16px"})]
-   [:ul {:list-style "inside"
-         :line-height "24px"}
-    [:li {:display "list-item"}]
-    [:ul {:margin-left "2rem"}]]
-   [:ol {:list-style "disk inside"
-         :line-height "24px"}
-    [:li {:display "list-item"}]
+   [:ul (c* [:ml 4] [:mb 4])
+    {:list-style "inside"
+     :line-height "24px"}
+    [:li {:display "list-item"
+          :list-style "outside"}]
+    [:ul (c* [:mb 0])]]
+   [:ol (c* [:ml 4]
+            {:list-style "disk inside"
+             :line-height "24px"})
+    [:li (c* [:my 1]
+             {:display "list-item"
+              :list-style "outside decimal"})]
     [:ol (c* [:ml 4])]]
 
    [:p (c* [:mb 4] {:line-height "1.5rem"})]
@@ -102,9 +107,9 @@
     [:style (garden.core/css common-style)]
     [:meta {:charset "UTF-8"}]
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
+    [:link  {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
-    [:script {:src "https://kit.fontawesome.com/c38313ee57.js" :crossorigin "anonymous"}]
     [:script {:src "/js/d3.js"}]
     [:script {:src "/js/mindmap.js"}]
     [:script {:src "/js/zendoc.js"}]
@@ -163,14 +168,14 @@
                     (filterv identity)
                     (mapv name)
                     (str/join " "))}
-    (if (:items item)
+    (when (:items item)
       [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center {:margin-left "-2px"})}
-       [:i.fas.fa-caret-down.toggler.rotateToggler]]
-      (if-let [ava (:avatar item)]
-        [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
-        (let [ico (or (:icon item) [:fa :fa-file-o])]
-          [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:text :gray-400])}
-           [:i {:class (str/join " " (map name ico))}]])))
+       [:i.fas.fa-caret-down.toggler.rotateToggler]])
+    (if-let [ava (:avatar item)]
+      [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
+      (let [ico (or (:icon item) [:fa-regular :fa-file])]
+        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:text :gray-500] [:mr 1])}
+         [:i {:class (str/join " " (map name ico))}]]))
 
     [:span {:class (c [:ml 0.5])} (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
@@ -188,7 +193,7 @@
                   [:hover [:text :gray-800] {:border-bottom "2px solid #888"}]))
 
 (defn navigation [ztx doc]
-  [:div {:class (c [:pr 4] [:w 80] [:text :gray-600]  :text-sm)}
+  [:div {:class (c [:pr 4] [:min-w 80] [:text :gray-600]  :text-sm)}
    [:div {:id "nav-files"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by menu-item-sort))]
@@ -214,8 +219,8 @@
     (breadcrump ztx (:zd/name page))
     [:div {:class (c :text-sm [:text :gray-600])}
      (:zd/name page)]]
-   [:div {:class (c [:w 280]
-                    [:w-max 280]
+   [:div {:class (c [:w 260]
+                    [:w-max 260]
                     [:bg :white] [:py 4] [:px 16] :shadow-md
                     {:color "#3b454e"})}
     
@@ -241,7 +246,8 @@
 
 
 (defn search [ztx doc]
-  [:div {:class (c :text-sm [:py 2] [:px 4] [:text :gray-600] [:border :gray-400] :rounded [:hover [:bg :white]])}
+  [:div {:class (c :text-sm [:py 2] [:px 4]
+                   [:text :gray-600] [:border :gray-400] :rounded [:hover [:bg :white]])}
    [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :black]])}
@@ -271,11 +277,11 @@
 
 (defn generate-page [ztx doc]
   (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
-    [:div {:class (c [:py 6] [:px 8] :flex [:space-x 4])}
+    [:div {:class (c [:py 6] [:px 8] :flex [:space-x 4] :justify-center )}
      (navigation ztx doc)
      (page ztx (assoc doc :backrefs link-groups))
      (search-container ztx doc)
-     [:div {:class (c  :flex :flex-col [:space-y 4] :flex-1)}
+     [:div {:class (c  :flex :flex-col [:space-y 4])}
       (search ztx doc)
       (links ztx link-groups)]]))
 
