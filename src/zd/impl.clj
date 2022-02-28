@@ -377,9 +377,17 @@
   [:title]
   [_ {title :data :as block}]
   [:h1 {}
-   (when-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
-     [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}])
+   (if-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
+     [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}]
+     (when-let [icon (get-in block [:page :resource :icon])]
+       [:i {:class (str (str/join " " (map name icon))
+                        " "
+                        (name (c [:mr 2] [:text :gray-600])))}]))
    title])
+
+(defmethod render-key [:avatar] [_ block] [:span])
+(defmethod render-key [:menu-order] [_ block] [:span])
+(defmethod render-key [:icon] [_ block] [:span])
 
 (defmethod render-key
   [:toc]

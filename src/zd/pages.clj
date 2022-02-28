@@ -98,8 +98,8 @@
   (zd.db/index-refs ztx)
   [:html
    [:head
-    [:style (garden.core/css common-style)]
     [:style (stylo.core/compile-styles @stylo.core/styles)]
+    [:style (garden.core/css common-style)]
     [:meta {:charset "UTF-8"}]
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
@@ -128,7 +128,8 @@
              (let [parts (interpose :items (str/split (name nm) #"\."))]
                (assoc-in acc parts {:title (or (get-in doc [:resource :title])
                                                (last parts))
-                                    :avatar      (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
+                                    :avatar    (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
+                                    :icon      (get-in doc [:resource :icon])
                                     :menu-order (get-in doc [:resource :menu-order] 10)
                                     :name      (last parts)
                                     :href (str nm)}))) {})))
@@ -165,8 +166,9 @@
        [:i.fas.fa-caret-down.toggler.rotateToggler]]
       (if-let [ava (:avatar item)]
         [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
-        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center [:text :gray-300])}
-         [:i.fa.fa-file]]))
+        (let [ico (or (:icon item) [:fa :fa-file-o])]
+          [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:text :gray-400])}
+           [:i {:class (str/join " " (map name ico))}]])))
 
     [:span (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
