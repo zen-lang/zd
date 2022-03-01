@@ -198,6 +198,10 @@
     [:a {:id id :href (str "#" id)} (or title id)]))
 
 (defmethod key-data :default [ztx path data] data)
+(defmethod zd.methods/title-actions
+  :override
+  [ztx block]
+  [:div ])
 
 (defmethod render-block :default
   [ztx {ann :annotations data :data path :path :as block}]
@@ -210,11 +214,14 @@
      (println :missed-render-block ann)
      [:div {:class (c [:text :red-800])}
       (str "Missed render-block for " ann)])
-   [(keyword (str "h" (inc (count path)))) {:class "zd-block-title"}
-    (when (:collapse ann)
-      [:i.fas.fa-chevron-right {:class (name (c [:mr 2] [:text :gray-500] :cursor-pointer
-                                                [:hover [:text :gray-600]]))}])
-    (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
+   [(keyword (str "h" (inc (count path)))) {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
+    [:div {:class (c :flex :flex-1)}
+     (when (:collapse ann)
+       [:i.fas.fa-chevron-right {:class (name (c [:mr 2] [:text :gray-500] :cursor-pointer
+                                                 [:hover [:text :gray-600]]))}])
+     (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
+    (zd.methods/title-actions ztx block)]
+   
    [:div.zd-content (render-content ztx (update block :data (fn [d] (key-data ztx path d))))]])
 
 (defmethod render-block :none [ztx block])
