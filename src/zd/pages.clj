@@ -239,8 +239,10 @@
         [:div {:class (c [:py 2] :text-sm)}
          [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
           (str/join "" (mapv str attr))]
-         (for [l (sort links)]
-           [:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])])
+         [:ul
+          (for [l (sort links)]
+            [:li (zd.impl/symbol-link ztx l)]
+            #_[:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])]])
       (into [:div {:class (c  [:py 2] [:px 4] )}
              [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))]))
 

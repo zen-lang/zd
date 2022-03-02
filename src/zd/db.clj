@@ -72,7 +72,8 @@
   (get-in @ ztx [:zdb nm]))
 
 (defn get-resource [ztx nm]
-  (get-in @ ztx [:zdb nm :resource]))
+  (when-let [r (get-in @ ztx [:zdb nm :resource])]
+    (assoc r :zd/name nm)))
 
 (defn get-resources [ztx]
   (->> (get-in @ ztx [:zdb])
