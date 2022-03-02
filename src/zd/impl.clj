@@ -17,9 +17,7 @@
 
 (defmethod annotation :default
   [nm params]
-  (println ::missed-annotation nm)
-  {:errors {nm {:params params
-                :message (str "No rule for " nm)}}})
+  (assoc {:content (keyword nm)} (keyword nm) params))
 
 (defmethod annotation :view-only
   [nm params]
