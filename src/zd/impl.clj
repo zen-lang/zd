@@ -273,9 +273,9 @@
                 (mapv (fn [x]
                         (into [:tr]
                               (->> headers
-                                   (mapv (fn [k]
+                                   (map-indexed (fn [i k]
                                            [:td
-                                            {:class (c [:px 4] [:py 2] :border)}
+                                            {:class (c [:px 4] [:py 2] :border {:vertical-align "top"}) :style (when (= i 0) "white-space: nowrap;")}
                                             (render-content ztx {:data (get x k)})]))))))))]
     [:pre (pr-str data)]))
 
