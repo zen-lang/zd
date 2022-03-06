@@ -159,6 +159,10 @@
   [:div {:class (c [:text :gray-600])}
    (render-content ztx block)])
 
+(defn render-md [ztx data]
+  (when data
+    (zd.zentext/parse-block ztx data)))
+
 (defmethod render-content :md
   [ztx {data :data}]
   [:div {:class (c [:px 0] [:py 1] [:bg :white])}
