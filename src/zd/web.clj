@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as str]
    [clojure.java.io :as io]
+   [zd.external-auth :as ext-auth]
    [org.httpkit.server :as http-kit]
    [ring.util.codec :as codec]
    [ring.util.response]
@@ -10,6 +11,7 @@
    [clj-yaml.core]
    [clojure.walk]
    [ring.middleware.content-type]
+   [ring.middleware.cookies]
    [ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
   (:use [ring.middleware.resource]
         [ring.middleware.file]
@@ -67,9 +69,14 @@
           (-> resp (allow req)))))))
 
 
-(defn auth-handler [opts]
-  (let [{:keys [basic-user basic-password]} opts]
+(defn auth-handler [ztx opts]
+  (let [{:keys [basic-user basic-password
+                github]} opts]
     (cond
+      github
+      (ext-auth/auth ztx opts)
+
+
       (and basic-user basic-password)
       (fn [req]
         (wrap-basic-authentication req
@@ -87,8 +94,10 @@
   [ztx opts dispatch]
   (stop ztx)
   (let [handler (mk-handler ztx dispatch)
-        srv (http-kit/run-server (-> handler
-                                     ((auth-handler opts)))
+        srv (http-kit/run-server (->
+                                  handler
+                                  ((auth-handler ztx opts))
+                                  (ring.middleware.cookies/wrap-cookies))
                                  (merge {:port 3030} opts))]
     (println :start (merge {:port 3030} opts))
     (swap! ztx assoc-in [:zd/web] {:server srv :handler handler}))
