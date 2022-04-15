@@ -13,17 +13,50 @@
 (defn create-resource [ztx res]
   (swap! ztx assoc-in [:zdb (:zd/name res)] res))
 
+(defmulti db-filter (fn [filter opts data] filter))
+
+(defmethod db-filter :default
+  [_ _ data]
+  data)
+
+(defmethod db-filter :namespace
+  [_ ns data]
+  (filterv (fn [{:zd/keys [name]}] (str/starts-with? name ns)) data))
+
+(defmethod db-filter :select
+  [_ keys data]
+  (mapv #(select-keys % keys) data))
+
+(defmethod db-filter :filter
+  [_ {:keys [path value]} data]
+  (filterv #(= (get-in % path) value)))
+
+(defmethod db-filter :sort
+  [_ sort data]
+  (sort-by (fn [x] (str (get-in x sort))) data))
+
+(defmethod db-filter :limit
+  [_ n data]
+  (take n data))
+
+(defmethod db-filter :where
+  [_ preds data]
+  (let [where (apply every-pred preds)]
+    (filterv where data)))
+
+(defn apply-filters
+  [filters data]
+  (reduce-kv (fn [data filter opts] (db-filter filter opts data))
+             data
+             filters))
 
 ;; TODO: implement more filters
 (defn search [ztx filter]
   (let [data (:zdb @ztx)]
-    (cond->>
-        (->>  data
-              (vals)
-              (filterv (fn [res] (str/starts-with? (:zd/name res) (:namespace filter))))
-              (take 100)
-              (mapv (fn [x] (assoc (:resource x) :zd/name (:zd/name x)))))
-      (:sort filter) (sort-by (fn [x] (str (get-in x (:sort filter))))))))
+    (->>  data
+          (vals)
+          (mapv (fn [x] (assoc (:resource x) :zd/name (:zd/name x))))
+          (apply-filters filter))))
 
 (defn select [ztx filter]
   (let [data (:zdb @ztx)]
