@@ -15,13 +15,13 @@
     (zd.db/load-dirs ztx dirs))
   :ok)
 
-(defn dispatch [ztx {uri :uri}]
+(defn dispatch [ztx {uri :uri :as q}]
   (when-not (get-in @ztx [:zd/opts :production])
     (reload ztx {}))
   (let [sym (symbol (subs uri 1))]
     (if-let [page (zd.db/get-page ztx sym)]
       {:status 200
-       :body  (zd.pages/render-page ztx page)}
+       :body  (zd.pages/render-page ztx (assoc page :request q))}
       {:status 404
        :body  (zd.pages/render-page ztx {:zd/name sym})})))
 

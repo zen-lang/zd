@@ -181,7 +181,7 @@
         params
         (cond->
             {:response_type "code"
-             :scope (str/join " " (:scopes prov))
+             :scope (str/join " " (concat (:scopes prov) (get-in opts [:github :additional-scopes] )))
              :client_id (get-in prov [:client-id])
              :redirect_uri  (cb-url opts req)
              :state state})
@@ -287,8 +287,9 @@
                                               :userinfo userinfo))]
     (if org-error
       org-error
-      (successful-redirect opts req (select-keys userinfo
-                                                 [:email :name :url])
+      (successful-redirect opts req (-> userinfo
+                                        (select-keys [:email :name :url])
+                                        (assoc :token token))
                            state))))
 
 
