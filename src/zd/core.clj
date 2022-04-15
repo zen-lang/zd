@@ -1,3 +1,5 @@
+;; :related #{comp.auth}
+;; :summary "......"
 (ns zd.core
   (:require
    [zen.core :as zen]
@@ -5,7 +7,8 @@
    [zd.pages]
    [zd.web]
    [clojure.walk]
-   [edamame.core]))
+   [edamame.core]
+   [route-map.core :as route-map]))
 
 
 (defn reload [ztx _opts]
@@ -15,15 +18,20 @@
     (zd.db/load-dirs ztx dirs))
   :ok)
 
-(defn dispatch [ztx {uri :uri :as q}]
+(defmulti op (fn [ztx {{op :op} :match} req] op))
+
+(defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])
     (reload ztx {}))
-  (let [sym (symbol (subs uri 1))]
-    (if-let [page (zd.db/get-page ztx sym)]
-      {:status 200
-       :body  (zd.pages/render-page ztx (assoc page :request q))}
-      {:status 404
-       :body  (zd.pages/render-page ztx {:zd/name sym})})))
+  (if-let [match (when-let [routes (get-in @ztx [:zd/opts :route-map])]
+                   (route-map.core/match  [m uri] routes))]
+    (op ztx match req)
+    (let [sym (symbol (subs uri 1))]
+      (if-let [page (zd.db/get-page ztx sym)]
+        {:status 200
+         :body  (zd.pages/render-page ztx (assoc page :request req))}
+        {:status 404
+         :body  (zd.pages/render-page ztx {:zd/name sym})}))))
 
 (defn start [ztx opts]
   (swap! ztx assoc :zd/opts opts)
