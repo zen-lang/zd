@@ -29,7 +29,7 @@
 
 (defmethod db-filter :filter
   [_ {:keys [path value]} data]
-  (filterv #(= (get-in % path) value)))
+  (filterv #(= (get-in % path) value) data))
 
 (defmethod db-filter :sort
   [_ sort data]
