@@ -38,3 +38,8 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
 });
+
+function on_form_validate() {
+    form_element = document.getElementById("form-validate");
+    form_element.submit();
+}

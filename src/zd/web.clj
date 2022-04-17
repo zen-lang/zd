@@ -10,6 +10,7 @@
    [ring.middleware.head]
    [clj-yaml.core]
    [clojure.walk]
+   [ring.middleware.params]
    [ring.middleware.content-type]
    [ring.middleware.cookies]
    [ring.middleware.basic-authentication :refer [wrap-basic-authentication]])
@@ -97,6 +98,7 @@
         srv (http-kit/run-server (->
                                   handler
                                   ((auth-handler ztx opts))
+                                  (ring.middleware.params/wrap-params)
                                   (ring.middleware.cookies/wrap-cookies))
                                  (merge {:port 3030} opts))]
     (println :start (merge {:port 3030} opts))
