@@ -234,17 +234,20 @@
 (defn links [ztx link-groups]
   (when (seq link-groups)
     [:div {:class (c [:text :gray-600])}
-     (->>
-      (for [[attr links] link-groups]
-        [:div {:class (c [:py 2] :text-sm)}
-         [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
-          (str/join "" (mapv str attr))]
-         [:ul
-          (for [l (sort links)]
-            [:li (zd.impl/symbol-link ztx l)]
-            #_[:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])]])
-      (into [:div {:class (c  [:py 2] [:px 4] )}
-             [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))]))
+     (->> link-groups
+          (reduce-kv (fn [acc k v]
+                       (update acc (first k) (fnil into []) v))
+                     {})
+          (map (fn [[attr links]]
+                 [:div {:class (c [:py 2] :text-sm)}
+                  [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
+                   attr]
+                  [:ul
+                   (for [l (sort links)]
+                     [:li (zd.impl/symbol-link ztx l)]
+                     #_[:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])]]))
+          (into [:div {:class (c  [:py 2] [:px 4] )}
+                 [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))]))
 
 
 (defn search [ztx doc]
