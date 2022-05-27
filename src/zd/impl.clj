@@ -268,7 +268,9 @@
   (if-let [headers (or (:columns cfg)
                        (and (sequential? data) (map? (first data))
                             (keys (first data))))]
-    [:table {:class (c :shadow-sm :rounded)}
+    [:table {:class (c :shadow-sm :rounded)
+             :style {:display "block"
+                     :overflow-x "overlay"}}
      [:thead
       (into [:tr] (->> headers (mapv (fn [k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
                                               (capitalize k)]))))]
