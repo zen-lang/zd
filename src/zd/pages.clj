@@ -1,22 +1,26 @@
 (ns zd.pages
   (:require
-   [zen.core :as zen]
    [zd.zentext]
    [zd.db]
    [zd.methods]
    [zd.impl]
-   [hiccup.core :as hiccup]
+   [hiccup.core]
    [hiccup.page]
    [hiccup.util]
    [markdown.core]
    [clojure.string :as str]
-   [stylo.core :refer [c c?]]
+   [stylo.core :refer [c]]
+   [stylo.rule :refer [rule join-rules]]
    [garden.core]
-   [stylo.rule  :refer [join-rules]]
    [cheshire.core :as json]
    [clojure.java.io :as io]))
 
-(defn to-html [x] (hiccup/html x))
+(defmethod rule :grid-template-areas
+  [_ & xs]
+  [[:& {:grid-template-areas (apply pr-str xs)}]])
+
+
+(defn to-html [x] (hiccup.core/html x))
 
 (def closed-node-style (c [:bg :red-500]))
 
@@ -71,7 +75,7 @@
                        :height "100%"
                        :top 0
                        :transition "transform 0.3s 0.3s"}]
-   
+
 
    [:.mindmap
     [:.node
@@ -91,12 +95,7 @@
     [:.zd-content {:transform "scaleY(1)"
                    :height "auto"}]
     [:.zd-block-title [:.fas {:transform "rotate(90deg)"
-                              :transition "all 0.26s"}]]
-    ]
-   
-
-
-   ])
+                              :transition "all 0.26s"}]]]])
 
 
 (defn layout [ztx content]
@@ -114,7 +113,7 @@
     [:script {:src "/js/mindmap.js"}]
     [:script {:src "/js/zendoc.js"}]
     [:script "hljs.highlightAll()"]]
-   [:body {:class (c [:bg :gray-100] :w-max-full)}
+   [:body {:class (c {:background-color "#F4F7F9" :overflow "hidden" :height "100vh"}  :w-max-full)}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
                 {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
@@ -129,6 +128,7 @@
 (defn build-tree [ztx doc]
   (->>
    (sort-by first (:zdb @ztx))
+   (filter #(not (contains? #{'logo} (get % 0))))
    (reduce (fn [acc [nm doc]]
              (let [parts (interpose :items (str/split (name nm) #"\."))]
                (assoc-in acc parts {:title (or (get-in doc [:resource :title])
@@ -153,16 +153,15 @@
                                     (assoc acc i (build-menu* ztx x doc)))
                                   {})))})))
 
-(defn build-menu [ztx doc]
-  (:items (build-menu* ztx {:ref 'readme} doc)))
 
 (defn menu-item-sort [[_ x]] (format "%07d %s" (get x :menu-order 10) (:title x)))
 
-(defn render-items [item & [k depth]]
+(defn render-items [item & [k]]
   [:div {:id  (str/lower-case k) :class "closable"}
    [:a {:href (when-not (:broken item) (:href item))
-        :class (->> [(c :inline-block :flex :items-center [:py 1]
-                        [:pl 0.5]
+        :class (->> [(c :inline-block :flex :items-center
+                        [:pl 2]
+                        [:py 2]
                         :rounded [:hover :cursor-pointer [:bg :white] [:text :gray-700]])
                      (when (:broken item) (c [:text :red-500]))]
                     (filterv identity)
@@ -188,21 +187,15 @@
                   (render-items it k true))]
             node-content)])])
 
-(def tab-class (c [:p 1] [:text :gray-600] :cursor-pointer
-                  {:margin-bottom "-2px"}
-                  [:hover [:text :gray-800] {:border-bottom "2px solid #888"}]))
-
 (defn navigation [ztx doc]
-  [:div {:class (c [:pr 4] [:min-w 80] [:text :gray-600]  :text-sm)}
+  [:aside {:class (c [:text :gray-600] [:pl 6] [:py 8] {:max-height "calc(100vh - 80px)" :overflow-y "auto" :grid-area "navigation"} :text-sm)}
    [:div {:id "nav-files"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by menu-item-sort))]
       (render-items it k))]])
 
-(def key-class (c [:text :orange-600] {:font-weight "400"}))
 
-
-(defn breadcrump [ztx name]
+(defn breadcrumb [_ztx name]
   (let [parts (str/split (str name) #"\.")]
     (->> (range (count parts))
          (mapv (fn [x]
@@ -213,27 +206,10 @@
                     (last pth)])))
          (into [:div {:class (c :flex :flex-1)}]))))
 
-(defn page [ztx {doc :doc res :resource :as page}]
-  [:div 
-   [:div {:class (c :flex [:py 1])}
-    (breadcrump ztx (:zd/name page))
-    [:div {:class (c :text-sm [:text :gray-600])}
-     (:zd/name page)]]
-   [:div {:class (c [:w 260]
-                    [:w-max 260]
-                    [:bg :white] [:py 4] [:px 16] :shadow-md
-                    {:color "#3b454e"})}
-    
-    [:div {:class (c [:mb 4])}
-     (->>
-      (for [block doc]
-        (let [block (assoc block :page page)]
-          (or (zd.methods/render-key ztx block)
-              (zd.methods/render-block ztx block)))))]]])
 
 (defn links [ztx link-groups]
-  (when (seq link-groups)
-    [:div {:class (c [:text :gray-600])}
+  [:div {:class (c [:text :gray-600])}
+   (when (seq link-groups)
      (->> link-groups
           (reduce-kv (fn [acc k v]
                        (update acc (first k) (fnil into []) v))
@@ -246,13 +222,34 @@
                    (for [l (sort links)]
                      [:li (zd.impl/symbol-link ztx l)]
                      #_[:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])]]))
-          (into [:div {:class (c  [:py 2] [:px 4] )}
-                 [:span {:class (c [:text :black] :font-bold)} "Referenced By"]]))]))
+          (into [:div {:class (c  [:py 2] [:px 4])}
+                 [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
 
-(defn search [ztx doc]
-  [:div {:class (c :text-sm [:py 2] [:px 4]
-                   [:text :gray-600] [:border :gray-400] :rounded [:hover [:bg :white]])}
+(defn page [ztx {doc :doc _res :resource :as page}]
+  [:div {:class (c {:grid-area "content"} [:pb 8] :grid {:overflow-y "auto"
+                                                         :max-height "calc(100vh - 80px)"
+                                                         :overflow-x "hidden"
+                                                         :grid-template-columns "1fr 230px"})}
+   [:div
+    [:div {:class (c :flex [:py 1])}
+     (breadcrumb ztx (:zd/name page))
+     [:div {:class (c :text-sm [:text :gray-600])}
+      (:zd/name page)]]
+    [:div {:class (c [:bg :white] [:py 4] [:px 8] :shadow-md
+                     {:color "#3b454e"})}
+     [:div {:class (c [:mb 4])}
+      (->>
+       (for [block doc]
+         (let [block (assoc block :page page)]
+           (or (zd.methods/render-key ztx block)
+               (zd.methods/render-block ztx block)))))]]]
+   (links ztx (:backrefs page))])
+
+
+(defn search []
+  [:div {:class (c :text-sm
+                   [:text :gray-600]  [:hover [:bg :white]])}
    [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :black]])}
@@ -260,7 +257,7 @@
     [:span "Search... (alt + k)"]]])
 
 
-(defn search-container [ztx doc]
+(defn search-container [_ztx _doc]
   [:div#searchContainer
    {:class (c :fixed {:z-index 2} [:w "30%"] :h-min-screen [:bg :gray-100] [:top 0]
               [:text :gray-700]
@@ -280,22 +277,55 @@
      {:class (c :flex :flex-col :h-max-screen :overflow-y-scroll)}]]])
 
 
+(defn topbar
+  [ztx doc]
+  (let [src (get (:zdb @ztx) 'logo)
+        logo (get-in src [:resource :logo])
+        title (get-in src [:resource :title])]
+    [:div {:class (c [:bg :white] {:height "80px"
+                                   :position "fixed"
+                                   :top 0
+                                   :width "100%"
+                                   :box-shadow "0px 4px 10px rgb(0 0 0 / 5%)"
+                                   :border-bottom "1px"
+                                   :border-bottom-color "rgba(211,220,228,1.00)"}
+                     :grid
+                     {:grid-template-columns  "300px 1fr 230px"})}
+     [:div {:class (c  [:py 5])}
+      [:a {:href "/readme"}
+       [:div {:class (c [:px 6]
+                        :flex
+                        :items-center
+                        [:border-r 2])}
+        [:div {:class (c {:height "40px" :width "40px"} [:mr 4])}
+         (when logo
+           [:image {:src logo}])]
+        [:div {:class (c :font-bold)}
+         (when title
+           title)]]]]
+     [:div]
+     [:div {:class (c  [:py 5])}
+      [:div {:class (c :h-full [:px 6] [:py 1] [:border-l 2] :items-center :justify-start :flex)}
+       (search)]]]))
+
 (defn generate-page [ztx doc]
   (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
-    [:div {:class (c [:py 6] [:px 8] :flex [:space-x 4] :justify-center )}
-     (navigation ztx doc)
-     (page ztx (assoc doc :backrefs link-groups))
-     (search-container ztx doc)
-     [:div {:class (c  :flex :flex-col [:space-y 4])}
-      (search ztx doc)
-      (links ztx link-groups)]]))
+    [:div {:class (c :h-max-full  :flex :flex-col)}
+     (topbar ztx doc)
+     [:div {:class (c :grid [:grid-template-areas "navigation content"]
+                      {:grid-template-columns  "300px 1fr"
+                       :margin-top "80px"})}
+      (navigation ztx doc)
+      (page ztx (assoc doc :backrefs link-groups))]
+     (search-container ztx doc)]))
 
-(defn zen-page [ztx doc]
+(defn zen-page [_ztx doc]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
    (when-let [t (:zen/name doc)]
-     [:div {:class (c :flex :border-b [:pt 2] [:pb 1])} 
+     [:div {:class (c :flex :border-b [:pt 2] [:pb 1])}
       [:div {:class (c :flex-1 [:text :gray-800] :font-bold  {:font-size "1.5rem"})} t]])
    [:pre (pr-str doc)]])
+
 
 (defn generate-zen-page [ztx doc]
   [:div {:class (c [:p 4] :flex [:space-x 4])}
@@ -311,7 +341,7 @@
   (->> [:div {:class (c [:p 4] :flex [:space-x 4])}
         (navigation ztx nil)
         [:div {:class (c [:w 260]  [:py 4] [:px 8] [:text :gray-600])}
-          (str "No page for '" sym)]]
+         (str "No page for '" sym)]]
        (layout ztx)
        to-html))
 

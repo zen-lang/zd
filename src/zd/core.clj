@@ -39,6 +39,7 @@
   (zen.core/read-ns ztx 'zd)
   (zd.web/start ztx opts dispatch))
 
+
 (defn stop [ztx]
   (zd.web/stop ztx))
 
@@ -54,12 +55,13 @@
   (def pth "/Users/niquola/sansara/box/docs")
 
   (def pth "/Users/niquola/hs-kb/libs/zd/docs")
+  (def pth "/Users/macabre/IdeaProjects/hs/zd/docs")
 
   (def ztx (zen/new-context {:zd/paths [pth] :paths [pth]}))
 
   (start ztx {:port 3031})
 
-  (stop ztx)
-  
+  (reload ztx {:port 3031})
 
-  )
+
+  (stop ztx))

@@ -1,8 +1,9 @@
 (ns zd.zentext
   (:require
    [clojure.string :as str]
-   [zd.methods ]
+   [zd.methods]
    [edamame.core]
+   [stylo.core :refer [c]]
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
@@ -70,7 +71,7 @@
                                             (if (:list ctx)
                                               (conj lists (:list ctx))
                                               lists)))
-                           (assoc :list [tp {:class (str "lvl-" lvl)}[:li line]]))
+                           (assoc :list [tp {:class (str "lvl-" lvl)} [:li line]]))
                        (update ctx :list #(conj % [:li line])))]
              ctx))
          {:lvl 0 :type nil :lists [:div]}
@@ -84,7 +85,7 @@
            :list  :list-start}
    :p     {:text  :conj
            :*     :p-end}
-   :block {:block :block-end 
+   :block {:block :block-end
            :*     :conj}
    :ol {:list :list-add-elem
         :sub-list :list-add-sub-elem
@@ -192,8 +193,8 @@
                    ctx  {:state :none :result []}]
               (let [token (get-token l)
                     action (or (get-in block-parser [(:state ctx) token])
-                                   (get-in block-parser [(:state ctx) :*])
-                                   {:action :unknown :state (:state ctx) :token token})
+                               (get-in block-parser [(:state ctx) :*])
+                               {:action :unknown :state (:state ctx) :token token})
                     new-ctx (apply-transition ztx action ctx l)]
                 ;; (println (:state ctx) token  :-> action :-> (dissoc new-ctx :result))
                 (if (not= :eof token)

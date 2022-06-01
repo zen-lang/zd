@@ -101,7 +101,7 @@
        (cond (= (:type icon) :img)
              [:img {:src (:img icon) :class (c [:h 4] :inline-block [:mr 1] {:border-radius "100%" :margin-bottom "1px"})}]
              (= (:type icon) :ico)
-             [:i {:class (str (str/join " " (map name (:icon icon))) " " (name (c [:mr 2] [:text :gray-500] :text-sm)))}])) 
+             [:i {:class (str (str/join " " (map name (:icon icon))) " " (name (c [:mr 2] [:text :gray-500] :text-sm)))}]))
      (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
@@ -144,7 +144,7 @@
 
 (defmethod process-block "code" [ztx _ lang cnt]
   [:pre {:class (c :text-sm)}
-   [:code {:class (str "language-" lang " hljs")} cnt]])
+   [:code {:class (str "language-" lang " hljs")} {:style {:word-wrap "break-word"}} cnt]])
 
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
@@ -165,12 +165,12 @@
 
 (defmethod render-content :md
   [ztx {data :data}]
-  [:div {:class (c [:px 0] [:py 1] [:bg :white])}
+  [:div {:class (c [:px 0] [:py 1] [:bg :white] {:word-wrap "break"})}
    (zd.zentext/parse-block ztx data)])
 
 (defmethod render-content :img
   [ztx {page :page {img :img} :annotations data :data}]
-  (let [path (str/join "/" (butlast (str/split (:zd/file page) #"/" )))
+  (let [path (str/join "/" (butlast (str/split (:zd/file page) #"/")))
         src (cond
               (str/starts-with? data "http") data
               (str/starts-with? data "/") data
@@ -188,8 +188,8 @@
     (symbol? data) (symbol-link ztx data)
     (number? data) (str data)
     (set? data) (conj (into [:div {:class (c :flex [:space-x 3] {:flex-wrap "wrap"})}
-                             [:div {:class (c [:text :gray-500] :text-sm )} "#"]]
-                            (mapv (fn [x] (render-content ztx {:data x}))data)))
+                             [:div {:class (c [:text :gray-500] :text-sm)} "#"]]
+                            (mapv (fn [x] (render-content ztx {:data x})) data)))
 
     (list? data)
     [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
@@ -223,15 +223,15 @@
 (defmethod zd.methods/title-actions
   :override
   [ztx block]
-  [:div ])
+  [:div])
 
 (defmethod render-block :default
   [ztx {ann :annotations data :data path :path :as block}]
   [:div.zd-block {:class (str
                           " "
                           (when (:collapse ann) "zd-toggle")
-                              " "
-                              (when (get-in ann [:collapse :open]) "zd-open"))}
+                          " "
+                          (when (get-in ann [:collapse :open]) "zd-open"))}
    (when-let [ann (:block ann)]
      (println :missed-render-block ann)
      [:div {:class (c [:text :red-800])}
@@ -243,7 +243,7 @@
                                                  [:hover [:text :gray-600]]))}])
      (keypath path (or (:title ann) (let [k (last path)] (capitalize k))))]
     (zd.methods/title-actions ztx block)]
-   
+
    [:div.zd-content (render-content ztx (update block :data (fn [d] (key-data ztx path d))))]])
 
 (defmethod render-block :none [ztx block])
@@ -252,7 +252,7 @@
   [ztx {data :data path :path :as block}]
   [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
    [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
-    (subs (str (last path)) 1) ]
+    (subs (str (last path)) 1)]
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
     (render-content ztx block)]])
 
@@ -260,8 +260,8 @@
   [ztx {data :data path :path :as block}]
   [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
    [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
-    (subs (str (last path)) 1) ]
-   [:div {:class (c )}
+    (subs (str (last path)) 1)]
+   [:div {:class (c)}
     (render-content ztx block)]])
 
 (defn table [ztx cfg data]
@@ -280,9 +280,9 @@
                         (into [:tr]
                               (->> headers
                                    (map-indexed (fn [i k]
-                                           [:td
-                                            {:class (c [:px 4] [:py 2] :border {:vertical-align "top"}) :style (when (= i 0) "white-space: nowrap;")}
-                                            (render-content ztx {:data (get x k)})]))))))))]
+                                                  [:td
+                                                   {:class (c [:px 4] [:py 2] :border {:vertical-align "top"}) :style (when (= i 0) "white-space: nowrap;")}
+                                                   (render-content ztx {:data (get x k)})]))))))))]
     [:pre (pr-str data)]))
 
 (defmethod render-content :table
@@ -359,7 +359,7 @@
 (defmethod render-key
   [:zd/page]
   [_ {data :data :as block}]
-  [:div 
+  [:div
    [:h3 "Debug:Page"]
    [:pre {:class (c :text-sm)}
     [:code {:class (str "language-edn hljs")}
@@ -368,7 +368,7 @@
 (defmethod render-key
   [:zd/resource]
   [_ {data :data :as block}]
-  [:div 
+  [:div
    [:h3 "Debug:Resource"]
    [:pre {:class (c :text-sm)}
     [:code {:class (str "language-edn hljs")}
@@ -425,9 +425,9 @@
   [_ {{doc :doc} :page :as block}]
   [:div {:class (c :text-sm)}
    (for [b doc]
-     (when-not 
-       (or (contains? #{[:menu-order] [:title] [:avatar] [:toc]} (:path b))
-           (get-in b [:annotations :block]))
+     (when-not
+      (or (contains? #{[:menu-order] [:title] [:avatar] [:toc]} (:path b))
+          (get-in b [:annotations :block]))
        [:div {:class (c :flex [:space-x 2])}
         (for [_ (range (count (:path b)))]
           [:div {:class (c [:w 2])}])
@@ -466,7 +466,7 @@
 
 (defn parse-mindmap [txt]
   (let [[root & lns] (->> (str/split-lines txt) (remove str/blank?))]
-    (loop [[l & lns] lns 
+    (loop [[l & lns] lns
            stack     (list)
            res       {:name (str/trim root) :children []}]
       (if (nil? l)
