@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function(){
         var current = id && document.getElementById(id);
         console.log('current', activetab, current);
 
-        el.querySelector('.tabsh').addEventListener("click", function (ev) {
+        el.querySelector('.tabh').addEventListener("click", function (ev) {
             console.log(ev);
             if(! ev.target.classList.contains("tabh")){
                 return;
