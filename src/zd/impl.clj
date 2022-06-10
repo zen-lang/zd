@@ -378,6 +378,34 @@
     [:code {:class (str "language-edn hljs")}
      (with-out-str (clojure.pprint/pprint (get-in block [:page :resource])))]]])
 
+(defmethod render-key
+  [:tag]
+  [ztx block]
+  (let [references (zen.core/get-tag ztx (:data block))
+        schemas    (->> (sort references)
+                        (filter (comp #(clojure.string/starts-with? % "fhir.ru")
+                                      namespace))
+                        (mapv (fn [reference]
+                                [reference (zen.core/get-symbol ztx reference)])))
+        sorted-schemas (reverse (sort-by (comp :zendoc second) schemas))]
+    [:div
+     [:h1 (-> block :annotations :title)]
+     [:ul
+      (for [[reference schema] sorted-schemas]
+        (let [zendoc (some-> schema :zendoc name (subs 1) symbol)]
+          [:li
+           (if zendoc
+             [:a {:href  (str "/" zendoc)
+                  :class (c [:text :blue-600])}
+              (or
+               (->> (zd.db/get-doc ztx zendoc) 
+                    (filter #(= [:title] (:path %)))
+                    (first)
+                    (:data))
+               reference)]
+             [:div {:class (c [:text :red-600])} (name reference)])]))]]))
+
+
 (defmethod render-key [:menu-order] [_ _block] [:div])
 
 (defmethod inline-method :mention
@@ -489,5 +517,3 @@
     [:div
      [:svg.mindmap {:id id :width "912" :height "600" :margin "0px -30px"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
-
-
