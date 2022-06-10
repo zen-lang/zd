@@ -264,6 +264,10 @@
    [:div {:class (c)}
     (render-content ztx block)]])
 
+(defmethod render-block :plain
+  [ztx block]
+  (render-content ztx block))
+
 (defn table [ztx cfg data]
   (if-let [headers (or (:columns cfg)
                        (and (sequential? data) (map? (first data))
