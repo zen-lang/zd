@@ -144,7 +144,7 @@
 
 (defmethod process-block "code" [ztx _ lang cnt]
   [:pre {:class (c :text-sm)}
-   [:code {:class (str "language-" lang " hljs")} {:style {:word-wrap "break-word"}} cnt]])
+   [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")}  cnt]])
 
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
