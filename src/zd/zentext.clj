@@ -7,7 +7,6 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
-
 (def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+[_a-zA-Z]|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
 
 (defn call-inline-method [ztx s]
@@ -42,8 +41,7 @@
                                (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)))
                                (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)))
                                (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)))
-                               (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2))))
-                         " ")))
+                               (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2)))))))
                 (conj res (subs s start))))]
     (remove empty? res)))
 
@@ -202,6 +200,7 @@
                     (recur ls new-ctx))
                   (:result new-ctx))))]
     res))
+
 
 (defn parse-block [ztx s]
   (let [lines (get-lines s)
