@@ -143,8 +143,15 @@
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
 (defmethod process-block "code" [ztx _ lang cnt]
-  [:pre {:class (c :text-sm)}
-   [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")}  cnt]])
+ [:div.code-block
+  [:pre {:class (c :text-sm)
+         :style {:position "relative"}}
+   [:i.fas.fa-clipboard-list.copy-button
+    {:title "Click to Copy"
+     :style {:position  "absolute"
+             :top       "5px"
+             :right     "5px"}}]
+   [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
