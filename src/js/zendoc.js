@@ -1,6 +1,7 @@
 function toa(x){
     return Array.prototype.slice.call(x);
 }
+
 document.addEventListener('DOMContentLoaded', function(){
     toa(document.getElementsByClassName("zd-toggle")).map(function(el){
         el.querySelector('.zd-block-title').addEventListener("click", function () {
@@ -15,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function(){
         var current = id && document.getElementById(id);
         console.log('current', activetab, current);
 
-        el.querySelector('.tabsh').addEventListener("click", function (ev) {
+        el.querySelector('.tabh').addEventListener("click", function (ev) {
             console.log(ev);
             if(! ev.target.classList.contains("tabh")){
                 return;
@@ -37,9 +38,24 @@ document.addEventListener('DOMContentLoaded', function(){
 
     });
 
+    toa(document.getElementsByClassName("code-block")).map(function(el) {
+        el.querySelector(".copy-button").addEventListener("click", function () {
+            copyToClipboard(el.querySelector("pre").querySelector("code").innerText);
+        })
+    });
 });
 
 function on_form_validate() {
     form_element = document.getElementById("form-validate");
     form_element.submit();
+}
+
+function copyToClipboard(str) {
+  var area = document.createElement('textarea');
+
+  document.body.appendChild(area);
+    area.value = str;
+    area.select();
+    document.execCommand("copy");
+  document.body.removeChild(area);
 }

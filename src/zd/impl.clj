@@ -143,8 +143,15 @@
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
 (defmethod process-block "code" [ztx _ lang cnt]
-  [:pre {:class (c :text-sm)}
-   [:code {:class (str "language-" lang " hljs")} {:style {:word-wrap "break-word"}} cnt]])
+ [:div.code-block
+  [:pre {:class (c :text-sm)
+         :style {:position "relative"}}
+   [:i.fas.fa-clipboard-list.copy-button
+    {:title "Click to Copy"
+     :style {:position  "absolute"
+             :top       "5px"
+             :right     "5px"}}]
+   [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
@@ -264,6 +271,10 @@
    [:div {:class (c)}
     (render-content ztx block)]])
 
+(defmethod render-block :plain
+  [ztx block]
+  (render-content ztx block))
+
 (defn table [ztx cfg data]
   (if-let [headers (or (:columns cfg)
                        (and (sequential? data) (map? (first data))
@@ -373,6 +384,34 @@
    [:pre {:class (c :text-sm)}
     [:code {:class (str "language-edn hljs")}
      (with-out-str (clojure.pprint/pprint (get-in block [:page :resource])))]]])
+
+(defmethod render-key
+  [:tag]
+  [ztx block]
+  (let [references (zen.core/get-tag ztx (:data block))
+        schemas    (->> (sort references)
+                        (filter (comp #(clojure.string/starts-with? % "fhir.ru")
+                                      namespace))
+                        (mapv (fn [reference]
+                                [reference (zen.core/get-symbol ztx reference)])))
+        sorted-schemas (reverse (sort-by (comp :zendoc second) schemas))]
+    [:div
+     [:h1 (-> block :annotations :title)]
+     [:ul
+      (for [[reference schema] sorted-schemas]
+        (let [zendoc (some-> schema :zendoc name (subs 1) symbol)]
+          [:li
+           (if zendoc
+             [:a {:href  (str "/" zendoc)
+                  :class (c [:text :blue-600])}
+              (or
+               (->> (zd.db/get-doc ztx zendoc) 
+                    (filter #(= [:title] (:path %)))
+                    (first)
+                    (:data))
+               reference)]
+             [:div {:class (c [:text :red-600])} (name reference)])]))]]))
+
 
 (defmethod render-key [:menu-order] [_ _block] [:div])
 
@@ -485,5 +524,3 @@
     [:div
      [:svg.mindmap {:id id :width "912" :height "600" :margin "0px -30px"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
-
-

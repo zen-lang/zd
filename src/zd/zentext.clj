@@ -7,9 +7,7 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
-
-(def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
-
+(def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+[_a-zA-Z]|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
 
 (defn call-inline-method [ztx s]
   (let [[method arg] (str/split s #"\s+" 2)]
@@ -43,8 +41,7 @@
                                (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)))
                                (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)))
                                (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)))
-                               (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2))))
-                         " ")))
+                               (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2)))))))
                 (conj res (subs s start))))]
     (remove empty? res)))
 
@@ -119,7 +116,12 @@
 
 (defmethod apply-transition :p-end
   [ztx tr {lns :lines :as ctx} line]
-  (-> (update ctx :result conj (into [:p] (interpose "\n" (mapcat (fn [l] (parse-inline ztx l)) lns))))
+  (-> (update ctx :result conj (let [res (into [:p]
+                                               (mapcat (fn [l] (let [parsed (parse-inline ztx l)]
+                                                                 (if-not (or (some #{"."} parsed) (some #{","} parsed))
+                                                                   (conj parsed "\n")
+                                                                   parsed))) lns))]
+                                 res))
       (assoc :state :none :lines [] :push-back true)))
 
 (defmethod apply-transition :block-start
@@ -203,6 +205,7 @@
                     (recur ls new-ctx))
                   (:result new-ctx))))]
     res))
+
 
 (defn parse-block [ztx s]
   (let [lines (get-lines s)

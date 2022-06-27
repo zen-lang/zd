@@ -20,6 +20,8 @@
 
 (defmulti op (fn [ztx {{op :op} :match} req] op))
 
+(defmethod op :default [_ {{op :op} :match} _] op)
+
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])
     (reload ztx {}))

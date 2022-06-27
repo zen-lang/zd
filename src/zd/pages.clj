@@ -235,7 +235,13 @@
     [:div {:class (c :flex [:py 1])}
      (breadcrumb ztx (:zd/name page))
      [:div {:class (c :text-sm [:text :gray-600])}
-      (:zd/name page)]]
+      (:zd/name page)
+      (when (and (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))
+        [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
+             :target "_blank"
+             :title "Edit page"
+             :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
+         [:i.fas.fa-pencil]])]]
     [:div {:class (c [:bg :white] [:py 4] [:px 8] :shadow-md
                      {:color "#3b454e"})}
      [:div {:class (c [:mb 4])}
