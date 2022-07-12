@@ -25,7 +25,7 @@
 
 (defmethod db-filter :namespace/first
   [_ ns data]
-  (filterv (fn [{:zd/keys [name]}] (println :here name) (and (str/starts-with? name ns) (re-find (re-matcher #"^[^.]+\.[^.]+$" (str name))))) data))
+  (filterv (fn [{:zd/keys [name]}] (and (str/starts-with? name ns) (re-find (re-matcher #"^[^.]+\.[^.]+$" (str name))))) data))
 
 (defmethod db-filter :select
   [_ keys data]
