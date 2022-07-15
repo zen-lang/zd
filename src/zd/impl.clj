@@ -143,15 +143,15 @@
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
 (defmethod process-block "code" [ztx _ lang cnt]
- [:div.code-block
-  [:pre {:class (c :text-sm)
-         :style {:position "relative"}}
-   [:i.fas.fa-clipboard-list.copy-button
-    {:title "Click to Copy"
-     :style {:position  "absolute"
-             :top       "5px"
-             :right     "5px"}}]
-   [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
+  [:div.code-block
+   [:pre {:class (c :text-sm)
+          :style {:position "relative"}}
+    [:i.fas.fa-clipboard-list.copy-button
+     {:title "Click to Copy"
+      :style {:position  "absolute"
+              :top       "5px"
+              :right     "5px"}}]
+    [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
@@ -303,8 +303,15 @@
 
 (defmethod render-content :yaml
   [ztx {ann :annotations data :data path :path :as block}]
-  [:pre {:class (c :text-sm)}
-   [:code {:class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]])
+  [:div.code-block
+   [:pre {:class (c :text-sm) :style {:white-space "pre-wrap"}}
+    [:i.fas.fa-clipboard-list.copy-button
+     {:title "Click to Copy"
+      :style {:position  "relative"
+              :float     "right"
+              :top       "5px"
+              :right     "20px"}}]
+    [:code {:style {:word-wrap "break-word"} :class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
 
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
