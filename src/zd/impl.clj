@@ -406,13 +406,13 @@
      [:h1 (-> block :annotations :title)]
      [:ul
       (for [[reference schema] sorted-schemas]
-        (let [zendoc (some-> schema :zendoc name (subs 1) symbol)]
+        (let [zendoc (some-> schema :zendoc)]
           [:li
            (if zendoc
              [:a {:href  (str "/" zendoc)
                   :class (c [:text :blue-600])}
               (or
-               (->> (zd.db/get-doc ztx zendoc) 
+               (->> (zd.db/get-doc ztx zendoc)
                     (filter #(= [:title] (:path %)))
                     (first)
                     (:data))
