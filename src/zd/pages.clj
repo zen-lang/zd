@@ -167,9 +167,7 @@
                     (filterv identity)
                     (mapv name)
                     (str/join " "))}
-    (when (:items item)
-      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center {:margin-left "-2px"})}
-       [:i.fas.fa-caret-down.toggler.rotateToggler]])
+    
     (if-let [ava (:avatar item)]
       [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
       (let [ico (or (:icon item) [:fa-regular :fa-file])]
@@ -178,7 +176,15 @@
 
     [:span {:class (c [:ml 0.5])} (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
-                                                      (str/join " "))} e])]]
+                                                      (str/join " "))} e])]
+    (when (:items item)
+      [:span {:class (c [:w 8] [:text :gray-400]
+                        :text-sm
+                        :cursor-pointer
+                        [:hover :rounded 
+                         [:text :gray-700]
+                         [:bg :white]] :text-lg :flex :justify-center #_{:margin-left "-2px"})}
+       [:i.fas.fa-chevron-down.toggler.rotateToggler]])]
    (into [:div {:class (->> ["closed" "closableContent" (name (c :border-l [:ml 3]))]
                             (str/join " "))}
           (let [node-content
