@@ -15,12 +15,14 @@
          org.babashka/sci                                    {:mvn/version "0.2.8"}
          ring/ring                                           {:mvn/version "1.9.3"}
          ring/ring-defaults                                  {:mvn/version "0.3.3"}
-         stylo/stylo                                         {:git/url "https://github.com/HealthSamurai/macrocss" :sha "1d0cba81d545bc30a42f64f0e65ee4c2ae4d9767"}
+         stylo/stylo                                         {:git/url "https://github.com/HealthSamurai/macrocss"
+                                                              :sha "3423951651da97b533020b4b70a29607c6979508"}
          zen-lang/zen                                        {:git/url "https://github.com/zen-lang/zen" :sha "77a51fe414c552755876b517d06e3c625f322c45"}
          ;; we do not need this dep - three lines of code
          route-map/route-map                                 {:mvn/version "0.0.7"}
          ring-basic-authentication/ring-basic-authentication {:mvn/version "1.0.5"}
-         org.bouncycastle/bcpkix-jdk15on                     {:mvn/version "1.70"}}
+         org.bouncycastle/bcpkix-jdk15on                     {:mvn/version "1.70"}
+         }
  :aliases
  {:nrepl {:extra-paths ["dev" "docs" "test"]
           :extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "2.5.1"}

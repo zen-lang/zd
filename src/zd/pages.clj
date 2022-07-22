@@ -133,6 +133,7 @@
              (let [parts (interpose :items (str/split (name nm) #"\."))]
                (assoc-in acc parts {:title (or (get-in doc [:resource :title])
                                                (last parts))
+                                    :zd/name nm
                                     :avatar    (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
                                     :icon      (get-in doc [:resource :icon])
                                     :menu-order (get-in doc [:resource :menu-order] 10)
@@ -156,35 +157,46 @@
 
 (defn menu-item-sort [[_ x]] (format "%07d %s" (get x :menu-order 10) (:title x)))
 
-(defn render-items [item & [k]]
+(defn render-items [doc item & [k]]
   [:div {:id  (str/lower-case k) :class "closable"}
    [:a {:href (when-not (:broken item) (:href item))
         :class (->> [(c :inline-block :flex :items-center
                         [:pl 2]
                         [:py 2]
-                        :rounded [:hover :cursor-pointer [:bg :white] [:text :gray-700]])
-                     (when (:broken item) (c [:text :red-500]))]
+                        [:mr 2]
+                        :rounded
+                        [:hover :cursor-pointer [:text :blue-600]])
+                     (when (:broken item) (c [:text :red-500]))
+                     (when (= (:zd/name doc) (:zd/name item))
+                       (c [:bg :white] [:text :gray-700] {:border-right "none"}))]
                     (filterv identity)
                     (mapv name)
                     (str/join " "))}
-    (when (:items item)
-      [:span {:class (c [:w 6] [:hover :rounded  :cursor-pointer [:bg :gray-300]] :text-lg :flex :justify-center {:margin-left "-2px"})}
-       [:i.fas.fa-caret-down.toggler.rotateToggler]])
+
     (if-let [ava (:avatar item)]
       [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
       (let [ico (or (:icon item) [:fa-regular :fa-file])]
-        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:text :gray-500] [:mr 1])}
+        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:mr 1])}
          [:i {:class (str/join " " (map name ico))}]]))
 
-    [:span {:class (c [:ml 0.5])} (or (:title item) (:href item) k)
+    [:span {:class (c [:ml 0.5] :flex-1)} (or (:title item) (:href item) k)
      (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
-                                                      (str/join " "))} e])]]
+                                                      (str/join " "))} e])]
+    (when (:items item)
+      [:span {:class (c [:w 10] [:text :gray-500]
+                        :cursor-pointer
+                        :flex
+                        :justify-center
+                        {:font-size "12px"}
+                        [:hover :rounded
+                         [:text :red-600]])}
+       [:i.fas.fa-chevron-down.toggler.rotateToggler]])]
    (into [:div {:class (->> ["closed" "closableContent" (name (c :border-l [:ml 3]))]
                             (str/join " "))}
           (let [node-content
                 (for [[k it] (->> (:items item)
                                   (sort-by menu-item-sort))]
-                  (render-items it k true))]
+                  (render-items doc it k true))]
             node-content)])])
 
 (defn navigation [ztx doc]
@@ -192,7 +204,7 @@
    [:div {:id "nav-files"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by menu-item-sort))]
-      (render-items it k))]])
+      (render-items doc it k))]])
 
 
 (defn breadcrumb [_ztx name]
@@ -244,7 +256,8 @@
              :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
          [:i.fas.fa-pencil]])]]
     [:div {:class (c [:bg :white] [:py 4] [:px 8] :shadow-md
-                     {:color "#3b454e"})}
+                     {:color "#3b454e"
+                      :min-height "80vh"})}
      [:div {:class (c [:mb 4])}
       (->>
        (for [block doc]

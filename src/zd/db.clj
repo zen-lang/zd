@@ -68,7 +68,7 @@
           (vals)
           (filterv filter)
           (take 100)
-          (mapv :resource))))
+          (mapv (fn [x] (assoc (:resource x) :zd/name (:zd/name x)))))))
 
 (defn update-refs [ztx refs]
   (swap! ztx update :zrefs deep-merge refs))
