@@ -202,9 +202,11 @@
 (defn render-logo [ztx doc [k item]]
   [:a {:href (when-not (:broken item) (:href item))
        :class (->> [(c :inline-block :flex :items-center
+                       :flex
+                       :items-center
                        [:text :gray-800]
                        [:pl 0]
-                       [:pt 6]
+                       [:pt 4]
                        [:pb 1]
                        [:mr 4]
                        [:mb 3]
@@ -219,7 +221,7 @@
                    (str/join " "))}
 
    (if-let [ava (:avatar item)]
-     [:img {:class (c [:w 8] [:h 8] [:mr 1] {:border-radius "100%"}) :src ava}]
+     [:img {:class (c [:w 12] [:h 12] [:mr 2] {:border-radius "100%"}) :src ava}]
      (let [ico (or (:icon item) [:fa-regular :fa-file])]
        [:span {:class (c [:w 8] [:h 8] :flex :items-center :justify-center :text-xs [:mr 1])}
         [:i {:class (str/join " " (map name ico))}]]))
@@ -258,7 +260,7 @@
          (into [:div {:class (c :flex :flex-1)}]))))
 
 (defn search []
-  [:div {:class (c [:text :gray-500] [:py 4] :border-b)}
+  [:div {:class (c [:text :gray-500] [:mt 3] [:pt 4] [:pb 3] :border-b)}
    [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :blue-600]])}
