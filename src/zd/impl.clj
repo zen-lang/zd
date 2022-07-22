@@ -188,7 +188,7 @@
 (defmethod render-content :default
   [ztx {data :data :as block}]
   (cond
-    (string? data) [:span data]
+    (string? data) [:span (zd.zentext/parse-block ztx (str data))]
     (or (keyword? data) (boolean? data))
     [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
