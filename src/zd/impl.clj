@@ -200,7 +200,7 @@
                             (mapv (fn [x] (render-content ztx {:data x})) data)))
 
     (list? data)
-    [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
+    [:pre [:code {:class (str "language-clojure hljs")} (pr-str data)]]
 
     (sequential? data)
     (if (keyword? (first data))
