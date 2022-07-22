@@ -449,18 +449,30 @@
   [:div {:class (c [:px 0] [:py 2] [:bg :white])}
    (markdown.core/md-to-html-string data)])
 
+(defn breadcrumb [_ztx name]
+  (let [parts (str/split (str name) #"\.")]
+    (->> (range (count parts))
+         (mapv (fn [x]
+                 (let [pth (into [] (take (inc x) parts))
+                       nm  (str/join "." pth)]
+                   [:a {:href (str "/" nm)
+                        :class (c [:text :blue-500])}
+                    (last pth)])))
+         (interpose [:span {:class (c [:text :gray-400]  [:px 0.2] )} "."])
+         (into [:div {:class (c :flex :text-sm {:font-weight "400"})}]))))
 
 (defmethod render-key
   [:title]
-  [_ {title :data :as block}]
-  [:h1 {}
+  [ztx {title :data :as block}]
+  [:h1 {:class (c :flex :items-baseline)}
    (if-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
      [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}]
      (when-let [icon (get-in block [:page :resource :icon])]
        [:i {:class (str (str/join " " (map name icon))
                         " "
                         (name (c [:mr 2] [:text :gray-600])))}]))
-   title])
+   [:div {:class (c :flex-1)} title]
+   (breadcrumb ztx (:zd/name (:page block)))])
 
 (defmethod render-key [:avatar] [_ block] [:span])
 (defmethod render-key [:menu-order] [_ block] [:span])
