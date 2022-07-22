@@ -102,7 +102,7 @@
                       :shadow-xl :border
                       :divide-y
                       :mx-auto)}
-      (for [[provider {:keys [organizations]}] prov-opts
+      (for [[provider {:keys [organizations organizations-notice]}] prov-opts
             :let [pr (get provider-settings provider)]]
         [:a {:class (c :flex :items-center
                        [:p 6]
@@ -113,10 +113,10 @@
          [:i.fab {:class [(c {:font-size "32px"}) (str "fa-" (name provider))]}]
          [:div {:class (c :flex-1 :text-xl)} (str "Sign in with " (or (:name pr)
                                                                       (name provider)))
-          (when organizations
+          (when (or organizations organizations-notice)
             [:div {:class (c :text-sm)}
              [:span {:class (c [:text :gray-700])} "You should be part of "]
-             [:span {:class (c [:text :gray-700] :font-bold)} (str/join "," organizations )]
+             [:span {:class (c [:text :gray-700] :font-bold)} (str/join "," (or organizations organizations-notice) )]
              [:span {:class (c [:text :gray-700])} " organization."]])]
          [:div {:class (c [:text :gray-400] {:font-size "32px"})} "›"]])
       ])
@@ -181,7 +181,7 @@
         params
         (cond->
             {:response_type "code"
-             :scope (str/join " " (concat (:scopes prov) (get-in opts [:github :additional-scopes] )))
+             :scope (str/join " " (concat (:scopes prov) (:additional-scopes prov)))
              :client_id (get-in prov [:client-id])
              :redirect_uri  (cb-url opts req)
              :state state})
@@ -314,7 +314,7 @@
         (let [parts (->> (str/split uri #"/") (remove empty?))
               provider (#{:github :google} (-> parts last keyword))
               opt' (assoc opt :provider (merge (get provider-settings provider)
-                                               (:github opt)))]
+                                               (get opt provider)))]
           (cond
             (= ["auth" "callback"] (take 2 parts)) (callback opt' req)
             (= ["auth"] (take 1 parts)) (redirect-provider opt' req)
