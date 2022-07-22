@@ -145,12 +145,13 @@
 (defmethod process-block "code" [ztx _ lang cnt]
   [:div.code-block
    [:pre {:class (c :text-sm)
-          :style {:position "relative"}}
+          :style {:position "relative" :white-space "pre-wrap"}}
     [:i.fas.fa-clipboard-list.copy-button
      {:title "Click to Copy"
-      :style {:position  "absolute"
+      :style {:position  "relative"
+              :float     "right"
               :top       "5px"
-              :right     "5px"}}]
+              :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
 (defmethod process-block :default [ztx tp args cnt]
@@ -313,6 +314,18 @@
               :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
 
+(defmethod render-content :edn
+  [ztx {ann :annotations data :data path :path :as block}]
+  [:div.code-block
+   [:pre {:class (c :text-sm) :style {:white-space "pre-wrap"}}
+    [:i.fas.fa-clipboard-list.copy-button
+     {:title "Click to Copy"
+      :style {:position  "relative"
+              :float     "right"
+              :top       "5px"
+              :right     "20px"}}]
+    [:code {:style {:word-wrap "break-word"} :class (str "language-edn hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
+
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
   (when (seq errors)
@@ -403,7 +416,7 @@
                                 [reference (zen.core/get-symbol ztx reference)])))
         sorted-schemas (reverse (sort-by (comp :zendoc second) schemas))]
     [:div
-     [:h1 (-> block :annotations :title)]
+     [:h3 (-> block :annotations :title)]
      [:ul
       (for [[reference schema] sorted-schemas]
         (let [zendoc (some-> schema :zendoc)]
@@ -412,7 +425,7 @@
              [:a {:href  (str "/" zendoc)
                   :class (c [:text :blue-600])}
               (or
-               (->> (zd.db/get-doc ztx zendoc)
+               (->> (zd.db/get-doc ztx (symbol zendoc))
                     (filter #(= [:title] (:path %)))
                     (first)
                     (:data))
