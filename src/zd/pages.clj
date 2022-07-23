@@ -313,8 +313,9 @@
      (->>
       (for [block doc]
         (let [block (assoc block :page page)]
-          (or (zd.methods/render-key ztx block)
-              (zd.methods/render-block ztx block)))))]]
+          (when-not (= :- (first (:path block)))
+            (or (zd.methods/render-key ztx block)
+                (zd.methods/render-block ztx block))))))]]
    (links ztx (:backrefs page))])
 
 

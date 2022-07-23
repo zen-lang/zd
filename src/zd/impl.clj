@@ -101,7 +101,7 @@
        (cond (= (:type icon) :img)
              [:img {:src (:img icon) :class (c [:h 4] :inline-block [:mr 1] {:border-radius "100%" :margin-bottom "1px"})}]
              (= (:type icon) :ico)
-             [:i {:class (str (str/join " " (map name (:icon icon))) " " (name (c [:mr 2] [:text :gray-500] :text-sm)))}]))
+             [:i {:class (str (str/join " " (map name (:icon icon))) " " (name (c [:mr 2] [:text :gray-500])))}]))
      (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
@@ -153,9 +153,11 @@
               :right     "5px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
+
 (defmethod process-block :default [ztx tp args cnt]
   [:pre {:params args :tp tp}
    [:code.hljs cnt]])
+
 
 (defmethod render-key :default [_ & _] nil)
 
@@ -368,6 +370,14 @@
 (defmethod render-content :mermaid
   [ztx {{params :mermaid} :annotations data :data path :path}]
   [:div.mermaid data])
+
+(defmethod process-block "mm"
+  [ztx tp args cnt]
+  [:div.mermaid cnt])
+
+(defmethod process-block "mermaid"
+  [ztx tp args cnt]
+  [:div.mermaid cnt])
 
 (defmethod render-content :mm
   [ztx {{params :mermaid} :annotations data :data path :path}]
