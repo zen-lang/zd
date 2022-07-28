@@ -7,7 +7,7 @@
    [clojure.java.io :as io])
   (:import [java.io StringReader]))
 
-(def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+[_a-zA-Z]|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
+(def inline-regex #"(::[_a-zA-Z][-:./a-zA-Z0-9]+|(#|@)[_a-zA-Z][-./a-zA-Z0-9]+[_a-zA-Z]|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
 
 (defn call-inline-method [ztx s]
   (let [[method arg] (str/split s #"\s+" 2)]
@@ -34,6 +34,7 @@
                    (conj res
                          head
                          (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1))
+                               (str/starts-with? match "::")  (zd.methods/inline-method ztx :local-link   (subs match 1))
                                (str/starts-with? match "@")   (zd.methods/inline-method ztx :mention      (subs match 1))
                                (str/starts-with? match "`")   (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
                                (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)))

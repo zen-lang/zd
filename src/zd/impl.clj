@@ -109,6 +109,10 @@
   [ztx m s]
   (symbol-link ztx s))
 
+(defmethod inline-method :local-link
+  [ztx m s]
+  [:a {:href (str "#" s) :class (c [:text :green-600])} s])
+
 (defmethod inline-method :code
   [ztx m s]
   [:code {:class (c [:px 1.5] [:py 1] [:bg :gray-200]
