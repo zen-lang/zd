@@ -31,18 +31,24 @@
                       match (subs s (.start m) (.end m))]
                   (recur
                    (.end m)
-                   (conj res
-                         head
-                         (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1))
-                               (str/starts-with? match "::")  (zd.methods/inline-method ztx :local-link   (subs match 1))
-                               (str/starts-with? match "@")   (zd.methods/inline-method ztx :mention      (subs match 1))
-                               (str/starts-with? match "`")   (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
-                               (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)))
-                               (str/starts-with? match "__")  (zd.methods/inline-method ztx :italic       (subs match 2 (- (count match) 2)))
-                               (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)))
-                               (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)))
-                               (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)))
-                               (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2)))))))
+                   (cond
+                     (str/ends-with? head "\\")
+                     (conj res (str/replace s #"\\" ""))
+                     (or (= \space (last head))
+                         (empty? head))
+                     (conj res
+                           head
+                           (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1))
+                                 (str/starts-with? match "::")  (zd.methods/inline-method ztx :local-link   (subs match 1))
+                                 (str/starts-with? match "@")   (zd.methods/inline-method ztx :mention      (subs match 1))
+                                 (str/starts-with? match "`")   (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
+                                 (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)))
+                                 (str/starts-with? match "__")  (zd.methods/inline-method ztx :italic       (subs match 2 (- (count match) 2)))
+                                 (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)))
+                                 (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)))
+                                 (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)))
+                                 (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2)))))
+                     :else (conj res s))))
                 (conj res (subs s start))))]
     (remove empty? res)))
 

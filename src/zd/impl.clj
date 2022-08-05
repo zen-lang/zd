@@ -11,6 +11,12 @@
    [cheshire.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
+(defmacro defzdocmethod
+  "Creates and installs a new method of multimethod associated with dispatch-value. "
+  {:added "1.0"}
+  [multifn dispatch-val zendoc & fn-tail]
+  `(. ~(with-meta multifn {:tag 'clojure.lang.MultiFn}) addMethod ~dispatch-val ^{:zd ~zendoc} (fn ~@fn-tail)))
+
 (defmethod annotation :collapse
   [nm params]
   {:collapse (or params {})})
@@ -99,14 +105,20 @@
       (when-let [parent (get-parent ztx res)]
         (resolve-icon ztx parent)))))
 
+(defn icon [ztx res]
+  (when-let [icon (resolve-icon ztx res)]
+       (cond (= (:type icon) :img)
+             [:img {:src (:img icon)
+                    :class (c [:h 4] :inline-block [:mr 1]
+                              {:border-radius "100%" :margin-bottom "1px" })}]
+             (= (:type icon) :ico)
+             [:i {:class (str (str/join " " (map name (:icon icon)))
+                              " "
+                              (name (c [:mr 2] [:text :gray-500])))}])))
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c [:text :blue-600])}
-     (when-let [icon (resolve-icon ztx res)]
-       (cond (= (:type icon) :img)
-             [:img {:src (:img icon) :class (c [:h 4] :inline-block [:mr 1] {:border-radius "100%" :margin-bottom "1px"})}]
-             (= (:type icon) :ico)
-             [:i {:class (str (str/join " " (map name (:icon icon))) " " (name (c [:mr 2] [:text :gray-500])))}]))
+    [:a {:href (str "/" s) :class (c [:text :blue-600] [:hover [:underline]])}
+     (icon ztx res)
      (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
@@ -139,7 +151,7 @@
 (defmethod inline-method :a
   [ztx m arg]
   (let [[src text] (str/split arg #"\s+" 2)]
-    [:a {:href src :class (c [:text :blue-700])} " " (or text src)]))
+    [:a {:href src :class (c [:text :blue-700] [:hover [:underline]])} " " (or text src)]))
 
 (defmethod inline-method
   :src
@@ -154,12 +166,13 @@
 (defmethod process-block "code" [ztx _ lang cnt]
   [:div.code-block
    [:pre {:class (c :text-sm)
-          :style {:position "relative"}}
+          :style {:position "relative" :white-space "pre-wrap"}}
     [:i.fas.fa-clipboard-list.copy-button
      {:title "Click to Copy"
-      :style {:position  "absolute"
+      :style {:position  "relative"
+              :float     "right"
               :top       "5px"
-              :right     "5px"}}]
+              :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
 
@@ -198,7 +211,12 @@
 (defmethod render-content :default
   [ztx {data :data :as block}]
   (cond
-    (string? data) [:span data]
+
+    (string? data)
+    ;; TODO: move to parameters
+    (if (= (:path block) [:telegram]) (zd.zentext/parse-block ztx (str "\\" data))
+        (zd.zentext/parse-block ztx (str data)))
+
     (or (keyword? data) (boolean? data))
     [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
@@ -210,7 +228,7 @@
                             (mapv (fn [x] (render-content ztx {:data x})) data)))
 
     (list? data)
-    [:pre [:clode {:class (str "language-clojure hljs")} (pr-str data)]]
+    [:pre [:code {:class (str "language-clojure hljs")} (pr-str data)]]
 
     (sequential? data)
     (if (keyword? (first data))
@@ -268,7 +286,7 @@
 
 (defmethod render-block :badge
   [ztx {data :data path :path :as block}]
-  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
+  [:div {:class (str "badge " (name (c :border [:m 1]  :inline-flex :rounded [:p 0])))}
    [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
     (subs (str (last path)) 1)]
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
@@ -331,6 +349,18 @@
               :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
 
+(defmethod render-content :edn
+  [ztx {ann :annotations data :data path :path :as block}]
+  [:div.code-block
+   [:pre {:class (c :text-sm) :style {:white-space "pre-wrap"}}
+    [:i.fas.fa-clipboard-list.copy-button
+     {:title "Click to Copy"
+      :style {:position  "relative"
+              :float     "right"
+              :top       "5px"
+              :right     "20px"}}]
+    [:code {:style {:word-wrap "break-word"} :class (str "language-edn hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
+
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
   (when (seq errors)
@@ -348,7 +378,7 @@
 
 (defmethod render-content :link
   [ztx {ann :annotations data :data path :path :as block}]
-  [:a {:href data :class (c [:text :blue-600])} data])
+  [:a {:href data :class (c [:text :blue-600] [:hover [:underline]])} data])
 
 (defmethod render-content :hiccup
   [ztx {ann :annotations data :data path :path :as block}]
@@ -429,7 +459,7 @@
                                 [reference (zen.core/get-symbol ztx reference)])))
         sorted-schemas (reverse (sort-by (comp :zendoc second) schemas))]
     [:div
-     [:h1 (-> block :annotations :title)]
+     [:h3 (-> block :annotations :title)]
      [:ul
       (for [[reference schema] sorted-schemas]
         (let [zendoc (some-> schema :zendoc)]
@@ -438,7 +468,7 @@
              [:a {:href  (str "/" zendoc)
                   :class (c [:text :blue-600])}
               (or
-               (->> (zd.db/get-doc ztx zendoc)
+               (->> (zd.db/get-doc ztx (symbol zendoc))
                     (filter #(= [:title] (:path %)))
                     (first)
                     (:data))
@@ -463,7 +493,7 @@
 (defmethod inline-method :md/link
   [ztx m s]
   (let [[txt href] (str/split s #"\]\(" 2)]
-    [:a {:href href :class (c [:text :blue-600])} txt]))
+    [:a {:href href :class (c [:text :blue-600] [:hover [:underline]])} txt]))
 
 (defmethod inline-method :md/img
   [ztx m s]
@@ -519,7 +549,7 @@
         (for [_ (range (count (:path b)))]
           [:div {:class (c [:w 2])}])
         [:div {:class (c [:text :gray-400])} "●"]
-        [:a {:href (str "#" (str/join (:path b))) :class (c [:text :blue-600])}
+        [:a {:href (str "#" (str/join (:path b))) :class (c [:text :blue-600] [:text :blue-600])}
          (or (get-in b [:annotations :title])
              (capitalize (name (last (:path b)))))]]))])
 
@@ -572,3 +602,62 @@
     [:div
      [:svg.mindmap {:id id :width "912" :height "600" :margin "0px -30px"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
+
+
+(defn collect-methods
+  "Collect all methods dispatch values and docs of specified multimethod.
+  Docs are assumed to be in the :zd key of method metadata."
+  [sym]
+  (into {}
+        (map (fn [[k v]]
+               [k (:zd (meta v))])
+             (methods sym))))
+
+(defn make-methods-list
+  "Make a hiccup definition list of multimethods
+  This creates a hiccup html definition list (dl)
+  each dt is a method dispatch name
+  and dd is a documentation (if provided)"
+  [multi]
+  [:dl {:class (c [:mb 6])}
+   (for [[method doc] (collect-methods multi)]
+     (list [:dt {:class (c {:font-family :monospace} [:py 1])} (str method)]
+           [:dd {:class (c [:ml 10])} (str doc)]))])
+
+(defzdocmethod render-key [:zd/features]
+  "Make a list of all zendoc multimethods with descriptions"
+  [ztx block]
+  [:div
+   [:div
+    [:p "Annotations are used to add metadata to the block. Often they set up block type to render it in a different way."]
+    [:p "List of annotations " [:code "(defmulti annotation)"]]
+    (make-methods-list annotation)]
+   [:div
+    [:p "Block render methods generate HTML output from block types set by metadata."]
+    [:p "List of block render methods " [:code "(defmulti render-block)"]]
+    (make-methods-list render-block)]
+   [:div
+    [:p "Content render methods generate HTML output from method/ dispatch entries"]
+    [:p "List of  content render methods " [:code "(defmulti render-content)"]]
+    (make-methods-list render-content)]
+   [:div
+    [:p "Key render methods are used to render HTML from specific keywords"]
+    [:p "List of key render methods " [:code "(defmulti render-key)"]]
+    (make-methods-list render-key)]
+   [:div
+    [:p "Inline function method renders HTML from ((function-name clojure-args)) inline syntax"]
+    [:p "List of inline function methods " [:code "(defmulti inline-function)"]]
+    (make-methods-list inline-function)]
+   [:div
+    [:p "Inline methods render HTML from " [:code "[[method-name string-args]]"] " inline syntax. And also "
+     [:code "#"] ", " [:code "@"] ", " [:code "`"] ", " [:code "**"] ", " [:code "__"] ", " [:code "[["] ", " [:code "!["] ", " [:code "["]]
+    [:p "List of inline mehotds (defmulti inline-method)"]
+    (make-methods-list inline-method)]
+   [:div
+    [:p "Block render method renders HTML from " [:code "```"] " syntax"]
+    [:p "List of block process methods " [:code "(defmulti process-block)"]]
+    (make-methods-list annotation)]
+   [:div
+    [:p "Key data method seem like something not yet implemented"]
+    [:p "List of key data methods " [:code "(defmulti process-block)"]]
+    (make-methods-list key-data)]])

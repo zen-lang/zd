@@ -355,3 +355,22 @@ select 1
 
 
   )
+
+(t/deftest escape-symbols-test
+  (def ztx (zen/new-context))
+  (match "@foo.bar"
+         [:div
+          [:p
+           "\n"
+           [:a
+            {:href "/people.foo.bar",
+             :class :c1089785874,
+             :title "Broken Link"}
+            'people.foo.bar]]]) 
+
+  (match "\\@foo.bar"    [:div [:p "\n" "@foo.bar"]]) 
+  (match "foo\\@foo.bar" [:div [:p "\n" "foo@foo.bar"]]) 
+  (match "\\"            [:div [:p "\n" "\\"]]) 
+
+  (match "foo@foo.bar"   [:div [:p "\n" "foo@foo.bar"]]) 
+  )
