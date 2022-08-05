@@ -271,7 +271,7 @@
          (let [block (assoc block :page page)]
            (or (zd.methods/render-key ztx block)
                (zd.methods/render-block ztx block)))))]
-     [:a {:href "#top" :class (c [:text :blue-600])} "Наверх"]]]
+     [:a {:href "#top" :class (c [:text :blue-600] [:hover [:underline]])} "Наверх"]]]
    (links ztx (:backrefs page))])
 
 

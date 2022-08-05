@@ -142,7 +142,7 @@
 (defmethod inline-method :a
   [ztx m arg]
   (let [[src text] (str/split arg #"\s+" 2)]
-    [:a {:href src :class (c [:text :blue-700])} " " (or text src)]))
+    [:a {:href src :class (c [:text :blue-700] [:hover [:underline]])} " " (or text src)]))
 
 (defmethod inline-method
   :src
@@ -360,7 +360,7 @@
 
 (defmethod render-content :link
   [ztx {ann :annotations data :data path :path :as block}]
-  [:a {:href data :class (c [:text :blue-600])} data])
+  [:a {:href data :class (c [:text :blue-600] [:hover [:underline]])} data])
 
 (defmethod render-content :hiccup
   [ztx {ann :annotations data :data path :path :as block}]
@@ -467,7 +467,7 @@
 (defmethod inline-method :md/link
   [ztx m s]
   (let [[txt href] (str/split s #"\]\(" 2)]
-    [:a {:href href :class (c [:text :blue-600])} txt]))
+    [:a {:href href :class (c [:text :blue-600] [:hover [:underline]])} txt]))
 
 (defmethod inline-method :md/img
   [ztx m s]
@@ -508,7 +508,7 @@
         (for [_ (range (count (:path b)))]
           [:div {:class (c [:w 2])}])
         [:div {:class (c [:text :gray-400])} "●"]
-        [:a {:href (str "#" (str/join (:path b))) :class (c [:text :blue-600])}
+        [:a {:href (str "#" (str/join (:path b))) :class (c [:text :blue-600] [:text :blue-600])}
          (or (get-in b [:annotations :title])
              (capitalize (name (last (:path b)))))]]))])
 
