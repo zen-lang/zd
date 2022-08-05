@@ -28,6 +28,11 @@
   {:block :badge
    :badge params})
 
+(defmethod annotation :link-badge
+  [nm params]
+  {:block :link-badge
+   :badge params})
+
 (defmethod annotation :attribute
   [nm params]
   {:block :attribute
@@ -268,6 +273,13 @@
     (subs (str (last path)) 1)]
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
     (render-content ztx block)]])
+
+(defmethod render-block :link-badge
+  [ztx {data :data path :path :as block}]
+  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
+   [:a {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :blue-600] {:font-weight "400"})
+        :href data}
+    (subs (str (last path)) 1)]])
 
 (defmethod render-block :attribute
   [ztx {data :data path :path :as block}]

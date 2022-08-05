@@ -1,4 +1,0 @@
-:title "Macros"
-:authror team.vganshin
-
-:macro.sample (load "sample.yaml" :yaml)
