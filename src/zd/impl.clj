@@ -203,14 +203,8 @@
 
     (string? data)
     ;; TODO: move to parameters
-    (case (:path block)
-      [:telegram] (zd.zentext/parse-block ztx (str "\\" data))
-      #_"FIXME: if
-      you remove it you will get <div><p>yyyy-mm-dd</p></div> so badge will be
-      two lines long with extra space below"
-      [:date :start] (str data)
-      :else
-      (zd.zentext/parse-block ztx (str data)))
+    (if (= (:path block) [:telegram]) (zd.zentext/parse-block ztx (str "\\" data))
+        (zd.zentext/parse-block ztx (str data)))
 
     (or (keyword? data) (boolean? data))
     [:span {:class (c [:text :green-600])} (str data)]
