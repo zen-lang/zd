@@ -486,7 +486,10 @@
                         " "
                         (name (c [:mr 2] [:text :gray-600])))}]))
    [:div {:class (c :flex-1)} title]
-   (breadcrumb ztx (:zd/name (:page block)))])
+   (breadcrumb ztx (:zd/name (:page block)))
+   [:a {:class (c :text-xs [:text :blue-600])
+        :href (str "/edit/" (:zd/name (:page block)))}
+    "edit"]])
 
 (defmethod render-key [:avatar] [_ block] [:span])
 (defmethod render-key [:menu-order] [_ block] [:span])

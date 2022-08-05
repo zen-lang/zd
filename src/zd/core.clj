@@ -8,6 +8,7 @@
    [zd.web]
    [clojure.walk]
    [edamame.core]
+   [clojure.string :as str]
    [route-map.core :as route-map]))
 
 
@@ -22,24 +23,31 @@
 
 (defmethod op :default [_ {{op :op} :match} _] op)
 
+
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])
     (reload ztx {}))
   (if-let [match (when-let [routes (get-in @ztx [:zd/opts :route-map])]
                    (route-map.core/match  [m uri] routes))]
     (op ztx match req)
-    (let [sym (symbol (subs uri 1))]
-      (if-let [page (zd.db/get-page ztx sym)]
-        {:status 200
-         :body  (zd.pages/render-page ztx (assoc page :request req))}
-        {:status 404
-         :body  (zd.pages/render-page ztx {:zd/name sym})}))))
+
+    (if (str/starts-with? uri "/edit/")
+      (let [sym (symbol (last (str/split uri #"/")))
+            page (zd.db/get-page ztx sym)]
+        {:body (zd.pages/edit-page ztx (assoc page :request req))
+         :status 200})
+      (let [sym (symbol (subs uri 1))]
+        (if-let [page (zd.db/get-page ztx sym)]
+          {:status 200
+           :body  (zd.pages/render-page ztx (assoc page :request req))}
+          {:status 404
+           :body  (zd.pages/render-page ztx {:zd/name sym})})))))
 
 (defn start [ztx opts]
   (swap! ztx assoc :zd/opts opts)
   (reload ztx opts)
   (zen.core/read-ns ztx 'zd)
-  (zd.web/start ztx opts dispatch))
+  (zd.web/start ztx opts #'dispatch))
 
 
 (defn stop [ztx]

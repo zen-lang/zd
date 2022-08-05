@@ -403,6 +403,22 @@
        (layout ztx)
        (to-html)))
 
+(defn generate-edit-page [ztx doc]
+  (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
+    [:div {:class (c :h-max-full  :flex :flex-col)}
+     [:div {:class (c :grid [:grid-template-areas "navigation content"]
+                      {:grid-template-columns  "300px 1fr"})}
+      (navigation ztx doc)
+      [:div {:class (c [:p 4])}
+       [:textarea {:class (c {:height "90vh" :width "100%"})}
+        (slurp (:zd/path doc))]]]
+     (search-container ztx doc)]))
+
+(defn edit-page [ztx doc]
+  (->> (generate-edit-page ztx doc)
+       (layout ztx)
+       (to-html)))
+
 (defn render-not-found [ztx sym]
   (->> [:div {:class (c [:p 4] :flex [:space-x 4])}
         (navigation ztx nil)
