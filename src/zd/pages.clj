@@ -65,7 +65,7 @@
                                     :rounded [:mr 2] [:bg :blue-500])]
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
-   [:.toggler {:padding-left "4px"
+   [:.toggler-arrow {:padding-left "4px"
                :padding-right "4px"
                :padding-top "2px"
                :padding-bottom "2px"}]
@@ -157,10 +157,21 @@
 
 (defn menu-item-sort [[_ x]] (format "%07d %s" (get x :menu-order 10) (:title x)))
 
+(defn item-avatar [item]
+  (if-let [ava (:avatar item)]
+      [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
+      (let [ico (or (:icon item) [:fa-regular :fa-file])]
+        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:mr 1])}
+         [:i {:class (str/join " " (map name ico))}]])))
+
+(defn item-title [item k]
+  [:span {:class (c [:ml 0.5] :flex-1)} (or (:title item) (:href item) k)
+     (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
+                                                      (str/join " "))} e])])
 (defn render-items [doc item & [k]]
   [:div {:id  (str/lower-case k) :class "closable"}
-   [:a {:href (when-not (:broken item) (:href item))
-        :class (->> [(c :inline-block :flex :items-center
+   [:a.toggler {:href (when-not (:broken item) (:href item))
+        :class (->> [(c :inline-block :flex :items-center 
                         [:pl 2]
                         [:py 2]
                         [:mr 2]
@@ -172,16 +183,9 @@
                     (filterv identity)
                     (mapv name)
                     (str/join " "))}
+    (item-avatar item)
+    (item-title item k)
 
-    (if-let [ava (:avatar item)]
-      [:img {:class (c [:w 4] [:h 4] [:mr 1] {:border-radius "100%"}) :src ava}]
-      (let [ico (or (:icon item) [:fa-regular :fa-file])]
-        [:span {:class (c [:w 4] [:h 4] :flex :items-center :justify-center :text-xs [:mr 1])}
-         [:i {:class (str/join " " (map name ico))}]]))
-
-    [:span {:class (c [:ml 0.5] :flex-1)} (or (:title item) (:href item) k)
-     (when-let [e (:errors item)] [:span {:class (->> [(c [:text :red-500] :text-xs [:px 1])]
-                                                      (str/join " "))} e])]
     (when (:items item)
       [:span {:class (c [:w 10] [:text :gray-500]
                         :cursor-pointer
@@ -190,8 +194,8 @@
                         {:font-size "12px"}
                         [:hover :rounded
                          [:text :red-600]])}
-       [:i.fas.fa-chevron-down.toggler.rotateToggler]])]
-   (into [:div {:class (->> ["closed" "closableContent" (name (c :border-l [:ml 3]))]
+       [:i.fas.toggler-arrow.fa-chevron-down.toggler.rotateToggler]])]
+   (into [:div {:class (->> ["closed" "closableContent" (name (c :border-l [:ml 4]))]
                             (str/join " "))}
           (let [node-content
                 (for [[k it] (->> (:items item)

@@ -197,7 +197,7 @@ openedNodesIds.forEach(id => {
 openedNodesIds.forEach(id =>
     document
         .getElementById(id)
-    ?.getElementsByClassName("toggler")[0]
+    ?.getElementsByClassName("toggler-arrow")[0]
     ?.classList
         .toggle("rotateToggler"))
 
@@ -206,8 +206,11 @@ const togglerElms = Array.from(document.getElementsByClassName("toggler"));
 togglerElms.forEach(node =>
     node.addEventListener("click",
                           (e) => {
+                            if (node.classList.contains("toggler-arrow")) {
+                              node.classList.toggle("rotateToggler");
                               e.preventDefault();
                               e.stopPropagation();
+                            }
                               const closableNodeParent = node.closest(".closable")
                               const closableNode =
                                     closableNodeParent
@@ -221,9 +224,17 @@ togglerElms.forEach(node =>
                                   window.sessionStorage.removeItem(closableNodeParent.id, null)
 
                               closableNode.classList.toggle("closed")
-                              node.classList.toggle("rotateToggler")
+                            if (node.classList.contains("toggler-arrow")) {
+                              node.classList.toggle("rotateToggler");
+                            }
+                            else {
+                              node.getElementsByClassName("toggler-arrow")[0]
+                                ?.classList
+                                ?.toggle("rotateToggler");
+                            }
 
                           }));
+
 
 const tabs = Array.from(document.getElementsByClassName("tab"));
 
