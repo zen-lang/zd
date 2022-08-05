@@ -94,14 +94,20 @@
       (when-let [parent (get-parent ztx res)]
         (resolve-icon ztx parent)))))
 
+(defn icon [ztx res]
+  (when-let [icon (resolve-icon ztx res)]
+       (cond (= (:type icon) :img)
+             [:img {:src (:img icon)
+                    :class (c [:h 4] :inline-block [:mr 1]
+                              {:border-radius "100%" :margin-bottom "1px" })}]
+             (= (:type icon) :ico)
+             [:i {:class (str (str/join " " (map name (:icon icon)))
+                              " "
+                              (name (c [:mr 2] [:text :gray-500])))}])))
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c [:text :blue-600])}
-     (when-let [icon (resolve-icon ztx res)]
-       (cond (= (:type icon) :img)
-             [:img {:src (:img icon) :class (c [:h 4] :inline-block [:mr 1] {:border-radius "100%" :margin-bottom "1px"})}]
-             (= (:type icon) :ico)
-             [:i {:class (str (str/join " " (map name (:icon icon))) " " (name (c [:mr 2] [:text :gray-500] :text-sm)))}]))
+    [:a {:href (str "/" s) :class (c [:text :blue-600] [:hover [:underline]])}
+     (icon ztx res)
      (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
