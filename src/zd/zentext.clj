@@ -34,7 +34,8 @@
                    (cond
                      (str/ends-with? head "\\")
                      (conj res (str/replace s #"\\" ""))
-                     (empty? head)
+                     (or (= \space (last head))
+                         (empty? head))
                      (conj res
                            head
                            (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1))
