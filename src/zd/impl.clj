@@ -200,7 +200,13 @@
 (defmethod render-content :default
   [ztx {data :data :as block}]
   (cond
-    (string? data) [:span (zd.zentext/parse-block ztx (str data))]
+
+    (string? data)
+    (if (= [:telegram] (:path block))
+      ;; TODO: move to parameters
+      (zd.zentext/parse-block ztx (str "\\" data))
+      (zd.zentext/parse-block ztx (str data)))
+
     (or (keyword? data) (boolean? data))
     [:span {:class (c [:text :green-600])} (str data)]
     ;; TODO: check link
