@@ -11,6 +11,12 @@
    [cheshire.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
 
+(defmacro defzdocmethod
+  "Creates and installs a new method of multimethod associated with dispatch-value. "
+  {:added "1.0"}
+  [multifn dispatch-val zendoc & fn-tail]
+  `(. ~(with-meta multifn {:tag 'clojure.lang.MultiFn}) addMethod ~dispatch-val ^{:zd ~zendoc} (fn ~@fn-tail)))
+
 (defmethod annotation :collapse
   [nm params]
   {:collapse (or params {})})
@@ -550,3 +556,62 @@
     [:div
      [:svg.mindmap {:id id :width "912" :height "600" :margin "0px -30px"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
+
+
+(defn collect-methods
+  "Collect all methods dispatch values and docs of specified multimethod.
+  Docs are assumed to be in the :zd key of method metadata."
+  [sym]
+  (into {}
+        (map (fn [[k v]]
+               [k (:zd (meta v))])
+             (methods sym))))
+
+(defn make-methods-list
+  "Make a hiccup definition list of multimethods
+  This creates a hiccup html definition list (dl)
+  each dt is a method dispatch name
+  and dd is a documentation (if provided)"
+  [multi]
+  [:dl {:class (c [:mb 6])}
+   (for [[method doc] (collect-methods multi)]
+     (list [:dt {:class (c {:font-family :monospace} [:py 1])} (str method)]
+           [:dd {:class (c [:ml 10])} (str doc)]))])
+
+(defzdocmethod render-key [:zd/features]
+  "Make a list of all zendoc multimethods with descriptions"
+  [ztx block]
+  [:div
+   [:div
+    [:p "Annotations are used to add metadata to the block. Often they set up block type to render it in a different way."]
+    [:p "List of annotations " [:code "(defmulti annotation)"]]
+    (make-methods-list annotation)]
+   [:div
+    [:p "Block render methods generate HTML output from block types set by metadata."]
+    [:p "List of block render methods " [:code "(defmulti render-block)"]]
+    (make-methods-list render-block)]
+   [:div
+    [:p "Content render methods generate HTML output from method/ dispatch entries"]
+    [:p "List of  content render methods " [:code "(defmulti render-content)"]]
+    (make-methods-list render-content)]
+   [:div
+    [:p "Key render methods are used to render HTML from specific keywords"]
+    [:p "List of key render methods " [:code "(defmulti render-key)"]]
+    (make-methods-list render-key)]
+   [:div
+    [:p "Inline function method renders HTML from ((function-name clojure-args)) inline syntax"]
+    [:p "List of inline function methods " [:code "(defmulti inline-function)"]]
+    (make-methods-list inline-function)]
+   [:div
+    [:p "Inline methods render HTML from " [:code "[[method-name string-args]]"] " inline syntax. And also "
+     [:code "#"] ", " [:code "@"] ", " [:code "`"] ", " [:code "**"] ", " [:code "__"] ", " [:code "[["] ", " [:code "!["] ", " [:code "["]]
+    [:p "List of inline mehotds (defmulti inline-method)"]
+    (make-methods-list inline-method)]
+   [:div
+    [:p "Block render method renders HTML from " [:code "```"] " syntax"]
+    [:p "List of block process methods " [:code "(defmulti process-block)"]]
+    (make-methods-list annotation)]
+   [:div
+    [:p "Key data method seem like something not yet implemented"]
+    [:p "List of key data methods " [:code "(defmulti process-block)"]]
+    (make-methods-list key-data)]])
