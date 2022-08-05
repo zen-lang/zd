@@ -64,7 +64,7 @@
    [:.searchResultContainerVBar (c* [:h "30px"] [:w "2px"]
                                     :rounded [:mr 2] [:bg :blue-500])]
    [:.badge
-    [:p {:margin-bottom 0}]]
+    [:p {:margin-bottom -3}]]
 
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
