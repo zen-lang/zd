@@ -63,6 +63,9 @@
    [:.searchResultContainerSummaryRow (c* :border-t)]
    [:.searchResultContainerVBar (c* [:h "30px"] [:w "2px"]
                                     :rounded [:mr 2] [:bg :blue-500])]
+   [:.badge
+    [:p {:margin-bottom 0}]]
+
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
    [:.toggler-arrow {:padding-left "4px"
