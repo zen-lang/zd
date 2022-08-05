@@ -202,9 +202,14 @@
   (cond
 
     (string? data)
-    (if (= [:telegram] (:path block))
-      ;; TODO: move to parameters
-      (zd.zentext/parse-block ztx (str "\\" data))
+    ;; TODO: move to parameters
+    (case (:path block)
+      [:telegram] (zd.zentext/parse-block ztx (str "\\" data))
+      #_"FIXME: if
+      you remove it you will get <div><p>yyyy-mm-dd</p></div> so badge will be
+      two lines long with extra space below"
+      [:date :start] (str data)
+      :else
       (zd.zentext/parse-block ztx (str data)))
 
     (or (keyword? data) (boolean? data))
