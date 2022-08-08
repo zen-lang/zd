@@ -1,0 +1,32 @@
+:title "Methods"
+
+:summary md/
+
+multi-methods you can hook-in into zendoc engine
+
+
+
+:core
+
+^title "render-key"
+:core:render-key /
+
+You can make some key (keypaths) to be rendered specially.
+There is recomendation to name this keys fully-qualified like `:git/timeline` to
+not clash with user keys.
+
+^title "render-block"
+:core:render-block /
+
+^title "render-content"
+:core:render-content /
+
+:zentext
+
+:zentext:keyword /
+
+:zentext:inline /
+
+:zentext:method md/
+
+:zentext:block md/

@@ -139,9 +139,10 @@
                                     :zd/name nm
                                     :avatar    (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
                                     :icon      (get-in doc [:resource :icon])
-                                    :menu-order (get-in doc [:resource :menu-order] 10)
+                                    :menu-order (double (get-in doc [:resource :menu-order] 10))
                                     :name      (last parts)
                                     :href (str nm)}))) {})))
+
 
 (defn build-menu* [ztx {ref :ref :as item} doc]
   (let [res  (zd.db/get-resource ztx ref)
@@ -158,7 +159,7 @@
                                   {})))})))
 
 
-(defn menu-item-sort [[_ x]] (format "%07d %s" (get x :menu-order 10) (:title x)))
+(defn menu-item-sort [[_ x]] (format "%07f %s" (get x :menu-order 10.0) (:title x)))
 
 (defn item-avatar [item]
   (if-let [ava (:avatar item)]

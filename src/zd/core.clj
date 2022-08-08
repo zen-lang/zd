@@ -23,6 +23,20 @@
 
 (defmethod op :default [_ {{op :op} :match} _] op)
 
+{'base-api
+ {:zen/tags #{'zd/api}
+  [:resource] {:GET 'zd/page}}
+
+ 'edit-api
+ {:zen/tags #{'zd/api}
+  [:resource] {"edit" {:GET  'zd.editor/edit-page
+                       :POST 'zd.editor/save}}}
+
+ 'google-auth {}
+
+ 'server {:apis ['base-api 'edit-api]
+          :middleware ['reload 'google-auth]}}
+
 
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])

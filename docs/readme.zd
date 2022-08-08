@@ -16,8 +16,8 @@ Clojure library to build knowlege bases.
 We were looking for:
 
 * semantic wiki
-* kinda cocktail of best ideas from notion, roam, org-mode, obsidian, jekyll, gitbook
-* and can be hacked in clojure
+* cocktail of best parts from Notion, Roam, OrgMode, Obsidian, Jekyll, GitBook
+* hackable in lovely [clojure](https://clojure.org/)
 
 so we made zen-doc on Samurai Christmas hackathon!
 
@@ -26,11 +26,16 @@ so we made zen-doc on Samurai Christmas hackathon!
 Knowledge base is github repository with `docs/` folder full
 of files with `zd` extension.
 
-When zen-doc starts it reads files from `docs/`, parse files and put
+When zen-doc starts it reads files from `docs/`, parse files into resources by #dev.zd-parser and put
 into in-memory database.
 
 Every `zd` file is a resource. Every resource has a unique name, which is deduced
 from it's relative path in `docs/` folder by replacing `/` with `.` and cating `.zd` extension.
 For example: `docs/features/hiccup.zd` will be `features.hiccup`.
 
-How to create knowledge base as a data and docs under the git
+:credits md/
+
+* @niquola - for initial idea
+* @mput -
+* @mput -
+* Health Samurai for supporting this project
