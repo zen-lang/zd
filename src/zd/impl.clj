@@ -203,7 +203,7 @@
 
     (string? data)
     ;; TODO: move to parameters
-    (if (= (:path block) [:telegram]) (zd.zentext/parse-block ztx (into [:p] data))
+    (if (= (:path block) [:telegram]) [:p data])
         (zd.zentext/parse-block ztx (str data)))
 
     (or (keyword? data) (boolean? data))
