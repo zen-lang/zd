@@ -311,7 +311,7 @@
                                    (map-indexed (fn [i k]
                                                   [:td
                                                    {:class (c [:px 4] [:py 2] :border {:vertical-align "top"}) :style (when (= i 0) "white-space: break-word;")}
-                                                   (render-content ztx {:data (get x k)})]))))))))]
+                                                   (render-content ztx {:data (get x k) :path [k]})]))))))))]
     [:pre (pr-str data)]))
 
 (defmethod render-content :table
