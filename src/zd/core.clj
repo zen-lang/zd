@@ -26,9 +26,11 @@
 
 (defn parse-uri [uri]
   (let [edit-postfix "/_edit"
-        edit? (str/ends-with? uri "/_edit")]
-    {:sym (symbol (str/replace (subs uri 1) (re-pattern edit-postfix) ""))
-     :edit? edit?}))
+        edit? (str/ends-with? uri "/_edit")
+        uri (str/replace uri (re-pattern edit-postfix) "")]
+    {:sym (symbol (subs uri 1))
+     :edit? edit?
+     :uri uri}))
 
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])
@@ -36,7 +38,7 @@
   (if-let [match (when-let [routes (get-in @ztx [:zd/opts :route-map])]
                    (route-map.core/match  [m uri] routes))]
     (op ztx match req)
-    (let [{:keys [sym edit?]} (parse-uri uri)
+    (let [{:keys [sym edit? uri]} (parse-uri uri)
           page (zd.db/get-page ztx sym)]
       (cond
         (not page)
@@ -45,9 +47,10 @@
 
         edit?
         {:status 200
-         :body  (zd.pages/render-page ztx (assoc page
-                                                 :request req
-                                                 :edit? true))}
+         :body  (zd.pages/edit-page ztx (assoc page
+                                               :request req
+                                               :edit? true
+                                               :uri uri))}
 
         :else
         {:status 200

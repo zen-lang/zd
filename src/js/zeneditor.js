@@ -12,18 +12,19 @@ function renderPreview() {
     })
 }
 
-// function savePreview() {
-//   var prNode = document.getElementById("edit-preview")
-//   var editorNode = document.getElementById("edit-page")
-//   var text = editorNode.value
-//   fetch(document.URL, {method: 'PUT',
-//                        body: text})
-//     .then(response => {
-//       return response.text()
-//       location.href = document.URL + '_save';
-//     })
+function savePreview() {
+  var editorNode = document.getElementById("edit-page")
+  var text = editorNode.value
 
-// }
+  fetch(document.URL, {method: 'PUT',
+                       body: text})
+    .then(response => {
+      return response.text()
+    })
+    .then(data => {
+      location.href = data;
+    })
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   renderPreview()

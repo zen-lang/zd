@@ -248,7 +248,8 @@
 
 
 (defn page [ztx {doc :doc _res :resource :as page} & [preview?]]
-  [:div {:class (when-not preview?
+  [:div {:class (if preview?
+                  (c :rounded)
                   (c {:grid-area "content"} [:pb 8] :grid {:overflow-y "auto"
                                                            :max-height "calc(100vh - 80px)"
                                                            :overflow-x "hidden"
@@ -371,16 +372,41 @@
    (navigation ztx doc)
    (zen-page ztx doc)])
 
+(def base-class
+  (c [:px 3] [:py 2]
+     :inline-flex
+     :items-center
+     :cursor-pointer
+     [:leading-relaxed]
+     :border
+     :rounded
+     :whitespace-no-wrap
+     [:bg :white]
+     [:space-x 1]
+     [:text :gray-700]
+     :transition-all [:duration 200] :ease-in-out
+     [:focus :outline-none :shadow-outline]
+     [:pseudo ":not(:disabled)"
+      [:hover [:text :blue-500] [:border :blue-500]]
+      [:active [:text :blue-800] [:border :blue-800]]]
+     [:disabled [:text :gray-500] [:bg :gray-200] [:border :gray-400] :cursor-not-allowed]))
+
 
 (defn generate-editor [ztx doc]
   (let [raw (slurp (:zd/path doc))]
     [:div {:class (c :flex :h-min-full )}
-     [:div {:class (c [:p 4] [:w-min 150] :border)}
-      [:textarea {:class (c [:w "100%"] [:h "90%"])
+     [:div {:class (c [:p 4] [:w-min 150] :border )}
+      [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded)
                   :id "edit-page"}
-       raw]]
+       raw]
+      [:div {:class (c :flex [:mt 2] [:p 2] )}
+       [:div {:class [(name base-class)
+                      (name (c :ml-auto))]
+              :onclick "savePreview()"}
+        "Save"]]]
      [:div {:class (c :border [:p 4] :flex-1)
             :id "edit-preview"}]]))
+
 
 (defn render-editor
   [ztx doc]
@@ -398,14 +424,23 @@
     (->> (page ztx (zd.db/get-page ztx (symbol name)) true)
          (to-html))))
 
+(defn save-preview
+  [ztx doc]
+  (let [content (slurp (:body (:request doc)))
+        path (:zd/path doc)]
+    (spit path content))
+  (:uri doc))
+
+(defn edit-page [ztx doc]
+  (case (get-in doc [:request :request-method])
+    :post  (render-preview ztx doc)
+    :put (save-preview  ztx doc)
+    :get (render-editor ztx doc)))
+
 (defn render-page [ztx doc]
-  (if (:edit? doc)
-    (if (= :post (get-in doc [:request :request-method]))
-      (render-preview ztx doc)
-      (render-editor ztx doc))
-    (->> (generate-page ztx doc)
-         (layout ztx)
-         (to-html))))
+  (->> (generate-page ztx doc)
+       (layout ztx)
+       (to-html)))
 
 (defn render-not-found [ztx sym]
   (->> [:div {:class (c [:p 4] :flex [:space-x 4])}
