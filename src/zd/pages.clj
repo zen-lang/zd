@@ -116,6 +116,7 @@
     [:script {:src "/js/d3.js"}]
     [:script {:src "/js/mindmap.js"}]
     [:script {:src "/js/zendoc.js"}]
+    [:script {:src "/js/zeneditor.js"}]
     [:script "hljs.highlightAll()"]]
    [:body {:class (c {:background-color "#F4F7F9" :overflow "hidden" :height "100vh"}  :w-max-full)}
     [:div#overlay
@@ -246,23 +247,31 @@
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
 
-(defn page [ztx {doc :doc _res :resource :as page}]
-  [:div {:class (c {:grid-area "content"} [:pb 8] :grid {:overflow-y "auto"
-                                                         :max-height "calc(100vh - 80px)"
-                                                         :overflow-x "hidden"
-                                                         :grid-template-columns "1fr 230px"})}
+(defn page [ztx {doc :doc _res :resource :as page} & [preview?]]
+  [:div {:class (when-not preview?
+                  (c {:grid-area "content"} [:pb 8] :grid {:overflow-y "auto"
+                                                           :max-height "calc(100vh - 80px)"
+                                                           :overflow-x "hidden"
+                                                           :grid-template-columns "1fr 230px"}))}
    [:div
-    [:div {:class (c :flex [:py 1])}
-     (breadcrumb ztx (:zd/name page))
-     [:a {:name "top"}]
-     [:div {:class (c :text-sm [:text :gray-600])}
-      (:zd/name page)
-      (when (and (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))
-        [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
-             :target "_blank"
-             :title "Edit page"
-             :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
-         [:i.fas.fa-pencil]])]]
+    (when-not preview?
+      [:div {:class (c :flex [:py 1])}
+       (breadcrumb ztx (:zd/name page))
+       [:a {:name "top"}]
+       [:div {:class (c :text-sm [:text :gray-600])}
+        (:zd/name page)
+        (when (and (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))
+          [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
+               :target "_blank"
+               :title "Edit page"
+               :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
+           [:i.fas.fa-pencil]])
+        (when (and (get-in @ztx [:zd/opts :beta-live-edit]) (:zd/file page))
+          [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
+               :title "Live edit"
+               :href (str (:zd/name page) "/" "_edit")}
+           "Live Edit "
+           [:i.fas.fa-pencil]])]])
     [:div {:class (c [:bg :white] [:py 4] [:px 8] :shadow-md
                      {:color "#3b454e"
                       :min-height "80vh"})}
@@ -273,7 +282,8 @@
            (or (zd.methods/render-key ztx block)
                (zd.methods/render-block ztx block)))))]
      [:a {:href "#top" :class (c [:text :blue-600] [:hover [:underline]])} "Наверх"]]]
-   (links ztx (:backrefs page))])
+   (when-not preview?
+    (links ztx (:backrefs page)))])
 
 
 (defn search []
@@ -361,10 +371,41 @@
    (navigation ztx doc)
    (zen-page ztx doc)])
 
-(defn render-page [ztx doc]
-  (->> (generate-page ztx doc)
+
+(defn generate-editor [ztx doc]
+  (let [raw (slurp (:zd/path doc))]
+    [:div {:class (c :flex :h-min-full )}
+     [:div {:class (c [:p 4] [:w-min 150] :border)}
+      [:textarea {:class (c [:w "100%"] [:h "90%"])
+                  :id "edit-page"}
+       raw]]
+     [:div {:class (c :border [:p 4] :flex-1)
+            :id "edit-preview"}]]))
+
+(defn render-editor
+  [ztx doc]
+  (->> (generate-editor ztx doc)
        (layout ztx)
        (to-html)))
+
+(defn render-preview
+  [ztx doc]
+  (let [content (slurp (:body (:request doc)))
+        name "editable-res"]
+    (zd.db/load-content! ztx {:path ""
+                              :resource-path name
+                              :content content})
+    (->> (page ztx (zd.db/get-page ztx (symbol name)) true)
+         (to-html))))
+
+(defn render-page [ztx doc]
+  (if (:edit? doc)
+    (if (= :post (get-in doc [:request :request-method]))
+      (render-preview ztx doc)
+      (render-editor ztx doc))
+    (->> (generate-page ztx doc)
+         (layout ztx)
+         (to-html))))
 
 (defn render-not-found [ztx sym]
   (->> [:div {:class (c [:p 4] :flex [:space-x 4])}
@@ -378,5 +419,3 @@
   (->> (generate-zen-page ztx doc)
        (layout ztx)
        (to-html)))
-
-

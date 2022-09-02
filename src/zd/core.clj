@@ -8,7 +8,8 @@
    [zd.web]
    [clojure.walk]
    [edamame.core]
-   [route-map.core :as route-map]))
+   [route-map.core :as route-map]
+   [clojure.string :as str]))
 
 
 (defn reload [ztx _opts]
@@ -18,9 +19,16 @@
     (zd.db/load-dirs ztx dirs))
   :ok)
 
+
 (defmulti op (fn [ztx {{op :op} :match} req] op))
 
 (defmethod op :default [_ {{op :op} :match} _] op)
+
+(defn parse-uri [uri]
+  (let [edit-postfix "/_edit"
+        edit? (str/ends-with? uri "/_edit")]
+    {:sym (symbol (str/replace (subs uri 1) (re-pattern edit-postfix) ""))
+     :edit? edit?}))
 
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])
@@ -28,12 +36,23 @@
   (if-let [match (when-let [routes (get-in @ztx [:zd/opts :route-map])]
                    (route-map.core/match  [m uri] routes))]
     (op ztx match req)
-    (let [sym (symbol (subs uri 1))]
-      (if-let [page (zd.db/get-page ztx sym)]
-        {:status 200
-         :body  (zd.pages/render-page ztx (assoc page :request req))}
+    (let [{:keys [sym edit?]} (parse-uri uri)
+          page (zd.db/get-page ztx sym)]
+      (cond
+        (not page)
         {:status 404
-         :body  (zd.pages/render-page ztx {:zd/name sym})}))))
+         :body  (zd.pages/render-page ztx {:zd/name sym})}
+
+        edit?
+        {:status 200
+         :body  (zd.pages/render-page ztx (assoc page
+                                                 :request req
+                                                 :edit? true))}
+
+        :else
+        {:status 200
+         :body  (zd.pages/render-page ztx (assoc page :request req))}))))
+
 
 (defn start [ztx opts]
   (swap! ztx assoc :zd/opts opts)
