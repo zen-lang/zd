@@ -332,3 +332,95 @@
         (if stop
           (dissoc res :stop)
           (cb res))))))
+
+
+
+;; -----------------GH COMMIT (low level)---------------
+
+(defn base-req
+  [req]
+  {:accept :json
+   :headers {"Authorization" (str "Bearer " (-> req :request :user :token :access_token))}})
+
+(defn get-ref
+  [req]
+  (let [ep "https://api.github.com/repos/HealthSamurai/knowledge-base/git/ref/heads/main"]
+    (-> (client/get ep (base-req req))
+        :body
+        (json/parse-string keyword))))
+
+(defn get-commit
+  [req]
+  (let [{{:keys [url]} :object :as ref} (get-ref req)]
+    (-> (client/get url (base-req req))
+        :body
+        (json/parse-string keyword))))
+
+
+(defn get-tree
+  [req]
+  (let [{{:keys [url]} :tree :as ref} (get-commit req)]
+    (-> (client/get url (base-req req))
+        :body
+        (json/parse-string keyword))))
+
+
+(defn create-blob
+  [req data]
+  (let [params {:content (encode64 data)
+                :encoding "base64"}
+        ep "https://api.github.com/repos/HealthSamurai/knowledge-base/git/blobs"
+        {:keys [url] :as blb} (-> (client/post ep
+                                               (assoc (base-req req)
+                                                      :form-params params
+                                                      :raise false
+                                                      :content-type :json))
+                                  :body
+                                  (json/parse-string keyword))]))
+
+;; ---------------------GH Commit (high level)-----------------------
+;; https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents
+
+(defn get-file
+  [ztx doc path]
+  (let [ep (format "https://api.github.com/repos/%s/contents%s"
+                   (-> ztx deref :zd/opts :live-edit :repo)
+                   path)]
+    (-> (client/get ep (base-req doc))
+        :body
+        (json/parse-string keyword)
+        (update :content (fn [c] (decode64 (str/replace c #"\n" "")))))))
+
+
+(defn create-file
+  [ztx doc path data]
+  (let [params {:content (encode64 data)
+                :message "Test update"}
+        ep (format "https://api.github.com/repos/%s/contents%s"
+                   (-> ztx deref :zd/opts :live-edit :repo)
+                   path)]
+    (-> (client/put ep
+                    (assoc (base-req doc)
+                           :form-params params
+                           :raise false
+                           :content-type :json))
+        :body
+        (json/parse-string keyword))))
+
+(defn update-file
+  [ztx doc path data cm & [prev-data]]
+  (let [{:keys [sha]} (get-file ztx doc path)
+        _ (prn 'sha sha)
+        params {:content (encode64 data)
+                :message cm
+                :sha sha}
+        ep (format "https://api.github.com/repos/%s/contents%s"
+                   (-> ztx deref :zd/opts :live-edit :repo)
+                   path)]
+    (-> (client/put ep
+                    (assoc (base-req doc)
+                           :form-params params
+                           :raise false
+                           :content-type :json))
+        :body
+        (json/parse-string keyword))))

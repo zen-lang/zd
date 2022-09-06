@@ -13,7 +13,8 @@
    [stylo.rule :refer [rule join-rules]]
    [garden.core]
    [cheshire.core :as json]
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [zd.external-auth]))
 
 (defmethod rule :grid-template-areas
   [_ & xs]
@@ -267,7 +268,7 @@
                :title "Edit page"
                :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
            [:i.fas.fa-pencil]])
-        (when (and (get-in @ztx [:zd/opts :beta-live-edit]) (:zd/file page))
+        (when (and (get-in @ztx [:zd/opts :live-edit]) (:zd/file page))
           [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
                :title "Live edit"
                :href (str (:zd/name page) "/" "_edit")}
@@ -432,10 +433,40 @@
   (:uri doc))
 
 (defn edit-page [ztx doc]
+  (def _ztx ztx)
+  (def _doc doc)
   (case (get-in doc [:request :request-method])
     :post  (render-preview ztx doc)
     :put (save-preview  ztx doc)
     :get (render-editor ztx doc)))
+
+
+
+
+(comment
+
+  (zd.external-auth/provider-settings :github)
+
+  (zd.external-auth/create-file _ztx _doc "/docs/test.zd" "Hello Blob! v2")
+
+  (zd.external-auth/update-file _ztx _doc "/docs/test.zd" "Hello Blob! v3" "test")
+
+  (zd.external-auth/get-file _ztx _doc "/docs/test.zd")
+
+
+  (-> _ztx deref :zd/opts :live-edit :repo)
+
+  (-> _doc
+      ;; keys
+      :request
+      :user
+      )
+
+  (-> _doc
+      (select-keys [:zd/path :zd/name :zd/file])
+      )
+
+  )
 
 (defn render-page [ztx doc]
   (->> (generate-page ztx doc)
