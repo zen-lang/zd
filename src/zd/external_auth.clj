@@ -279,7 +279,7 @@
          :body (error-page (str "You should be member of [" (str/join "," allowed-orgs)
                                 "] organizations. But only [" (str/join "," orgs) "]"))}))))
 
-(defn callback [opts req]
+(defn callback [opts req provider]
   (let [{:keys [token state] } (get-token opts req)
         userinfo (get-userinfo (assoc opts :token token))
         org-error (check-organizations (assoc opts
@@ -289,7 +289,8 @@
       org-error
       (successful-redirect opts req (-> userinfo
                                         (select-keys [:email :name :url])
-                                        (assoc :token token))
+                                        (assoc :token token
+                                               :provider provider))
                            state))))
 
 
@@ -316,7 +317,7 @@
               opt' (assoc opt :provider (merge (get provider-settings provider)
                                                (get opt provider)))]
           (cond
-            (= ["auth" "callback"] (take 2 parts)) (callback opt' req)
+            (= ["auth" "callback"] (take 2 parts)) (callback opt' req provider)
             (= ["auth"] (take 1 parts)) (redirect-provider opt' req)
             :else (redirect-to-auth req)))
         (catch clojure.lang.ExceptionInfo e
@@ -335,50 +336,13 @@
 
 
 
-;; -----------------GH COMMIT (low level)---------------
+;; -----------------GH COMMIT ---------------
 
 (defn base-req
   [req]
   {:accept :json
    :headers {"Authorization" (str "Bearer " (-> req :request :user :token :access_token))}})
 
-(defn get-ref
-  [req]
-  (let [ep "https://api.github.com/repos/HealthSamurai/knowledge-base/git/ref/heads/main"]
-    (-> (client/get ep (base-req req))
-        :body
-        (json/parse-string keyword))))
-
-(defn get-commit
-  [req]
-  (let [{{:keys [url]} :object :as ref} (get-ref req)]
-    (-> (client/get url (base-req req))
-        :body
-        (json/parse-string keyword))))
-
-
-(defn get-tree
-  [req]
-  (let [{{:keys [url]} :tree :as ref} (get-commit req)]
-    (-> (client/get url (base-req req))
-        :body
-        (json/parse-string keyword))))
-
-
-(defn create-blob
-  [req data]
-  (let [params {:content (encode64 data)
-                :encoding "base64"}
-        ep "https://api.github.com/repos/HealthSamurai/knowledge-base/git/blobs"
-        {:keys [url] :as blb} (-> (client/post ep
-                                               (assoc (base-req req)
-                                                      :form-params params
-                                                      :raise false
-                                                      :content-type :json))
-                                  :body
-                                  (json/parse-string keyword))]))
-
-;; ---------------------GH Commit (high level)-----------------------
 ;; https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents
 
 (defn get-file

@@ -248,7 +248,7 @@
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
 
-(defn page [ztx {doc :doc _res :resource :as page} & [preview?]]
+(defn page [ztx {doc :doc req :request _res :resource :as page} & [preview?]]
   [:div {:class (if preview?
                   (c :rounded)
                   (c {:grid-area "content"} [:pb 8] :grid {:overflow-y "auto"
@@ -261,19 +261,25 @@
        (breadcrumb ztx (:zd/name page))
        [:a {:name "top"}]
        [:div {:class (c :text-sm [:text :gray-600])}
-        (:zd/name page)
+        #_(:zd/name page)
         (when (and (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))
           [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
                :target "_blank"
                :title "Edit page"
                :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
+           "gh edit "
            [:i.fas.fa-pencil]])
-        (when (and (get-in @ztx [:zd/opts :live-edit]) (:zd/file page))
+        (when (and (get-in @ztx [:zd/opts :live-edit])
+                   (:zd/file page)
+                   (= (get-in req [:user :provider]) "github")
+                   )
           [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
-               :title "Live edit"
+               :title "Live edit "
                :href (str (:zd/name page) "/" "_edit")}
-           "Live Edit "
-           [:i.fas.fa-pencil]])]])
+           "live edit "
+           [:i.fas.fa-pencil
+
+            ]])]])
     [:div {:class (c [:bg :white] [:py 4] [:px 8] :shadow-md
                      {:color "#3b454e"
                       :min-height "80vh"})}
@@ -285,7 +291,7 @@
                (zd.methods/render-block ztx block)))))]
      [:a {:href "#top" :class (c [:text :blue-600] [:hover [:underline]])} "Наверх"]]]
    (when-not preview?
-    (links ztx (:backrefs page)))])
+     (links ztx (:backrefs page)))])
 
 
 (defn search []
@@ -422,51 +428,23 @@
     (zd.db/load-content! ztx {:path ""
                               :resource-path name
                               :content content})
-    (->> (page ztx (zd.db/get-page ztx (symbol name)) true)
+    (->> (page ztx (merge doc (zd.db/get-page ztx (symbol name))) true)
          (to-html))))
 
 (defn save-preview
   [ztx doc]
   (let [content (slurp (:body (:request doc)))
-        path (:zd/path doc)]
-    (spit path content))
+        {:zd/keys [path file]} doc
+        file (str "/docs/" file)]
+    (zd.external-auth/update-file ztx doc file content "Live Update" (slurp path)))
   (:uri doc))
 
 (defn edit-page [ztx doc]
-  (def _ztx ztx)
-  (def _doc doc)
   (case (get-in doc [:request :request-method])
     :post  (render-preview ztx doc)
     :put (save-preview  ztx doc)
     :get (render-editor ztx doc)))
 
-
-
-
-(comment
-
-  (zd.external-auth/provider-settings :github)
-
-  (zd.external-auth/create-file _ztx _doc "/docs/test.zd" "Hello Blob! v2")
-
-  (zd.external-auth/update-file _ztx _doc "/docs/test.zd" "Hello Blob! v3" "test")
-
-  (zd.external-auth/get-file _ztx _doc "/docs/test.zd")
-
-
-  (-> _ztx deref :zd/opts :live-edit :repo)
-
-  (-> _doc
-      ;; keys
-      :request
-      :user
-      )
-
-  (-> _doc
-      (select-keys [:zd/path :zd/name :zd/file])
-      )
-
-  )
 
 (defn render-page [ztx doc]
   (->> (generate-page ztx doc)
