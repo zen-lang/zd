@@ -442,7 +442,9 @@
         uri (format "http://localhost:%s/%s" hook-port hook-name)]
     (zd.external-auth/update-file ztx doc file content "Live Update" (slurp path))
     (when (and hook-port hook-name)
-      (println :resutl (client/get uri))))
+      (try (println :resutl (client/get uri))
+           (catch Exception e
+             (println :exception-in-hook-notify e)))))
   (:uri doc))
 
 
