@@ -439,12 +439,12 @@
         file (str "/docs/" file)
         hook-port (System/getenv (name :hook-listener-port))
         hook-name (System/getenv (name :hook-site-name))
-        uri (format "localhost:%s/%s" hook-port hook-name)]
+        uri (format "http://localhost:%s/%s" hook-port hook-name)]
     (zd.external-auth/update-file ztx doc file content "Live Update" (slurp path))
-    (println :notify uri)
     (when (and hook-port hook-name)
       (println :resutl (client/get uri))))
   (:uri doc))
+
 
 (defn edit-page [ztx doc]
   (case (get-in doc [:request :request-method])
