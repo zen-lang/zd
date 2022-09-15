@@ -3,6 +3,7 @@
    [zd.zentext]
    [zd.db]
    [zd.methods]
+   [clj-http.client :as client]
    [zd.impl]
    [hiccup.core]
    [hiccup.page]
@@ -435,8 +436,14 @@
   [ztx doc]
   (let [content (slurp (:body (:request doc)))
         {:zd/keys [path file]} doc
-        file (str "/docs/" file)]
-    (zd.external-auth/update-file ztx doc file content "Live Update" (slurp path)))
+        file (str "/docs/" file)
+        hook-port (System/getenv (name :hook-listener-port))
+        hook-name (System/getenv (name :hook-site-name))
+        uri (format "localhost:%/%s" hook-port hook-name)]
+    (zd.external-auth/update-file ztx doc file content "Live Update" (slurp path))
+    (println :notify uri)
+    (when (and hook-port hook-name)
+      (println :resutl (client/get uri))))
   (:uri doc))
 
 (defn edit-page [ztx doc]
