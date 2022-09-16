@@ -22,7 +22,9 @@
 
 (defmulti op (fn [ztx {{op :op} :match} req] op))
 
-(defmethod op :default [_ {{op :op} :match} _] op)
+(defmethod op :default
+  [_ {{op :op} :match} _]
+  {:status 404 :body (format "can't find %s operation" op)})
 
 (defn parse-uri [uri]
   (let [edit-postfix "/_edit"
