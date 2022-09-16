@@ -16,6 +16,9 @@ function savePreview() {
   var editorNode = document.getElementById("edit-page")
   var text = editorNode.value
 
+  var spinner = document.getElementById("spinner")
+  spinner.classList.add("show-spinner")
+
   fetch(document.URL, {method: 'PUT',
                        body: text})
     .then(response => {
@@ -23,6 +26,11 @@ function savePreview() {
     })
     .then(data => {
       location.href = data;
+    })
+    .catch(() => {
+      spinner.classList.remove("show-spinner")
+      alert("Что то сломалось. Сори, это пока бета, можете попробовать еще раз.")
+
     })
 }
 

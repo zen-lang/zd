@@ -113,6 +113,7 @@
     [:meta {:charset "UTF-8"}]
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:link  {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  :rel "stylesheet"}]
+    [:link  {:href "/js/spinner.css"  :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
     [:script {:src "/js/d3.js"}]
@@ -401,18 +402,26 @@
 
 (defn generate-editor [ztx doc]
   (let [raw (slurp (:zd/path doc))]
-    [:div {:class (c :flex :h-min-full )}
-     [:div {:class (c [:p 4] [:w-min 150] :border )}
-      [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded)
-                  :id "edit-page"}
-       raw]
-      [:div {:class (c :flex [:mt 2] [:p 2] )}
-       [:div {:class [(name base-class)
-                      (name (c :ml-auto))]
-              :onclick "savePreview()"}
-        "Save"]]]
-     [:div {:class (c :border [:p 4] :flex-1)
-            :id "edit-preview"}]]))
+    [:div
+     [:div {:class (c :flex :h-min-full )}
+      [:div {:class (c [:p 4] [:w-min 150] :border )}
+       [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded)
+                   :id "edit-page"}
+        raw]
+       [:div {:class (c :flex [:mt 2] [:p 2] )}
+        [:div {:class [(name base-class)
+                       (name (c :ml-auto))]
+               :onclick "savePreview()"}
+         "Save"]]]
+      [:div {:class (c :border [:p 4] :flex-1)
+             :id "edit-preview"}]]
+     [:div#spinner {:class [(name (c :fixed [:top 0] [:left 0] [:bottom 0] [:right 0]
+                                     {:z-index 1000} {:background-color "rgba(120, 120, 120, 0.4)"} #_{:visibility "hidden"}
+                                     {:display "none"}))
+                            ;; "show-spinner"
+                            ]
+                    }
+      [:div.lds-ellipsis [:div][:div][:div]]]]))
 
 
 (defn render-editor
