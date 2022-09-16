@@ -35,8 +35,8 @@
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (when-not (get-in @ztx [:zd/opts :production])
     (reload ztx {}))
-  (if-let [match (when-let [routes (get-in @ztx [:zd/opts :route-map])]
-                   (route-map.core/match  [m uri] routes))]
+  (if-let [match (some->> (get-in @ztx [:zd/opts :route-map])
+                          (route-map.core/match [m uri]))]
     (op ztx match req)
     (let [{:keys [sym edit? uri]} (parse-uri uri)
           page (zd.db/get-page ztx sym)]
