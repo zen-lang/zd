@@ -103,7 +103,7 @@
                               :transition "all 0.26s"}]]]])
 
 
-(defn layout [ztx content]
+(defn layout [ztx content & [doc]]
   (zd.db/index-refs ztx)
   [:html
    [:head
@@ -111,6 +111,11 @@
     [:style (garden.core/css common-style)]
     [:style "*, ::before, ::after {overflow-x: auto;}"]
     [:meta {:charset "UTF-8"}]
+    (when-let [title (->> (:doc doc)
+                          (filter #(= [:title] (:path %)))
+                          (first)
+                          (:data))]
+      [:title title])
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:link  {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  :rel "stylesheet"}]
     [:link  {:href "/js/spinner.css"  :rel "stylesheet"}]
@@ -464,8 +469,7 @@
 
 
 (defn render-page [ztx doc]
-  (->> (generate-page ztx doc)
-       (layout ztx)
+  (->> (layout ztx (generate-page ztx doc) doc)
        (to-html)))
 
 (defn render-not-found [ztx sym]
