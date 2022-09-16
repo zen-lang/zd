@@ -404,11 +404,11 @@
   (let [raw (slurp (:zd/path doc))]
     [:div
      [:div {:class (c :flex :h-min-full )}
-      [:div {:class (c [:p 4] [:w-min 150] :border )}
-       [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded)
+      [:div {:class (c [:p 4] [:w-min 150]  [:h "100vh"] :border  )}
+       [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded {:resize "none"})
                    :id "edit-page"}
         raw]
-       [:div {:class (c :flex [:mt 2] [:p 2] )}
+       [:div {:class (c :flex [:mt 2] [:p 2]  )}
         [:div {:class [(name base-class)
                        (name (c :ml-auto))]
                :onclick "savePreview()"}
