@@ -295,7 +295,7 @@
 
 
 (defn white-list? [ztx opt {:keys [uri] :as req}]
-  (let [uris #{"/logo.png" "/favicon.ico"}]
+  (let [uris #{"/logo.png" "/favicon.ico" "/$tgbot"}]
     (uris uri)))
 
 (defn dispatch
