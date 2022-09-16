@@ -273,7 +273,7 @@
         (when (and (get-in @ztx [:zd/opts :live-edit])
                    (:zd/file page)
                    (or (= (get-in req [:user :provider]) "github")
-                       (->> req :user :token :scope (re-find #"repo"))))
+                       (some->> req :user :token :scope (re-find #"repo"))))
           [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
                :title "Live edit "
                :href (str (:zd/name page) "/" "_edit")}
