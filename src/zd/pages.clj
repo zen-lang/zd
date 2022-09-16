@@ -248,7 +248,6 @@
           (into [:div {:class (c  [:py 2] [:px 4])}
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
-
 (defn page [ztx {doc :doc req :request _res :resource :as page} & [preview?]]
   [:div {:class (if preview?
                   (c :rounded)
@@ -272,12 +271,12 @@
            [:i.fas.fa-pencil]])
         (when (and (get-in @ztx [:zd/opts :live-edit])
                    (:zd/file page)
-                   (= (get-in req [:user :provider]) "github")
-                   )
+                   (or (= (get-in req [:user :provider]) "github")
+                       (->> req :user :token :scope (re-find #"repo"))))
           [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
                :title "Live edit "
                :href (str (:zd/name page) "/" "_edit")}
-           "live edit "
+           "live edit(β) "
            [:i.fas.fa-pencil
 
             ]])]])
