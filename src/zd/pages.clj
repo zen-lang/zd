@@ -205,6 +205,7 @@
                         :flex
                         :justify-center
                         {:font-size "12px"}
+                        :overflow-y-hidden
                         [:hover :rounded
                          [:text :red-600]])}
        [:i.fas.toggler-arrow.fa-chevron-down.toggler.rotateToggler]])]
