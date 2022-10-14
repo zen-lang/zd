@@ -39,15 +39,14 @@
    [:ul (c* [:ml 4] [:mb 4])
     {:list-style "inside"
      :line-height "24px"}
-    [:li {:display "list-item"
-          :list-style "outside"}]
+    [:li {:display "list-item"}]
     [:ul (c* [:mb 0])]]
    [:ol (c* [:ml 4]
             {:list-style "disk inside"
              :line-height "24px"})
     [:li (c* [:my 1]
              {:display "list-item"
-              :list-style "outside decimal"})]
+              :list-style "decimal"})]
     [:ol (c* [:ml 4])]]
 
    [:p (c* [:mb 4] {:line-height "1.5rem"})]
