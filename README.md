@@ -70,7 +70,7 @@ You have to have installed clojure cli. Go to the root of your project and run:
 ```
 echo ':title "My first zd/note 🙂"' > docs/readme.zd
 
-clojure -Sdeps '{:deps {zen-lang/zd {:git/url "git@github.com:zen-lang/zd.git" :sha "2ffa5788e70d99c5ccd833a22266c70a6b4b90a1"}}}' -M -m zd.dev docs zrc
+clojure -Sdeps '{:deps {zen-lang/zd {:git/url "git@github.com:zen-lang/zd.git" :sha "53ca914e73ff9cf6db75434d5d6dafe425e2b057"}}}' -M -m zd.dev docs zrc
 ```
 
 Open http://localhost:3030 and that's it. 
