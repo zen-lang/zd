@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [stylo.core :refer [c]]
    [zd.db]
+   [zd.utils]
    [zd.zentext]
    [sci.core]
    [clj-yaml.core]
@@ -203,8 +204,15 @@
 
     (string? data)
     ;; TODO: move to parameters
-    (if (= (:path block) [:telegram]) [:p data]
-        (zd.zentext/parse-block ztx (str data)))
+    (cond 
+      (re-find #"\d\d\d\d-\d\d-\d\d" data)
+      (zd.utils/format-date data)
+      
+      (= (:path block) [:telegram]) 
+      [:p data]
+      
+      :else
+      (zd.zentext/parse-block ztx (str data)))
 
     (or (keyword? data) (boolean? data))
     [:span {:class (c [:text :green-600])} (str data)]
@@ -283,6 +291,7 @@
 
 (defmethod render-block :attribute
   [ztx {data :data path :path :as block}]
+  (when (= path [:birthdate]) (def d block))
   [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
    [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
     (subs (str (last path)) 1)]
