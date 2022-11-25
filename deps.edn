@@ -10,6 +10,7 @@
          clj-http/clj-http                                   {:mvn/version "3.12.3"} ;; replace with HTTP-KIT
          markdown-clj/markdown-clj                           {:mvn/version "1.10.5"}
          org.clojure/data.xml                                {:mvn/version "0.2.0-alpha6"}
+         org.clojure/data.csv                                {:mvn/version "1.0.1"}
          org.clojure/java.jdbc                               {:mvn/version "0.7.12"}
          org.postgresql/postgresql                           {:mvn/version "42.2.22.jre7"}
          org.babashka/sci                                    {:mvn/version "0.2.8"}
