@@ -3,6 +3,7 @@
    [zen.core :as zen]
    [zd.parse]
    [sci.core]
+   [clojure.data.csv]
    [clj-yaml.core :as yaml]
    [zd.deep-merge :refer [deep-merge]]
    [clojure.java.io :as io]
@@ -181,6 +182,14 @@
                 (:annotations block)))))
     doc)))
 
+(defn format-csv
+  [[header & content]]
+  (let [header-keys (mapv keyword header)]
+    (mapv
+     (fn [raw]
+       (zipmap header-keys raw))
+     content)))
+
 (def macros
   {'users (fn [& usrs] (->> usrs (mapv #(symbol (str "aidbox.team." %)))
                            (into #{})))
@@ -193,6 +202,7 @@
                ^:error {:message (str "File " pth " not found")}
                (cond
                  (= :yaml fmt) (yaml/parse-string content)
+                 (= :csv fmt)  (-> content clojure.data.csv/read-csv format-csv) 
                  :else content))))})
 
 (defn process-macroses [ztx {doc :doc :as page}]
