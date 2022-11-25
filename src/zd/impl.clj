@@ -3,14 +3,15 @@
    [clojure.string :as str]
    [stylo.core :refer [c]]
    [zd.db]
-   [zd.utils]
    [zd.zentext]
    [sci.core]
    [clj-yaml.core]
    [clojure.pprint]
    [markdown.core]
    [cheshire.core]
-   [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]))
+   [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]])
+  (:import (java.time.format DateTimeFormatter)
+           (java.time LocalDate)))
 
 (defmacro defzdocmethod
   "Creates and installs a new method of multimethod associated with dispatch-value. "
@@ -198,6 +199,12 @@
               :else (str path "/" data))]
     [:img (merge img {:src src})]))
 
+(def date-formatter-d-mmm-yyyy
+  (DateTimeFormatter/ofPattern "d MMM YYYY"))
+
+(defn format-date [date-str]
+  (.format (LocalDate/parse date-str) date-formatter-d-mmm-yyyy))
+
 (defmethod render-content :default
   [ztx {data :data :as block}]
   (cond
@@ -206,7 +213,7 @@
     ;; TODO: move to parameters
     (cond 
       (re-find #"\d\d\d\d-\d\d-\d\d" data)
-      (zd.utils/format-date data)
+      (format-date data)
       
       (= (:path block) [:telegram]) 
       [:p data]
