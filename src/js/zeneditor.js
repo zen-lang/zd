@@ -1,7 +1,7 @@
 function renderPreview() {
-  var prNode = document.getElementById("edit-preview")
-  var editorNode = document.getElementById("edit-page")
-  var text = editorNode.value
+  const prNode = document.getElementById("edit-preview")
+  const editorNode = document.getElementById("edit-page")
+  const text = editorNode.value
   fetch(document.URL, {method: 'POST',
                        body: text})
     .then(response => {
@@ -13,10 +13,10 @@ function renderPreview() {
 }
 
 function savePreview() {
-  var editorNode = document.getElementById("edit-page")
-  var text = editorNode.value
+  const editorNode = document.getElementById("edit-page")
+  const text = editorNode.value
 
-  var spinner = document.getElementById("spinner")
+  const spinner = document.getElementById("spinner")
   spinner.classList.add("show-spinner")
 
   fetch(document.URL, {method: 'PUT',
@@ -36,6 +36,6 @@ function savePreview() {
 
 document.addEventListener('DOMContentLoaded', function() {
   renderPreview()
-  var editorNode = document.getElementById("edit-page")
+  const editorNode = document.getElementById("edit-page")
   editorNode.addEventListener("input", renderPreview)
 })
