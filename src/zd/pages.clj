@@ -408,8 +408,8 @@
 (defn generate-editor [ztx doc]
   (let [raw (slurp (:zd/path doc))]
     [:div
-     [:div {:class (c :flex :h-min-full )}
-      [:div {:class (c [:p 4] [:w-min 150]  [:h "100vh"] :border  )}
+     [:div {:class (c :flex [:h "100%"])}
+      [:div {:class (c [:p 4] [:w-min 150] :border)}
        [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded {:resize "none"})
                    :id "edit-page"}
         raw]
