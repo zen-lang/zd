@@ -1,12 +1,3 @@
-function syncScroll(elScrolled, elToSync) {
-  const scrollPercentage = elScrolled.scrollTop / (elScrolled.scrollHeight - elScrolled.offsetHeight)
-  elToSync.scrollTop = scrollPercentage * (elToSync.scrollHeight - elToSync.offsetHeight)
-}
-
-function registerScrollSync(elScrolling, elToSync) {
-  elScrolling.onscroll = () => syncScroll(elScrolling, elToSync)
-}
-
 function renderPreview() {
   const prNode = document.getElementById("edit-preview")
   const editorNode = document.getElementById("edit-page")
@@ -20,9 +11,6 @@ function renderPreview() {
     .then(data => {
       prNode.innerHTML = data
     })
-
-  registerScrollSync(editorNode, prNode)
-  registerScrollSync(prNode, editorNode)
 }
 
 function savePreview() {
