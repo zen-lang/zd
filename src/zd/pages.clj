@@ -123,7 +123,6 @@
     [:script {:src "/js/d3.js"}]
     [:script {:src "/js/mindmap.js"}]
     [:script {:src "/js/zendoc.js"}]
-    [:script {:src "/js/syncscroll.js"}]
     [:script {:src "/js/zeneditor.js"}]
     [:script "hljs.highlightAll()"]]
    [:body {:class (c {:background-color "#F4F7F9" :overflow "hidden" :height "100vh"}  :w-max-full)}
@@ -411,9 +410,7 @@
     [:div
      [:div {:class (c :flex [:h "100%"])}
       [:div {:class (c [:p 4] [:w-min 150] :border)}
-       [:textarea {:class [(name (c [:w "100%"] [:h "90%"] [:p 4] :rounded {:resize "none"}))
-                           "syncscroll"]
-                   :name "syncscroll"
+       [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded {:resize "none"})
                    :id "edit-page"}
         raw]
        [:div {:class (c :flex [:mt 2] [:p 2]  )}
@@ -421,9 +418,7 @@
                        (name (c :ml-auto))]
                :onclick "savePreview()"}
          "Save"]]]
-      [:div {:class [(name (c :border [:p 4] :flex-1))
-                     "syncscroll"]
-             :name "syncscroll"
+      [:div {:class (c :border [:p 4] :flex-1)
              :id "edit-preview"}]]
      [:div#spinner {:class [(name (c :fixed [:top 0] [:left 0] [:bottom 0] [:right 0]
                                      {:z-index 1000} {:background-color "rgba(120, 120, 120, 0.4)"} #_{:visibility "hidden"}

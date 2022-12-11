@@ -1,3 +1,25 @@
+function syncScroll(elScrolled, elToSync) {
+  const scrollPercentage = elScrolled.scrollTop / (elScrolled.scrollHeight - elScrolled.offsetHeight)
+  elToSync.scrollTop = scrollPercentage * (elToSync.scrollHeight - elToSync.offsetHeight)
+}
+
+function registerScrollSync(elScrolling, elToSync) {
+  elScrolling.onscroll = (e) => {
+    isElScrollingNotHovered = !elScrolling.dataset.hovered
+    isElToSyncFocused = document.activeElement === elToSync
+    if (isElScrollingNotHovered || isElToSyncFocused) {
+      return
+    }
+
+    syncScroll(elScrolling, elToSync)
+  }
+}
+
+function registerHoverFlagger(el) {
+  el.onmouseenter = () => el.dataset.hovered = "true"
+  el.onmouseleave = () => delete el.dataset.hovered
+}
+
 function renderPreview() {
   const prNode = document.getElementById("edit-preview")
   const editorNode = document.getElementById("edit-page")
@@ -10,6 +32,7 @@ function renderPreview() {
     })
     .then(data => {
       prNode.innerHTML = data
+      window.requestAnimationFrame(() => syncScroll(editorNode, prNode))
     })
 }
 
@@ -36,7 +59,14 @@ function savePreview() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  renderPreview()
+  const prNode = document.getElementById("edit-preview")
   const editorNode = document.getElementById("edit-page")
+
+  renderPreview()
   editorNode.addEventListener("input", renderPreview)
+
+  registerHoverFlagger(prNode)
+  registerHoverFlagger(editorNode)
+  registerScrollSync(prNode, editorNode)
+  registerScrollSync(editorNode, prNode)
 })
