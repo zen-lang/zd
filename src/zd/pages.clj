@@ -120,6 +120,7 @@
     [:link  {:href "/js/spinner.css"  :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
+    [:script {:src "//cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"}]
     [:script {:src "/js/d3.js"}]
     [:script {:src "/js/mindmap.js"}]
     [:script {:src "/js/zendoc.js"}]

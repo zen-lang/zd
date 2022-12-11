@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const editorNode = document.getElementById("edit-page")
 
   renderPreview()
-  editorNode.addEventListener("input", renderPreview)
+  editorNode.addEventListener("input", _.debounce(renderPreview, 200))
 
   registerHoverFlagger(prNode)
   registerHoverFlagger(editorNode)
