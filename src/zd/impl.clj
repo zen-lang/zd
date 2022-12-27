@@ -111,10 +111,10 @@
              (= (:type icon) :ico)
              [:i {:class (str (str/join " " (map name (:icon icon)))
                               " "
-                              (name (c [:mr 2] [:text :gray-500])))}])))
+                              (name (c [:mr 1] [:text :gray-500])))}])))
 (defn symbol-link [ztx s]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c :inline-flex :items-baseline [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
+    [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
      (icon ztx res)
      (or (:title res) s)]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
