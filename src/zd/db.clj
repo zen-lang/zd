@@ -64,12 +64,16 @@
           (apply-filters filter))))
 
 (defn select [ztx filter]
-  (let [data (:zdb @ztx)]
-    (->>  data
-          (vals)
-          (filterv filter)
-          (take 100)
-          (mapv (fn [x] (assoc (:resource x) :zd/name (:zd/name x)))))))
+  (->> (:zdb @ztx)
+       (vals)
+       (filter filter)
+       (take 100)
+       (mapv (fn [x] (assoc (:resource x) :zd/name (:zd/name x))))))
+
+(defn data [ztx]
+  (->> (:zdb @ztx)
+        (vals)
+        (map (fn [x] (assoc (:resource x) :zd/name (:zd/name x))))))
 
 (defn update-refs [ztx refs]
   (swap! ztx update :zrefs deep-merge refs))

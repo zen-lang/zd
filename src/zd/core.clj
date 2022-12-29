@@ -75,8 +75,10 @@
   [ztx {{id :id} :params} {uri :uri :as req}]
   (println :save id)
   (let [content (slurp (:body req))
-        file (str "docs/" (str/join "/" (str/split id #"\.")) ".zd")]
-    (println :file file)
+        parts (str/split id #"\.")
+        dir (str "docs/" (str/join "/" (butlast parts)))
+        file (str "docs/" (str/join "/" parts) ".zd")]
+    (.mkdirs (io/file dir))
     (spit file content))
   {:body (str "/" id) :status 200})
 
