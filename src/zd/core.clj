@@ -56,7 +56,8 @@
 
 (defmethod op :edit
   [ztx {{id :id} :params} req]
-  (if-let [page (or (zd.db/get-page ztx (symbol (or id "index"))) {:zd/name (symbol id)})]
+  (if-let [page (or (zd.db/get-page ztx (symbol (or id "index")))
+                    {:zd/name (symbol id)})]
     {:status 200
      :body (zd.pages/render-edit-page ztx (assoc page :request req))}
     {:status 404 :body "Ups"}))

@@ -230,7 +230,8 @@
             node-content)])])
 
 (defn navigation [ztx doc]
-  [:aside#aside {:class (c [:text :gray-600] [:px 6] [:py 4]  :text-sm)}
+  [:aside#aside {:class (c [:text :gray-600] [:px 6] [:py 4]  :text-sm
+                           {:max-width "300px"})}
    [:div {:id "nav-files"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by menu-item-sort))]
@@ -406,11 +407,24 @@
      [:disabled [:text :gray-500] [:bg :gray-200] [:border :gray-400] :cursor-not-allowed]))
 
 
+(defn find-template [ztx nm]
+  (when nm
+    (let [parts (str/split (str nm) #"\.")]
+      (loop [parts parts]
+        (when (not (empty? parts))
+          (let [f (str "docs/" (str/join "/" (butlast parts)) "/_template.zd")]
+            (if (.exists (io/file f))
+              (slurp f)
+              (recur (butlast parts)))))))))
+
+(def default-tpl ":title \"\"\n:tags #{}")
 (defn generate-editor [ztx doc]
+  (println :? (find-template ztx (:zd/name doc)))
+
   (let [raw (if-let [pth (:zd/path doc)]
               (slurp (:zd/path doc))
-              ";; TODO snippets
-:title \"\"")]
+              (or (find-template ztx (:zd/name doc))
+                  default-tpl))]
     [:div
      [:div {:class (c :flex [:h "100%"])}
       [:div {:class (c [:p 0] [:w-min 150] :border {:position "relative"})}
