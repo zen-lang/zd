@@ -102,13 +102,25 @@
                               :transition "all 0.26s"}]]]])
 
 
+(defn styled-div [cnt]
+  [:div
+   [:style (stylo.core/compile-styles @stylo.core/styles)]
+   [:style (garden.core/css common-style)]
+   cnt])
+
 (defn layout [ztx content & [doc]]
   (zd.db/index-refs ztx)
   [:html
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:style (garden.core/css common-style)]
-    [:style "*, ::before, ::after {overflow-x: auto;}"]
+    [:style "*, ::before, ::after {overflow-x: auto;}
+@media (max-width: 700px) {
+ #aside {display: none;}
+ #topbar {display: none;}
+}
+
+"]
     [:meta {:charset "UTF-8"}]
     (when-let [title (->> (:doc doc)
                           (filter #(= [:title] (:path %)))
@@ -126,7 +138,7 @@
     [:script {:src "/js/zendoc.js"}]
     [:script {:src "/js/zeneditor.js"}]
     [:script "hljs.highlightAll()"]]
-   [:body {:class (c {:background-color "#F4F7F9" :overflow "hidden" :height "100vh"}  :w-max-full)}
+   [:body {:class (c {})}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
                 {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
@@ -218,7 +230,7 @@
             node-content)])])
 
 (defn navigation [ztx doc]
-  [:aside {:class (c [:text :gray-600] [:pl 6] [:py 8] {:max-height "calc(100vh - 80px)" :overflow-y "auto" :grid-area "navigation"} :text-sm)}
+  [:aside#aside {:class (c [:text :gray-600] [:px 6] [:py 4]  :text-sm)}
    [:div {:id "nav-files"}
     (for [[k it] (->> (build-tree ztx doc)
                       (sort-by menu-item-sort))]
@@ -227,14 +239,19 @@
 
 (defn breadcrumb [_ztx name]
   (let [parts (str/split (str name) #"\.")]
-    (->> (range (count parts))
-         (mapv (fn [x]
-                 (let [pth (into [] (take (inc x) parts))
-                       nm  (str/join "." pth)]
-                   [:a {:href (str "/" nm)
-                        :class (c [:text :blue-500] [:px 2] {:border-right "1px solid #ddd"})}
-                    (last pth)])))
-         (into [:div {:class (c :flex :flex-1)}]))))
+    (-> 
+     (->> (range (count parts))
+          (mapv (fn [x]
+                  (let [pth (into [] (take (inc x) parts))
+                        nm  (str/join "." pth)]
+                    [:a {:href (str "/" nm)
+                         :class (c [:text :blue-500] [:px 2] {:border-right "1px solid #ddd"})}
+                     (last pth)])))
+          (into [:div {:class (c :flex :flex-1 :items-center)}]))
+     (conj
+      [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
+           :href (str name "/" "edit")}
+       [:i.fas.fa-edit]]))))
 
 
 (defn links [ztx link-groups]
@@ -252,63 +269,51 @@
                    (for [l (sort links)]
                      [:div {:class (c [:py 0.5])} (zd.impl/symbol-link ztx l)]
                      #_[:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])]]))
-          (into [:div {:class (c  [:py 2] [:px 4])}
+          (into [:div {:class (c  [:py 2] [:px 0])}
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
-(defn page [ztx {doc :doc req :request _res :resource :as page} & [preview?]]
-  [:div {:class (if preview?
-                  (c :rounded)
-                  (c {:grid-area "content"} [:pb 8] :grid {:overflow-y "auto"
-                                                           :max-height "calc(100vh - 80px)"
-                                                           :overflow-x "hidden"
-                                                           :grid-template-columns "1fr 230px"}))}
-   [:div
-    (when-not preview?
-      [:div {:class (c :flex [:py 1])}
-       (breadcrumb ztx (:zd/name page))
-       [:a {:name "top"}]
-       [:div {:class (c :text-sm [:text :gray-600])}
-        #_(:zd/name page)
-        (when (and (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))
-          [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
-               :target "_blank"
-               :title "Edit page"
-               :href (str (get-in @ztx [:zd/opts :edit-url]) (:zd/file page))}
-           "gh edit "
-           [:i.fas.fa-pencil]])
-        (when (and (get-in @ztx [:zd/opts :live-edit])
-                   (:zd/file page)
-                   (or (= (get-in req [:user :provider]) "github")
-                       (some->> req :user :token :scope (re-find #"repo"))))
-          [:a {:class (c [:ml 2] [:hover [:text :blue-600]])
-               :title "Live edit "
-               :href (str (:zd/name page) "/" "_edit")}
-           "live edit(β) "
-           [:i.fas.fa-pencil
+(defn page-content [ztx {doc :doc req :request _res :resource :as page}]
+  [:div {:class (c [:p 2])}
+   (->>
+    (for [block doc]
+      (let [block (assoc block :page page)]
+        (or (zd.methods/render-key ztx block)
+            (zd.methods/render-block ztx block)))))])
 
-            ]])]])
-    [:div {:class (c [:bg :white] [:py 4] [:px 8] :shadow-md
-                     {:color "#3b454e"
-                      :min-height "80vh"})}
-     [:div {:class (c [:mb 4])}
-      (->>
-       (for [block doc]
-         (let [block (assoc block :page page)]
-           (or (zd.methods/render-key ztx block)
-               (zd.methods/render-block ztx block)))))]
-     [:a {:href "#top" :class (c [:text :blue-600] [:hover [:underline]])} "Наверх"]]]
-   (when-not preview?
-     (links ztx (:backrefs page)))])
+(defn page-content [ztx {doc :doc req :request _res :resource :as page}]
+  [:div {:class (c [:mb 4])}
+   (->>
+    (for [block doc]
+      (let [block (assoc block :page page)]
+        (or (zd.methods/render-key ztx block)
+            (zd.methods/render-block ztx block)))))])
+
+(defn page [ztx {doc :doc req :request _res :resource :as page}]
+  [:div {:class (c [:py 4] [:px 8] :flex-1 {:overflow-y "auto" :overflow-x "hidden" :grid-template-columns "1fr 230px"})}
+   [:div
+    (breadcrumb ztx (:zd/name page))
+    [:div {:class (c [:bg :white] :shadow-md {:color "#3b454e"})}
+     (page-content ztx page)]]
+   (links ztx (:backrefs page))])
+
+(defn edit-page [ztx {doc :doc _res :resource :as page}]
+  [:div {:class (c [:mb 4])}
+   (->>
+    (for [block doc]
+      (let [block (assoc block :page page)]
+        (or (zd.methods/render-key ztx block)
+            (zd.methods/render-block ztx block)))))])
 
 
 (defn search []
   [:div {:class (c :text-sm
                    [:text :gray-600]  [:hover [:bg :white]])}
    [:div#searchButton {:class (c :flex [:space-x 2] :items-baseline
+                                 :text-l
                                  {:transition "color 0.2s ease"}
                                  [:hover :cursor-pointer [:text :black]])}
     [:span [:i.fas.fa-search]]
-    [:span "Search... (alt + k)"]]])
+    [:span "[alt+k]"]]])
 
 
 (defn search-container [_ztx _doc]
@@ -336,42 +341,37 @@
   (let [src (get (:zdb @ztx) 'logo)
         logo (get-in src [:resource :logo])
         title (get-in src [:resource :title])]
-    [:div {:class (c [:bg :white] {:height "80px"
-                                   :position "fixed"
-                                   :top 0
-                                   :width "100%"
-                                   :box-shadow "0px 4px 10px rgb(0 0 0 / 5%)"
-                                   :border-bottom "1px"
-                                   :border-bottom-color "rgba(211,220,228,1.00)"}
-                     :grid
-                     {:grid-template-columns  "300px 1fr 230px"})}
-     [:div {:class (c  [:py 5])}
+    [:div#topbar {:class (c :flex :items-center :border-b)}
+     [:div {:class (c  [:py 4])}
       [:a {:href "/readme"}
-       [:div {:class (c [:px 6]
-                        :flex
-                        :items-center
-                        [:border-r 2])}
-        [:div {:class (c {:height "40px" :width "40px"} [:mr 4])}
+       [:div {:class (c [:px 6] :flex :items-center [:border-r 2])}
+        [:div {:class (c [:w 6] [:h 6] [:mr 4])}
          (when logo
            [:image {:src logo}])]
         [:div {:class (c :font-bold)}
          (when title
            title)]]]]
-     [:div]
-     [:div {:class (c  [:py 5])}
+     [:div {:class (c  [:py 4])}
       [:div {:class (c :h-full [:px 6] [:py 1] [:border-l 2] :items-center :justify-start :flex)}
        (search)]]]))
 
+;; :grid [:grid-template-areas "navigation content"]
+;; {:grid-template-columns  "300px 1fr"
+;;  :margin-top "80px"}
+
 (defn generate-page [ztx doc]
   (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
-    [:div {:class (c :h-max-full  :flex :flex-col)}
-     (topbar ztx doc)
-     [:div {:class (c :grid [:grid-template-areas "navigation content"]
-                      {:grid-template-columns  "300px 1fr"
-                       :margin-top "80px"})}
+    [:div {:class (c )}
+     ;; (topbar ztx doc)
+     [:div {:class (c :flex :items-top)}
       (navigation ztx doc)
       (page ztx (assoc doc :backrefs link-groups))]
+     [:div {:class (c {:position "absolute" :top "1rem" :right "2rem"})}
+      (search)]
      (search-container ztx doc)]))
+
+(defn generate-edit-page [ztx doc]
+  (page ztx doc))
 
 (defn zen-page [_ztx doc]
   [:div {:class (c [:w 260] [:bg :white] [:py 4] [:px 8] :shadow-md)}
@@ -407,70 +407,56 @@
 
 
 (defn generate-editor [ztx doc]
-  (let [raw (slurp (:zd/path doc))]
+  (let [raw (if-let [pth (:zd/path doc)]
+              (slurp (:zd/path doc))
+              ";; TODO snippets
+:title \"\"")]
     [:div
      [:div {:class (c :flex [:h "100%"])}
-      [:div {:class (c [:p 4] [:w-min 150] :border)}
-       [:textarea {:class (c [:w "100%"] [:h "90%"] [:p 4] :rounded {:resize "none"})
-                   :id "edit-page"}
-        raw]
-       [:div {:class (c :flex [:mt 2] [:p 2]  )}
-        [:div {:class [(name base-class)
-                       (name (c :ml-auto))]
-               :onclick "savePreview()"}
-         "Save"]]]
-      [:div {:class (c :border [:p 4] :flex-1)
-             :id "edit-preview"}]]
-     [:div#spinner {:class [(name (c :fixed [:top 0] [:left 0] [:bottom 0] [:right 0]
-                                     {:z-index 1000} {:background-color "rgba(120, 120, 120, 0.4)"} #_{:visibility "hidden"}
-                                     {:display "none"}))
-                            ;; "show-spinner"
-                            ]
-                    }
-      [:div.lds-ellipsis [:div][:div][:div]]]]))
+      [:div {:class (c [:p 0] [:w-min 150] :border {:position "relative"})}
+       [:textarea {:class (c [:w "100%"] [:h "100%"] [:p 4] :rounded {:resize "none"})
+                   :id "edit-page"} raw]
+       [:div#spinner {:class (c  {:position "absolute" :bottom "10px" :left "10px"})}"..."]
+       [:div {:class (c :ml-auto
+                        [:px 4] [:py 2] :cursor-pointer
+                        [:bg :blue-500] [:text :white]
+                        [:hover [:bg :blue-600] [:text :white]]
+                        {:position "absolute" :bottom "10px" :right "10px"})
+              :onclick "savePreview()"} "Save"]]
+      [:div {:class (c :border [:p 4] :flex-1) :id "edit-preview"}]]]))
 
 
-(defn render-editor
-  [ztx doc]
-  (->> (generate-editor ztx doc)
-       (layout ztx)
-       (to-html)))
 
-(defn render-preview
-  [ztx doc]
-  (let [content (slurp (:body (:request doc)))
-        name "editable-res"]
-    (zd.db/load-content! ztx {:path ""
-                              :resource-path name
-                              :content content})
-    (->> (page ztx (merge doc (zd.db/get-page ztx (symbol name))) true)
-         (to-html))))
+;; (defn render-preview
+;;   [ztx doc]
+;;   (let [content (slurp (:body (:request doc)))
+;;         name "editable-res"]
+;;     (zd.db/load-content! ztx {:path "" :resource-path name :content content})
+;;     (->> (page ztx (merge doc (zd.db/get-page ztx (symbol name))) true)
+;;          (to-html))))
 
-(defn save-preview
-  [ztx doc]
-  (let [content (slurp (:body (:request doc)))
-        {:zd/keys [path file]} doc
-        file (str "/docs/" file)
-        hook-port (System/getenv (name :hook-listener-port))
-        hook-name (System/getenv (name :hook-site-name))
-        uri (format "http://localhost:%s/%s" hook-port hook-name)]
-    (zd.external-auth/update-file ztx doc file content "Live Update" (slurp path))
-    (when (and hook-port hook-name)
-      (try (println :resutl (client/get uri))
-           (catch Exception e
-             (println :exception-in-hook-notify e)))))
-  (:uri doc))
+;; (defn save-preview
+;;   [ztx {:zd/keys [path file] uri :uri req :request}]
+;;   (let [content (slurp (:body req))
+;;         file (str "docs/" file)]
+;;     (spit file content))
+;;   uri)
 
 
-(defn edit-page [ztx doc]
-  (case (get-in doc [:request :request-method])
-    :post  (render-preview ztx doc)
-    :put (save-preview  ztx doc)
-    :get (render-editor ztx doc)))
+;; (defn edit-page [ztx doc]
+;;   (case (get-in doc [:request :request-method])
+;;     :post  (render-preview ztx doc)
+;;     :put   (save-preview  ztx doc)
+;;     :get   (render-editor ztx doc)))
 
 
 (defn render-page [ztx doc]
   (->> (layout ztx (generate-page ztx doc) doc)
+       (to-html)))
+
+(defn render-edit-page [ztx doc]
+  (->> (generate-editor ztx doc)
+       (layout ztx)
        (to-html)))
 
 (defn render-not-found [ztx sym]
