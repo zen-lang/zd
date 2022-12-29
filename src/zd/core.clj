@@ -56,7 +56,7 @@
 
 (defmethod op :edit
   [ztx {{id :id} :params} req]
-  (if-let [page (or (zd.db/get-page ztx (symbol (or id "index"))) {})]
+  (if-let [page (or (zd.db/get-page ztx (symbol (or id "index"))) {:zd/name (symbol id)})]
     {:status 200
      :body (zd.pages/render-edit-page ztx (assoc page :request req))}
     {:status 404 :body "Ups"}))
@@ -89,6 +89,7 @@
 
 
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
+  (println m uri (:params req))
   (when-not (get-in @ztx [:zd/opts :production])
     (reload ztx {}))
   (if-let [match (some->> (get-in @ztx [:zd/opts :route-map])

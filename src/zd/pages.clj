@@ -417,6 +417,7 @@
        [:textarea {:class (c [:w "100%"] [:h "100%"] [:p 4] :rounded {:resize "none"})
                    :id "edit-page"} raw]
        [:div#spinner {:class (c  {:position "absolute" :bottom "10px" :left "10px"})}"..."]
+       [:div {:class (c {:font-size "10px" :opacity 0.5 :position "absolute" :top "2px" :left "2px"})} (str (:zd/name doc))]
        [:div {:class (c :ml-auto
                         [:px 4] [:py 2] :cursor-pointer
                         [:bg :blue-500] [:text :white]
