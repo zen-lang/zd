@@ -107,16 +107,18 @@
        (cond (= (:type icon) :img)
              [:img {:src (:img icon)
                     :class (c [:h 4] :inline-block [:mr 1]
+                              :border
                               {:border-radius "100%" :margin-bottom "1px" })}]
              (= (:type icon) :ico)
              [:i {:class (str (str/join " " (map name (:icon icon)))
                               " "
                               (name (c [:mr 1] [:text :gray-500])))}])))
-(defn symbol-link [ztx s]
+(defn symbol-link [ztx s & [opts]]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
      (icon ztx res)
-     (or (:title res) s)]
+     (when-not (:compact opts)
+       (or (:title res) s))]
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
 (defmethod inline-method :symbol-link

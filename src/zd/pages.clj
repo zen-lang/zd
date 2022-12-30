@@ -290,12 +290,13 @@
             (zd.methods/render-block ztx block)))))])
 
 (defn page [ztx {doc :doc req :request _res :resource :as page}]
-  [:div {:class (c [:py 4] [:px 8] :flex-1 {:overflow-y "auto" :overflow-x "hidden" :grid-template-columns "1fr 230px"})}
-   [:div
+  [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1 )}
+   [:div {:class (c [:mr 12] {:min-width "30em" :max-width "50em"})}
     (breadcrumb ztx (:zd/name page))
-    [:div {:class (c [:bg :white] :shadow-md {:color "#3b454e"})}
+    [:div {:class (c [:bg :white] {:color "#3b454e"})}
      (page-content ztx page)]]
-   (links ztx (:backrefs page))])
+   [:div {:class (c {:min-width "15em"})}
+    (links ztx (:backrefs page))]])
 
 (defn edit-page [ztx {doc :doc _res :resource :as page}]
   [:div {:class (c [:mb 4])}
