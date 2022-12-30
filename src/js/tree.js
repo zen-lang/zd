@@ -157,26 +157,31 @@ document
 
         })
 
+// TODO common hotkeys
 document.onkeyup = (e) => {
-    if (e.altKey && (e.code === "KeyK"))
+    console.log(e);
+    if ((e.altKey || e.key === "Meta") && (e.code === "KeyK"))
     {
 
-        e.stopPropagation()
+        e.stopPropagation();
         document
             .getElementById("searchContainer")
             .classList
-            .add("visible")
+            .add("visible");
 
 
         document
             .getElementById("overlay")
             .classList
-            .add("visible")
+            .add("visible");
 
 
         document
             .getElementById("searchInput")
-            .focus()
+            .focus();
+    } else if ((e.altKey || e.key === "Meta") && (e.code === 'KeyE')) {
+        e.stopPropagation();
+        window.location.href = window.location.href + '/edit';
     }
 
 }

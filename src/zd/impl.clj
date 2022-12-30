@@ -467,6 +467,7 @@
 
 
 (defmethod render-key [:menu-order] [_ _block] [:div])
+(defmethod render-key [:logo] [_ _block] [:div])
 
 (defmethod inline-method :mention
   [ztx m s]
@@ -518,7 +519,7 @@
   [:div {:class (c :text-sm)}
    (for [b doc]
      (when-not
-      (or (contains? #{[:menu-order] [:title] [:avatar] [:toc]} (:path b))
+      (or (contains? #{[:menu-order] [:title] [:avatar] [:toc] [:logo]} (:path b))
           (get-in b [:annotations :block]))
        [:div {:class (c :flex [:space-x 2])}
         (for [_ (range (count (:path b)))]
