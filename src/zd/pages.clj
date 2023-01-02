@@ -3,6 +3,7 @@
    [zd.zentext]
    [zd.db]
    [zd.methods]
+   [zd.parse]
    [clj-http.client :as client]
    [zd.impl]
    [hiccup.core]
@@ -15,6 +16,7 @@
    [garden.core]
    [cheshire.core :as json]
    [clojure.java.io :as io]
+   [zd.icons]
    [zd.external-auth]))
 
 (defmethod rule :grid-template-areas
@@ -49,7 +51,7 @@
               :list-style "decimal"})]
     [:ol (c* [:ml 4])]]
 
-   [:p (c* [:mb 4] {:line-height "1.5rem"})]
+   [:p (c* [:my 2] {:line-height "1.5rem"})]
 
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
@@ -65,7 +67,7 @@
    [:.searchResultContainerVBar (c* [:h "30px"] [:w "2px"]
                                     :rounded [:mr 2] [:bg :blue-500])]
    [:.badge
-    [:p {:margin-bottom -3}]]
+    [:p {:margin 0}]]
 
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
@@ -128,7 +130,8 @@
                           (:data))]
       [:title title])
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
-    [:link  {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  :rel "stylesheet"}]
+    [:link {:href "/js/fa/css/all.min.css", :rel "stylesheet"}]
+    ;; [:link  {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  :rel "stylesheet"}]
     [:link  {:href "/js/spinner.css"  :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
@@ -136,7 +139,9 @@
     [:script {:src "/js/d3.js"}]
     [:script {:src "/js/mindmap.js"}]
     [:script {:src "/js/zendoc.js"}]
-    [:script {:src "/js/zeneditor.js"}]
+    ;; [:script {:src "/js/zeneditor.js"}]
+    [:script {:src "/js/quick-score.min.js"}]
+    [:script {:src "/js/editor.js"}]
     [:script "hljs.highlightAll()"]]
    [:body {:class (c {})}
     [:div#overlay
@@ -273,16 +278,9 @@
           (into [:div {:class (c  [:py 2] [:px 0])}
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
-(defn page-content [ztx {doc :doc req :request _res :resource :as page}]
-  [:div {:class (c [:p 2])}
-   (->>
-    (for [block doc]
-      (let [block (assoc block :page page)]
-        (or (zd.methods/render-key ztx block)
-            (zd.methods/render-block ztx block)))))])
 
 (defn page-content [ztx {doc :doc req :request _res :resource :as page}]
-  [:div {:class (c [:mb 4])}
+  [:div {:class (c [:mb 4] {:min-width "30em" :max-width "50em"})}
    (->>
     (for [block doc]
       (let [block (assoc block :page page)]
@@ -420,6 +418,32 @@
 
 (def default-tpl ":title \"\"\n:tags #{}")
 (defn generate-editor [ztx doc]
+  (let [raw (if-let [pth (:zd/path doc)]
+              (slurp (:zd/path doc))
+              (or (find-template ztx (:zd/name doc))
+                  default-tpl))]
+    [:div
+     [:div {:class (c :flex [:h "100%"])}
+      [:div {:class (c [:p 0] [:w-min 150] :border {:position "relative"})}
+       [:textarea {:class (c [:w "100%"] [:h "100%"] [:p 4] :rounded {:resize "none"})
+                   :id "edit-page"} raw]
+       [:div#spinner {:class (c  {:position "absolute" :bottom "10px" :left "10px"})}"..."]
+       [:div {:class (c {:font-size "10px" :opacity 0.5 :position "absolute" :top "2px" :left "2px"})} (str (:zd/name doc))]
+       [:div {:class (c :ml-auto
+                        [:px 4] [:py 2] :cursor-pointer
+                        [:bg :blue-500] [:text :white]
+                        [:hover [:bg :blue-600] [:text :white]]
+                        {:position "absolute" :bottom "10px" :right "10px"})
+              :onclick "savePreview()"} "Save"]]
+      [:div {:class (c :border [:p 4] :flex-1) :id "edit-preview"}]]]))
+
+
+
+(defn render-page [ztx doc]
+  (->> (layout ztx (generate-page ztx doc) doc)
+       (to-html)))
+
+#_(defn generate-editor [ztx doc]
   (println :? (find-template ztx (:zd/name doc)))
 
   (let [raw (if-let [pth (:zd/path doc)]
@@ -442,36 +466,25 @@
       [:div {:class (c :border [:p 4] :flex-1) :id "edit-preview"}]]]))
 
 
+(defn preview [ztx text]
+  (hiccup.core/html (page-content ztx (zd.parse/parse ztx text))))
 
-;; (defn render-preview
-;;   [ztx doc]
-;;   (let [content (slurp (:body (:request doc)))
-;;         name "editable-res"]
-;;     (zd.db/load-content! ztx {:path "" :resource-path name :content content})
-;;     (->> (page ztx (merge doc (zd.db/get-page ztx (symbol name))) true)
-;;          (to-html))))
-
-;; (defn save-preview
-;;   [ztx {:zd/keys [path file] uri :uri req :request}]
-;;   (let [content (slurp (:body req))
-;;         file (str "docs/" file)]
-;;     (spit file content))
-;;   uri)
-
-
-;; (defn edit-page [ztx doc]
-;;   (case (get-in doc [:request :request-method])
-;;     :post  (render-preview ztx doc)
-;;     :put   (save-preview  ztx doc)
-;;     :get   (render-editor ztx doc)))
-
-
-(defn render-page [ztx doc]
-  (->> (layout ztx (generate-page ztx doc) doc)
-       (to-html)))
+(defn editor [ztx doc]
+  (let [text (if (:zd/path doc) (slurp (:zd/path doc))
+              (or (find-template ztx (:zd/name doc))
+                  default-tpl))
+        symbols (keys (:zdb @ztx))
+        keypaths (:zd/keys @ztx)
+        zendoc {:text text
+                :symbols symbols
+                :keys keypaths
+                :icons zd.icons/icons
+                :preview (preview ztx text)
+                :doc (:zd/name doc)}]
+    [:script "var zendoc="(cheshire.core/generate-string zendoc)]))
 
 (defn render-edit-page [ztx doc]
-  (->> (generate-editor ztx doc)
+  (->> (editor ztx doc)
        (layout ztx)
        (to-html)))
 

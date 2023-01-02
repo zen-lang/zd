@@ -236,6 +236,13 @@
     doc)))
 
 
+(defn collect-keypaths [ztx blocks]
+  (->> blocks
+       (mapv (fn [x]
+               (when x
+                 (swap! ztx update :zd/keys (fn [acc] (conj (or acc #{})
+                                                           (str/join (:path x))))))))))
+
 (defn load-content! [ztx {:keys [resource-path path content]}]
   (let [resource-name (str/replace (str/replace resource-path #"\.zd$" "") #"/" ".")
         data (zd.parse/parse ztx content)
@@ -256,7 +263,8 @@
                (update data :doc conj {:path [:zd/errors] :annotations {:block :zen/errors} :data errors})
                data)]
     (create-resource ztx data)
-    (update-refs ztx refs)))
+    (update-refs ztx refs)
+    (collect-keypaths ztx (:doc data))))
 
 (defn load-dirs [ztx dirs]
   (doseq [dir dirs]

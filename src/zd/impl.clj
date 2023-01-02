@@ -292,7 +292,7 @@
 
 (defmethod render-block :badge
   [ztx {data :data path :path :as block}]
-  [:div {:class (str "badge " (name (c :border [:m 1]  :inline-flex :rounded [:p 0])))}
+  [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}
    [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
     (subs (str (last path)) 1)]
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
@@ -301,7 +301,7 @@
 (defmethod render-block :attribute
   [ztx {data :data path :path :as block}]
   (when (= path [:birthdate]) (def d block))
-  [:div {:title "attribute" :class (c [:py 0.5] :flex :border-b :items-baseline [:space-x 4])}
+  [:div {:title "attribute" :class (c [:py 0.5] :flex :items-center [:space-x 4])}
    [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
     (subs (str (last path)) 1)]
    [:div {:class (c)}
@@ -482,6 +482,20 @@
 (defmethod inline-method :italic
   [ztx m s]
   [:i s])
+
+(defmethod inline-method :x
+  [ztx m s]
+  [:i.fa-solid.fa-square-check {:class (name (c [:text :green-600]))}])
+
+(defmethod inline-method :fa
+  [ztx m s]
+  (let [cls (->> 
+             (str/split s #"\s")
+             (mapv str/trim)
+             (remove str/blank?)
+             (mapv (fn [x] (if (str/starts-with? x ":") (subs x 1) x)))
+             (str/join " "))]
+    [:i {:class cls}]))
 
 (defmethod inline-method :md/link
   [ztx m s]

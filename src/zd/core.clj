@@ -71,6 +71,19 @@
       {:status 200
        :body (hiccup.core/html (zd.pages/page-content ztx doc))})))
 
+(defmethod op :editor
+  [ztx {{id :id} :params} req]
+  {:status 200
+   :body (hiccup.core/html [:html
+                            [:head
+                             [:script {:src "/js/editor.js"}]]
+                            [:body]])})
+
+(defmethod op :preview
+  [ztx _ req]
+  {:body (zd.pages/preview ztx (slurp (:body req)))
+   :status 200})
+
 (defmethod op :save
   [ztx {{id :id} :params} {uri :uri :as req}]
   (println :save id)
@@ -84,7 +97,10 @@
 
 (def routes
   {:GET {:op :symbol}
+   "editor" {:GET {:op :editor}}
+   "preview" {:POST {:op :preview}}
    [:id] {:GET {:op :symbol}
+          :POST {:op :save}
           "rpc"  {:POST {:op :rpc}}
           "edit" {:GET  {:op :edit}
                   :POST {:op :update}
@@ -137,5 +153,9 @@
 
 
   (stop ztx)
+
+  ;; (def icons (clj-yaml.core/parse-string (slurp "/Users/niquola/Downloads/fontawesome-pro-6.2.1-web/metadata/icons.yml")))
+  ;; (count (keys icons))
+
 
   )
