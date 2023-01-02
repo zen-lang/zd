@@ -83,35 +83,6 @@ var main = (f)=>{
 
 // end of lib
 
-var editor_style = {border: '1px solid #ddd', position: relative ,
-                    overflow: 'auto', width: '40vw', height: 'calc(100vh - 20px)'};
-
-var poss = {display: 'block',
-            border: none,
-            outline: none,
-            background: transparent,
-            "font-size": 14,
-            padding: 10,
-            margin: 0,
-            'line-height': 20,
-            "overflow-wrap": 'break-word',
-            "white-space": 'pre-wrap',
-            "font-family": 'monospace'};
-
-var popup_style = {position: absolute,
-                   display: none,
-                   'box-shadow': '1px 2px 2px #ddd',
-                   'min-width': '10em',
-                   'border-radius': 5,
-                   background: black,
-                   border: '1px solid #ddd'};
-
-
-var caret_style  = merge(poss, {color: transparent,
-                                overflow: 'hidden',
-                                position: absolute, margin: 0, top: 0, left: 0});
-
-var textarea_style = merge(poss, {overflow: 'hidden', position: absolute, margin: 0, top: 0, left: 0});
 
 
 var insert = (textarea, symbol) => {
@@ -338,16 +309,47 @@ var on_editor_keyup = (ctx, ev) => {
     }
 }
 
-var editor_style = {position: relative ,
-                    background: black,
-                    color: 'white',
-                    overflow: 'auto', width: '40vw', height: 'calc(100vh)'};
+
+var poss = {display: 'block',
+            border: none,
+            outline: none,
+            background: transparent,
+            "font-size": 14,
+            padding: 10,
+            margin: 0,
+            'line-height': 20,
+            "overflow-wrap": 'break-word',
+            "white-space": 'pre-wrap',
+            "font-family": 'monospace'};
+
+var popup_style = {position: absolute,
+                   display: none,
+                   'box-shadow': '1px 2px 2px #ddd',
+                   'min-width': '10em',
+                   'border-radius': 5,
+                   background: black,
+                   border: '1px solid #ddd'};
+
+
+var caret_style  = merge(poss, {color: transparent,
+                                overflow: 'hidden',
+                                position: absolute, margin: 0, top: 0, left: 0});
+
+var textarea_style = merge(poss, {overflow: 'hidden', position: absolute, margin: 0, top: 0, left: 0});
 
 var editor = (zendoc) => {
     var symIdx = new quickScore.QuickScore(zendoc.symbols);
     var keysIdx = new quickScore.QuickScore(zendoc.keys);
     var iconsIdx = new quickScore.QuickScore(zendoc.icons);
     var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, doc: zendoc.doc};
+    var in_chrome = (window.location.search || '').includes('chrome') || document.body.getBoundingClientRect().width < 800;
+
+    var editor_style = {position: relative ,
+                        background: black,
+                        color: 'white',
+                        overflow: 'auto', width: in_chrome ? '100vw' : '40vw',
+                        height: 'calc(100vh)'};
+
     ctx.container = el({tag: 'div',
                         append: document.body,
                         style: {display: 'flex', padding: 0},
@@ -356,7 +358,8 @@ var editor = (zendoc) => {
                                      style: { position: absolute,
                                               cursor: 'pointer',
                                               'z-index': "10000",
-                                              bottom: 10, left: 'calc(40vw - 50px)', 'font-size': 40, color: 'white'},
+                                              bottom: 10, left: in_chrome ? 'calc(100vw - 50px)' : 'calc(40vw - 50px)',
+                                              'font-size': 40, color: 'white'},
                                      on: {click: (ev)=> { save(ctx); }}}}
                        });
 
@@ -381,18 +384,20 @@ var editor = (zendoc) => {
                                       autofocus: true,
                                       on: {keyup:    (ev) => { on_editor_keyup(ctx,ev);},
                                            keydown:  (ev) => { on_editor_keydown(ctx ,ev); },
-                                           keypress: debounce(keypress, 300),
+                                           keypress: ! in_chrome ? debounce(keypress, 300) : ()=> {},
                                            click:    (ev) => { hide_popup(ctx); }},
                                       value: zendoc.text || "",
                                       style: textarea_style},
                            pop: {tag: 'div', style: popup_style }}});
     hl(ctx, zendoc.text);
-    ctx.preview = el({tag: 'div', html: zendoc.preview,
-                      style: {height: 'calc(100vh - 20px)',
-                              padding: 20,
-                              width: '60vw',
-                              overflow: 'auto'},
-                      append: ctx.container});
+    if(! in_chrome) {
+        ctx.preview = el({tag: 'div', html: zendoc.preview,
+                          style: {height: 'calc(100vh - 20px)',
+                                  padding: 20,
+                                  width: '60vw',
+                                  overflow: 'auto'},
+                          append: ctx.container});
+    }
     return ctx;
 };
 

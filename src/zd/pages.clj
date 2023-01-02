@@ -243,7 +243,7 @@
       (render-items doc it k))]])
 
 
-(defn breadcrumb [_ztx name]
+(defn breadcrumb [_ztx name & [page]]
   (let [parts (str/split (str name) #"\.")]
     (-> 
      (->> (range (count parts))
@@ -256,7 +256,7 @@
           (into [:div {:class (c :flex :flex-1 :items-center)}]))
      (conj
       [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
-           :href (str name "/" "edit")}
+           :href (str name "/" "edit" "?" (get-in page [:request :query-string]))}
        [:i.fas.fa-edit]]))))
 
 
@@ -278,19 +278,22 @@
           (into [:div {:class (c  [:py 2] [:px 0])}
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
+(def page-cls (c [:mr 12] {:min-width "30em" :max-width "50em"}))
+(def full-page-cls (c [:mr 12] ))
 
-(defn page-content [ztx {doc :doc req :request _res :resource :as page}]
-  [:div {:class (c [:mb 4] {:min-width "30em" :max-width "50em"})}
+(defn page-content [ztx {doc :doc req :request res :resource :as page}]
+  [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
    (->>
     (for [block doc]
       (let [block (assoc block :page page)]
         (or (zd.methods/render-key ztx block)
             (zd.methods/render-block ztx block)))))])
 
-(defn page [ztx {doc :doc req :request _res :resource :as page}]
+
+(defn page [ztx {doc :doc req :request res :resource :as page}]
   [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1 )}
-   [:div {:class (c [:mr 12] {:min-width "30em" :max-width "50em"})}
-    (breadcrumb ztx (:zd/name page))
+   [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
+    (breadcrumb ztx (:zd/name page) page)
     [:div {:class (c [:bg :white] {:color "#3b454e"})}
      (page-content ztx page)]]
    [:div {:class (c {:min-width "15em"})}
@@ -442,29 +445,6 @@
 (defn render-page [ztx doc]
   (->> (layout ztx (generate-page ztx doc) doc)
        (to-html)))
-
-#_(defn generate-editor [ztx doc]
-  (println :? (find-template ztx (:zd/name doc)))
-
-  (let [raw (if-let [pth (:zd/path doc)]
-              (slurp (:zd/path doc))
-              (or (find-template ztx (:zd/name doc))
-                  default-tpl))]
-    [:div
-     [:div {:class (c :flex [:h "100%"])}
-      [:div {:class (c [:p 0] [:w-min 150] :border {:position "relative"})}
-       [:textarea {:class (c [:w "100%"] [:h "100%"] [:p 4] :rounded {:resize "none"})
-                   :id "edit-page"} raw]
-       [:div#spinner {:class (c  {:position "absolute" :bottom "10px" :left "10px"})}"..."]
-       [:div {:class (c {:font-size "10px" :opacity 0.5 :position "absolute" :top "2px" :left "2px"})} (str (:zd/name doc))]
-       [:div {:class (c :ml-auto
-                        [:px 4] [:py 2] :cursor-pointer
-                        [:bg :blue-500] [:text :white]
-                        [:hover [:bg :blue-600] [:text :white]]
-                        {:position "absolute" :bottom "10px" :right "10px"})
-              :onclick "savePreview()"} "Save"]]
-      [:div {:class (c :border [:p 4] :flex-1) :id "edit-preview"}]]]))
-
 
 (defn preview [ztx text]
   (hiccup.core/html (page-content ztx (zd.parse/parse ztx text))))

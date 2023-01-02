@@ -52,7 +52,7 @@
   (if-let [page (zd.db/get-page ztx (symbol (or id "index")))]
     {:status 200
      :body (zd.pages/render-page ztx (assoc page :request req))}
-    (redirect (str "/" id "/edit"))))
+    (redirect (str "/" id "/edit" "?" (:query-string req)))))
 
 (defmethod op :edit
   [ztx {{id :id} :params} req]
