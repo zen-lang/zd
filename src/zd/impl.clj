@@ -214,12 +214,12 @@
     (string? data)
     ;; TODO: move to parameters
     (cond 
-      (re-find #"\d\d\d\d-\d\d-\d\d" data)
-      (format-date data)
-      
-      (= (:path block) [:telegram]) 
+      ;; (re-find #"\d\d\d\d-\d\d-\d\d" data)
+      ;; (format-date data)
+
+      (= (:path block) [:telegram])
       [:p data]
-      
+
       :else
       (zd.zentext/parse-block ztx (str data)))
 

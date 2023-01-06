@@ -133,17 +133,7 @@
 
   (def pth "docs")
 
-  (def pth "/Users/ghrp/prog/zd/docs")
-
-  (def pth "/Users/ganshinv/hs/sansara/box/docs")
-
-  (def pth "/Users/niquola/sansara/box/docs")
-
-  (def pth "/Users/niquola/hs-kb/libs/zd/docs")
-
-  (def pth "/Users/macabre/IdeaProjects/hs/zd/docs")
-
-  (def pth "/home/svt/projects/sansara/zendocs/libs/zd/docs")
+  (def pth "/Users/niquola/marketing/libs/zd/docs")
 
   (def ztx (zen/new-context {:zd/paths [pth] :paths [pth]}))
 
