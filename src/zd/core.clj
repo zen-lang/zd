@@ -144,8 +144,6 @@
 
   (stop ztx)
 
-  ;; (def icons (clj-yaml.core/parse-string (slurp "/Users/niquola/Downloads/fontawesome-pro-6.2.1-web/metadata/icons.yml")))
-  ;; (count (keys icons))
 
 
   )

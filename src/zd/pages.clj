@@ -465,8 +465,7 @@
         zendoc {:text text
                 :symbols symbols
                 :keys keypaths
-                :icons (->> zd.icons/icons
-                            (mapv (fn [x] {:name x})))
+                :icons  zd.icons/icons
                 :preview (preview ztx text)
                 :doc (:zd/name doc)}]
     [:script "var zendoc="(cheshire.core/generate-string zendoc)]))

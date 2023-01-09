@@ -140,7 +140,7 @@ var keys = [':title', ':tags', ':desc', ':role'];
 var options = {
     key: (ctx, token)=> {
         if( token.startsWith(':fa-')){
-            return ctx.icons.search(token.substring(4)).map((x)=> { return `:fa-${x.item}`; });
+            return ctx.icons.search(token.substring(4)).map((x)=> {return x.item;});
         } else {
             return ctx.keys.search(token).map((x)=> { return x.item; });
         }
@@ -357,7 +357,7 @@ var popup_style = {position: absolute,
                    'box-shadow': '1px 2px 2px #ddd',
                    'min-width': '10em',
                    'border-radius': 5,
-                   background: black,
+                   background: '#555',
                    border: '1px solid #ddd'};
 
 
