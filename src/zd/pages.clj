@@ -38,6 +38,7 @@
    [:h3 (c* :border-b {:font-size "20px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "25px"})]
    [:h4 (c* {:font-size "16px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "20px"})]
    [:h5 (c* {:font-size "14px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "16px"})]
+   [:.menu-item (c* :cursor-pointer [:hover [:bg :blue-700]])]
    [:ul (c* [:ml 4] [:mb 4])
     {:list-style "inside"
      :line-height "24px"}

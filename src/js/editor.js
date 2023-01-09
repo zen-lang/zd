@@ -29,6 +29,13 @@ var set = (nel, attrs) => {
     if(attrs.html) { nel.innerHTML = attrs.html; }
     if(attrs.src) { nel.src = attrs.src; }
     if(attrs.autofocus) { nel.autofocus = "true"; }
+    if(attrs.intoView) {
+        nel.scrollIntoView({
+            behavior: "smooth", 
+            block: "end",
+            inline: "nearest"
+        });
+    }
     if(attrs.on){
         for(e in attrs.on){
             var f = attrs.on[e];
@@ -151,6 +158,22 @@ var hide_popup = (ctx)=>{
 
 var selection_style = {background: 'blueviolet'};
 
+var insert_item = (ctx,item) => {
+    var textarea = ctx.editor.els.textarea;
+    var v = textarea.value;
+    var start = textarea.selectionStart;
+    var new_v = v.substring(0, ctx.insert_at) + item.name + v.substring(start, v.length);
+    textarea.value = new_v;
+    textarea.selectionEnd = ctx.insert_at + item.length;
+    hl(ctx, new_v);
+    hide_popup(ctx);
+};
+
+var insert_selection = (ctx) => {
+    var item = ctx.items[ctx.selection];
+    insert_item(ctx,item);
+};
+
 var autocompl = (ctx, v)=> {
     var els = ctx.editor.els;
     var btxt = v.substring(0,els.textarea.selectionStart);
@@ -203,14 +226,17 @@ var autocompl = (ctx, v)=> {
                     icon = {tag: 'span', class: item.icon, style: {'font-size': 12, 'padding-right': '0.5rem'}};
                 }
                 var opts = {tag: 'div',
+                            class: ['menu-item'],
+                            on: {click: (ev)=> { insert_item(ctx,item); } },
                             els: {icon:  icon,
                                   name:  {tag: 'b', style: {'padding-right': 5}, text: item.name},
                                   title: {tag: 'span', text: item.title}},
-                            style: {padding: 5, 'font-size': 12}};
+                            style: {padding: 5, 'font-size': 12, cursor: 'point'}};
                 if(i == 0) { opts.style = merge(opts.style, selection_style); }
                 item_els[i] = opts;
             }
-            set(els.pop, {style: {display: 'block', top: cur.offsetTop + 18, left: cur.offsetLeft}, els: item_els});
+            set(els.pop, {style: {display: 'block', top: cur.offsetTop + 18, left: cur.offsetLeft, height: 500, 'overflow-y': 'auto'},
+                          els: item_els});
 
         } else {
             hide_popup(ctx);
@@ -219,17 +245,6 @@ var autocompl = (ctx, v)=> {
         hide_popup(ctx);
     }};
 
-var insert_selection = (ctx) => {
-    var textarea = ctx.editor.els.textarea;
-    var v = textarea.value;
-    var start = textarea.selectionStart;
-    var item = ctx.items[ctx.selection];
-    var new_v = v.substring(0, ctx.insert_at) + item.name + v.substring(start, v.length);
-    textarea.value = new_v;
-    textarea.selectionEnd = ctx.insert_at + item.length;
-    hl(ctx, new_v);
-    hide_popup(ctx);
-}
 
 var get_in = (obj, path) => {
     var res = obj;
@@ -253,7 +268,9 @@ var select = (ctx, dir) => {
         sel = sel + dir;
     }
     set(get_in(ctx, ['editor', 'els', 'pop', 'els', ctx.selection]), {style: {background: 'transparent'}});
-    set(get_in(ctx, ['editor', 'els', 'pop', 'els', sel]), {style: selection_style});
+    set(get_in(ctx, ['editor', 'els', 'pop', 'els', sel]), {style: selection_style, intoView: true});
+
+
     ctx.selection = sel;
 };
 
