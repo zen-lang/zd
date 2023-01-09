@@ -164,9 +164,10 @@ var insert_item = (ctx,item) => {
     var start = textarea.selectionStart;
     var new_v = v.substring(0, ctx.insert_at) + item.name + v.substring(start, v.length);
     textarea.value = new_v;
-    textarea.selectionEnd = ctx.insert_at + item.length;
+    textarea.selectionEnd = ctx.insert_at + item.name.length;
     hl(ctx, new_v);
     hide_popup(ctx);
+    textarea.dispatchEvent(new KeyboardEvent("keypress", {}));
 };
 
 var insert_selection = (ctx) => {
@@ -209,6 +210,7 @@ var autocompl = (ctx, v)=> {
         var token = btxt.substring(token_start);
         var items = options[type](ctx, token);
         if(items.length > 0) {
+            items=items.slice(0, 100);
             ctx.items = items;
             ctx.selection = 0;
             ctx.insert_at = token_start;
