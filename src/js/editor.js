@@ -15,6 +15,20 @@ var merge = (a,b) => {
     return Object.assign({}, a,b);
 };
 
+var is_alphanum=(c)=>{
+    return  (c || false) && c.match(/[-.a-zA-Z0-9]/i) !== null;
+};
+
+var is_in_key = (txt, sym) =>{
+    var line_start  = txt.lastIndexOf("\n");
+    var quote_count = 0;
+    for(var i = txt.length - 1 ; i > line_start; i--){
+        if(txt[i] == '"'){ quote_count = quote_count + 1;}
+    }
+    var lastc = txt[line_start+1];
+    return (lastc == ':' || lastc == '^')  && !(quote_count & 1);
+};
+
 var transparent = 'transparent';
 var black = '#1f2937';
 var absolute = 'absolute';
@@ -147,6 +161,9 @@ var options = {
     },
     symbol: (ctx, token)=>{
         return ctx.symbols.search(token).map((x)=> { return x.item; });
+    },
+    annotation: (ctx, token)=>{
+        return ctx.annotations.search(token).map((x)=> { return x.item; });
     }
 };
 
@@ -179,36 +196,50 @@ var autocompl = (ctx, v)=> {
     var els = ctx.editor.els;
     var btxt = v.substring(0,els.textarea.selectionStart);
 
-    var line_start  = btxt.lastIndexOf("\n");
-    var str_start   = btxt.lastIndexOf('"');
-    var colon_start = btxt.lastIndexOf(':');
-    var ann_start = btxt.lastIndexOf('^');
-    var space_start = btxt.lastIndexOf(' ');
+    // var line_start  = btxt.lastIndexOf("\n");
+    // var str_start   = btxt.lastIndexOf('"');
+    // var colon_start = btxt.lastIndexOf(':');
+    // var ann_start = btxt.lastIndexOf('^');
+    // var space_start = btxt.lastIndexOf(' ');
+    // var token_start = -1;
+
+    var c = null;
+    var j = 0;
+    var lst_idx = btxt.length - 1;
+    var p_aln = is_alphanum(btxt[lst_idx]);
+    var pos_type =  null;
     var token_start = -1;
 
-    // for(var i = btxt.length; i > 0; i--){
-    // TODO replace with backward search by symbols
-    // TODO add annotations support
-    //     console.log(i, btxt[i]);
-    //     // if " -> in string
-    //     // if : -> in key -> check line beginning
-    //     // if ^
-    // }
-
-    var type = null;
-    if(str_start > line_start && str_start > colon_start) {
-        token_start = str_start;
-        type = 'string';
-    } else if (colon_start > line_start && space_start > colon_start ) {
-        token_start = space_start + 1;
-        type = 'symbol';
-    } else if (colon_start > line_start && space_start < colon_start) {
-        token_start = colon_start;
-        type = 'key';
+    for(var i = lst_idx; i > 0; i--){
+        j = j+1;
+        c = btxt[i];
+        if(c == '^' && (p_aln || j == 1) && (i == 0 || btxt[i-1] == '\n' )) {
+            pos_type='annotation';
+            token_start = i;
+            break;
+        } else if(c == ':' && (p_aln || j == 1) && is_in_key(btxt)) {
+            pos_type = 'key';
+            token_start = i;
+            break;
+        } else if ( j> 1 && c == '#' && p_aln){
+            pos_type = 'symbol';
+            token_start = i + 1;
+            break;
+        } else if ( j > 1 && !is_alphanum(c) && c !== '/' && p_aln && is_in_key(btxt)) {
+            pos_type = 'symbol';
+            token_start = i + 1;
+            break;
+        }
+        if(c == '\n') {
+            break;
+        }
+        if(p_aln && ! is_alphanum(c)) {
+            p_aln = false;
+        }
     }
-    if(type == 'symbol' || type == 'key') {
+    if(pos_type) {
         var token = btxt.substring(token_start);
-        var items = options[type](ctx, token);
+        var items = options[pos_type](ctx, token);
         if(items.length > 0) {
             items=items.slice(0, 100);
             ctx.items = items;
@@ -229,7 +260,7 @@ var autocompl = (ctx, v)=> {
                 }
                 var opts = {tag: 'div',
                             class: ['menu-item'],
-                            on: {click: (ev)=> { insert_item(ctx,item); } },
+                            on:  {click: (ev)=> { ctx.selection = i; insert_selection(ctx); } },
                             els: {icon:  icon,
                                   name:  {tag: 'b', style: {'padding-right': 5}, text: item.name},
                                   title: {tag: 'span', text: item.title}},
@@ -373,7 +404,8 @@ var editor = (zendoc) => {
     var symIdx = new quickScore.QuickScore(zendoc.symbols, ["name", "title"]);
     var keysIdx = new quickScore.QuickScore(zendoc.keys, ["name", "title"]);
     var iconsIdx = new quickScore.QuickScore(zendoc.icons, ["name", "title"]);
-    var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, doc: zendoc.doc};
+    var annotationsIdx = new quickScore.QuickScore(zendoc.annotations, ["name", "title"]);
+    var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, annotations: annotationsIdx, doc: zendoc.doc};
     var in_chrome = (window.location.search || '').includes('chrome') || document.body.getBoundingClientRect().width < 800;
 
     var editor_style = {position: relative ,
@@ -414,6 +446,7 @@ var editor = (zendoc) => {
                                       spellcheck: false,
                                       autofocus: true,
                                       on: {keyup:    (ev) => { on_editor_keyup(ctx,ev);},
+                                           paste:    (ev) => { window.ev = ev; console.log('paste', ev);},
                                            keydown:  (ev) => { on_editor_keydown(ctx ,ev); },
                                            keypress: ! in_chrome ? debounce(keypress, 300) : ()=> {},
                                            click:    (ev) => { hide_popup(ctx); }},
@@ -429,6 +462,7 @@ var editor = (zendoc) => {
                                   overflow: 'auto'},
                           append: ctx.container});
     }
+    window.ctx = ctx;
     return ctx;
 };
 

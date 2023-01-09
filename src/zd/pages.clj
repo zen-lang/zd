@@ -466,9 +466,14 @@
                 :symbols symbols
                 :keys keypaths
                 :icons  zd.icons/icons
+                :annotations (->> (keys (methods zd.methods/annotation))
+                                  (mapv (fn [x]
+                                          {:name (str "^" (name x))
+                                           :title (name x)})))
                 :preview (preview ztx text)
                 :doc (:zd/name doc)}]
     [:script "var zendoc="(cheshire.core/generate-string zendoc)]))
+
 
 (defn render-edit-page [ztx doc]
   (->> (editor ztx doc)
