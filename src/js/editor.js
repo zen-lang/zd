@@ -27,6 +27,7 @@ var set = (nel, attrs) => {
     if(attrs.class) { attrs.class.forEach((c)=>{ nel.classList.add(c); }); }
     if(attrs.text) { nel.innerText = attrs.text; }
     if(attrs.html) { nel.innerHTML = attrs.html; }
+    if(attrs.src) { nel.src = attrs.src; }
     if(attrs.autofocus) { nel.autofocus = "true"; }
     if(attrs.on){
         for(e in attrs.on){
@@ -54,8 +55,10 @@ var set = (nel, attrs) => {
         nel.innerHTML = '';
         for(id in attrs.els){
             var def = attrs.els[id];
-            def.append = nel;
-            nel.els[id] = el(def);
+            if(def){
+                def.append = nel;
+                nel.els[id] = el(def);
+            }
         }
     }
     if(attrs.append){
@@ -192,11 +195,21 @@ var autocompl = (ctx, v)=> {
             var cur = els.caret.els.cursor;
             var item_els = {};
             for (let i = 0; i < items.length; i++) {
-                var opts = {tag: 'div', text: items[i], style: {padding: 5}};
+                var item =items[i];
+                var icon = null;
+                if(item.logo) {
+                    icon = {tag: 'img', src: item.logo, style: { height: 16, 'border-radius': "1px", 'padding-right': '0.5rem', display: 'inline-block'}};
+                } else if (item.icon) {
+                    icon = {tag: 'span', class: item.icon, style: {'font-size': 12, 'padding-right': '0.5rem'}};
+                }
+                var opts = {tag: 'div',
+                            els: {icon:  icon,
+                                  name:  {tag: 'b', style: {'padding-right': 5}, text: item.name},
+                                  title: {tag: 'span', text: item.title}},
+                            style: {padding: 5, 'font-size': 12}};
                 if(i == 0) { opts.style = merge(opts.style, selection_style); }
                 item_els[i] = opts;
             }
-            console.log('pos', cur.offsetLeft, cur.offsetRight);
             set(els.pop, {style: {display: 'block', top: cur.offsetTop + 18, left: cur.offsetLeft}, els: item_els});
 
         } else {
@@ -211,7 +224,7 @@ var insert_selection = (ctx) => {
     var v = textarea.value;
     var start = textarea.selectionStart;
     var item = ctx.items[ctx.selection];
-    var new_v = v.substring(0, ctx.insert_at) + item + v.substring(start, v.length);
+    var new_v = v.substring(0, ctx.insert_at) + item.name + v.substring(start, v.length);
     textarea.value = new_v;
     textarea.selectionEnd = ctx.insert_at + item.length;
     hl(ctx, new_v);
@@ -338,9 +351,9 @@ var caret_style  = merge(poss, {color: transparent,
 var textarea_style = merge(poss, {overflow: 'hidden', position: absolute, margin: 0, top: 0, left: 0});
 
 var editor = (zendoc) => {
-    var symIdx = new quickScore.QuickScore(zendoc.symbols);
-    var keysIdx = new quickScore.QuickScore(zendoc.keys);
-    var iconsIdx = new quickScore.QuickScore(zendoc.icons);
+    var symIdx = new quickScore.QuickScore(zendoc.symbols, ["name", "title"]);
+    var keysIdx = new quickScore.QuickScore(zendoc.keys, ["name", "title"]);
+    var iconsIdx = new quickScore.QuickScore(zendoc.icons, ["name", "title"]);
     var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, doc: zendoc.doc};
     var in_chrome = (window.location.search || '').includes('chrome') || document.body.getBoundingClientRect().width < 800;
 
@@ -364,7 +377,6 @@ var editor = (zendoc) => {
                        });
 
     var keypress = (ev)=>  {
-        console.log('changed');
         fetch('/preview', {method: 'POST', body: ev.target.value}).then((resp)=> {
             resp.text().then((txt)=> {
                 ctx.preview.innerHTML = txt;

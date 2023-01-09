@@ -453,12 +453,19 @@
   (let [text (if (:zd/path doc) (slurp (:zd/path doc))
               (or (find-template ztx (:zd/name doc))
                   default-tpl))
-        symbols (keys (:zdb @ztx))
-        keypaths (:zd/keys @ztx)
+        symbols (->> (:zdb @ztx)
+                     (mapv (fn [[k {{ico :icon logo :logo tit :title} :resource}]]
+                             {:title tit
+                              :name k
+                              :logo logo
+                              :icon ico})))
+        keypaths (->> (:zd/keys @ztx)
+                      (mapv (fn [x] {:name x})))
         zendoc {:text text
                 :symbols symbols
                 :keys keypaths
-                :icons zd.icons/icons
+                :icons (->> zd.icons/icons
+                            (mapv (fn [x] {:name x})))
                 :preview (preview ztx text)
                 :doc (:zd/name doc)}]
     [:script "var zendoc="(cheshire.core/generate-string zendoc)]))
