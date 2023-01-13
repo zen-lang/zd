@@ -8,6 +8,7 @@
    [clj-yaml.core]
    [clojure.pprint]
    [markdown.core]
+   [zen.core]
    [cheshire.core]
    [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]])
   (:import (java.time.format DateTimeFormatter)
@@ -122,40 +123,54 @@
     [:a {:href (str "/" s) :class (c [:text :red-600] [:bg :red-100]) :title "Broken Link"} s]))
 
 (defmethod inline-method :symbol-link
-  [ztx m s]
+  [ztx m s ctx]
   (symbol-link ztx s))
 
 (defmethod inline-method :code
-  [ztx m s]
+  [ztx m s ctx]
   [:code {:class (c [:px 1.5] [:py 1] [:bg :gray-200]
                     :text-sm
                     {:border-radius "4px"
-                     :font-family "ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace"})} s])
+                     :font-family "ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace"})}
+   s])
 
 (defmethod inline-method :b
-  [ztx m s]
+  [ztx m s ctx]
   [:b s])
 
+(defn img-src [ctx src]
+  (when src
+    (cond (str/starts-with? src "http") src
+          (str/starts-with? src "/") src
+          :else (str "/" (get-in ctx  [:block :page :name]) "/" src))))
 
 (defmethod inline-method
   :img
-  [ztx m arg]
-  (let [[src alt] (str/split arg #"\s+" 2)]
+  [ztx m arg ctx]
+  (let [[src alt] (str/split arg #"\s+" 2)
+        src (img-src ctx src)]
     [:img {:src src :alt alt}]))
 
+(defmethod inline-function
+  :img
+  [ztx m args ctx]
+  (let [[src opts & _]  args
+        src (img-src ctx src)]
+    [:img (assoc opts :src src)]))
+
 (defmethod inline-method :a
-  [ztx m arg]
+  [ztx m arg ctx]
   (let [[src text] (str/split arg #"\s+" 2)]
     [:a {:href src :class (c [:text :blue-700] [:hover [:underline]])} " " (or text src)]))
 
 (defmethod inline-method
   :src
-  [ztx m arg]
+  [ztx m arg ctx]
   [:a {:class (c [:text :green-600] :title "TODO")}
    (str arg)])
 
 (defmethod inline-method :default
-  [ztx m arg]
+  [ztx m arg ctx]
   [:span {:class (c [:text :red-600] [:bg :red-100])} (str "No inline-method for " m " arg:" arg)])
 
 (defmethod process-block "code" [ztx _ lang cnt]
@@ -188,9 +203,9 @@
     (zd.zentext/parse-block ztx data)))
 
 (defmethod render-content :md
-  [ztx {data :data}]
+  [ztx {data :data :as block}]
   [:div {:class (c [:px 0] [:py 1] [:bg :white] {:word-wrap "break"})}
-   (zd.zentext/parse-block ztx data)])
+   (zd.zentext/parse-block ztx data block)])
 
 (defmethod render-content :img
   [ztx {page :page {img :img} :annotations data :data}]
@@ -221,7 +236,7 @@
       [:p data]
 
       :else
-      (zd.zentext/parse-block ztx (str data)))
+      (zd.zentext/parse-block ztx (str data) block))
 
     (or (keyword? data) (boolean? data))
     [:span {:class (c [:text :green-600])} (str data)]
@@ -397,13 +412,13 @@
 
 (defmethod inline-function
   :echo
-  [ztx m args]
+  [ztx m args ctx]
   [:span "((" m (pr-str args) "))"])
 
 
 (defmethod inline-function
   :resource
-  [ztx m [sym & path]]
+  [ztx m [sym & path] ctx]
   (if-let [sym (zd.db/get-resource ztx sym)]
     (get-in sym path)
     [:div "Could not find " (pr-str sym)]))
@@ -472,23 +487,23 @@
 (defmethod render-key [:logo] [_ _block] [:div])
 
 (defmethod inline-method :mention
-  [ztx m s]
+  [ztx m s ctx]
   (symbol-link ztx (symbol (str "people." s))))
 
 (defmethod inline-method :bold
-  [ztx m s]
+  [ztx m s ctx]
   [:b s])
 
 (defmethod inline-method :italic
-  [ztx m s]
+  [ztx m s ctx]
   [:i s])
 
 (defmethod inline-method :x
-  [ztx m s]
+  [ztx m s ctx]
   [:i.fa-solid.fa-square-check {:class (name (c [:text :green-600]))}])
 
 (defmethod inline-method :fa
-  [ztx m s]
+  [ztx m s ctx]
   (let [cls (->> 
              (str/split s #"\s")
              (mapv str/trim)
@@ -498,12 +513,12 @@
     [:i {:class cls}]))
 
 (defmethod inline-method :md/link
-  [ztx m s]
+  [ztx m s ctx]
   (let [[txt href] (str/split s #"\]\(" 2)]
     [:a {:href href :class (c [:text :blue-600] [:hover [:underline]])} txt]))
 
 (defmethod inline-method :md/img
-  [ztx m s]
+  [ztx m s ctx]
   (let [[txt href] (str/split s #"\]\(" 2)]
     [:img {:src href :alt txt}]))
 

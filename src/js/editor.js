@@ -175,16 +175,29 @@ var hide_popup = (ctx)=>{
 
 var selection_style = {background: 'blueviolet'};
 
-var insert_item = (ctx,item) => {
+var insert_text = (ctx, text) => {
     var textarea = ctx.editor.els.textarea;
     var v = textarea.value;
     var start = textarea.selectionStart;
-    var new_v = v.substring(0, ctx.insert_at) + item.name + v.substring(start, v.length);
+    var new_v = v.substring(0, ctx.insert_at) + text + v.substring(start, v.length);
     textarea.value = new_v;
-    textarea.selectionEnd = ctx.insert_at + item.name.length;
+    textarea.selectionEnd = ctx.insert_at + text.length;
     hl(ctx, new_v);
     hide_popup(ctx);
     textarea.dispatchEvent(new KeyboardEvent("keypress", {}));
+}
+
+var insert_item = (ctx,item) => {
+    insert_text(ctx, item.name);
+    // var textarea = ctx.editor.els.textarea;
+    // var v = textarea.value;
+    // var start = textarea.selectionStart;
+    // var new_v = v.substring(0, ctx.insert_at) + item.name + v.substring(start, v.length);
+    // textarea.value = new_v;
+    // textarea.selectionEnd = ctx.insert_at + item.name.length;
+    // hl(ctx, new_v);
+    // hide_popup(ctx);
+    // textarea.dispatchEvent(new KeyboardEvent("keypress", {}));
 };
 
 var insert_selection = (ctx) => {
@@ -428,11 +441,36 @@ var editor = (zendoc) => {
                        });
 
     var keypress = (ev)=>  {
-        fetch('/preview', {method: 'POST', body: ev.target.value}).then((resp)=> {
+        fetch(`/${ctx.doc}/preview`, {method: 'POST', body: ev.target.value}).then((resp)=> {
             resp.text().then((txt)=> {
                 ctx.preview.innerHTML = txt;
             });
         });
+    };
+
+    var on_paste = (evt) => {
+        const clipboardItems = evt.clipboardData.items;
+        console.log('paste', evt);
+        const items = [].slice.call(clipboardItems).filter(function (item) {
+            console.log(item);
+            return item.type.indexOf('image') !== -1;
+        });
+        const item = items[0];
+        if(item){
+            const blob = item.getAsFile();
+            console.log(blob);
+            const file_name = prompt('Give file a uniq name', blob.name);
+            if(file_name) {
+                fetch(`/${ctx.doc}/file`, {
+                    method: 'POST',
+                    headers: {'content-type': item.type,
+                              'file-name': file_name},
+                    body: blob
+                }).then((resp)=>{
+                    insert_text(ctx, `((img "${file_name}" {:width 400 :class "screenshot"}))`);
+                });
+            }
+        }
     };
 
     ctx.editor = el({tag: 'div',
@@ -446,7 +484,7 @@ var editor = (zendoc) => {
                                       spellcheck: false,
                                       autofocus: true,
                                       on: {keyup:    (ev) => { on_editor_keyup(ctx,ev);},
-                                           paste:    (ev) => { window.ev = ev; console.log('paste', ev);},
+                                           paste:    on_paste,
                                            keydown:  (ev) => { on_editor_keydown(ctx ,ev); },
                                            keypress: ! in_chrome ? debounce(keypress, 300) : ()=> {},
                                            click:    (ev) => { hide_popup(ctx); }},

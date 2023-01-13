@@ -9,20 +9,20 @@
 
 (def inline-regex #"((#|@)[_a-zA-Z][-./a-zA-Z0-9]+[_a-zA-Z]|\[\[[^\]]+\]\]|\(\([^)]+\)\))|`[^`]+`|\*\*[^*]+\*\*|\!?\[[^\]]*\]\([^)]+\)|__[^_]+__")
 
-(defn call-inline-method [ztx s]
+(defn call-inline-method [ztx s ctx]
   (let [[method arg] (str/split s #"\s+" 2)]
-    (zd.methods/inline-method ztx  method arg)))
+    (zd.methods/inline-method ztx  method arg ctx)))
 
 
-(defn call-inline-function [ztx s]
+(defn call-inline-function [ztx s ctx]
   (try
     (let [[method arg] (str/split s #"\s+" 2)
           arg (edamame.core/parse-string (str "[" arg "]"))]
-      (zd.methods/inline-function ztx method arg))
+      (zd.methods/inline-function ztx method arg ctx))
     (catch Exception e
       [:error (pr-str e)])))
 
-(defn parse-inline [ztx s]
+(defn parse-inline [ztx s ctx]
   (let [m (re-matcher inline-regex s)
         res (loop [start 0
                    res []]
@@ -38,15 +38,16 @@
                          (empty? head))
                      (conj res
                            head
-                           (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1))
-                                 (str/starts-with? match "@")   (zd.methods/inline-method ztx :mention      (subs match 1))
-                                 (str/starts-with? match "`")   (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)))
-                                 (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)))
-                                 (str/starts-with? match "__")  (zd.methods/inline-method ztx :italic       (subs match 2 (- (count match) 2)))
-                                 (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)))
-                                 (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)))
-                                 (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)))
-                                 (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2)))))
+                           (cond (str/starts-with? match "#")   (zd.methods/inline-method ztx :symbol-link  (subs match 1) ctx)
+                                 (str/starts-with? match "@")   (zd.methods/inline-method ztx :mention      (subs match 1) ctx)
+                                 (str/starts-with? match "`")   (zd.methods/inline-method ztx :code         (subs match 1 (- (count match) 1)) ctx)
+                                 (str/starts-with? match "**")  (zd.methods/inline-method ztx :bold       (subs match 2 (- (count match) 2)) ctx)
+                                 (str/starts-with? match "__")  (zd.methods/inline-method ztx :italic       (subs match 2 (- (count match) 2)) ctx)
+                                 (str/starts-with? match "[[")  (call-inline-method   ztx (subs match 2 (- (count match) 2)) ctx)
+                                 (str/starts-with? match "![")  (zd.methods/inline-method ztx :md/img     (subs match 2 (- (count match) 1)) ctx)
+                                 (str/starts-with? match "[")   (zd.methods/inline-method ztx :md/link    (subs match 1 (- (count match) 1)) ctx)
+                                 (str/starts-with? match "((")  (call-inline-function ztx (subs match 2 (- (count match) 2))  ctx)
+                                 ))
                      :else (conj res s))))
                 (conj res (subs s start))))]
     (remove empty? res)))
@@ -123,7 +124,7 @@
 (defmethod apply-transition :p-end
   [ztx tr {lns :lines :as ctx} line]
   (-> (update ctx :result conj (let [res (into [:p]
-                                               (mapcat (fn [l] (let [parsed (parse-inline ztx l)]
+                                               (mapcat (fn [l] (let [parsed (parse-inline ztx l ctx)]
                                                                  (if-not (or (some #{"."} parsed) (some #{","} parsed))
                                                                    (conj parsed "\n")
                                                                    parsed))) lns))]
@@ -158,13 +159,13 @@
 
 (defn process-list-item [ztx ctx]
   (let [item (when (:item ctx)
-               (parse-inline ztx (last (re-find #"^(\* |\d+\) )(.+)" (:item ctx)))))]
+               (parse-inline ztx (last (re-find #"^(\* |\d+\) )(.+)" (:item ctx))) ctx))]
     (cond-> [:li]
       item
       (into item)
 
       (seq (:sub-items ctx))
-      (into (parse-block* ztx (mapv #(subs % 2) (:sub-items ctx)))))))
+      (into (parse-block* ztx (mapv #(subs % 2) (:sub-items ctx)) ctx)))))
 
 (defmethod apply-transition :list-add-elem
   [ztx _ ctx line]
@@ -196,9 +197,9 @@
   (println ::missed-transition a)
   ctx)
 
-(defn parse-block* [ztx lines]
+(defn parse-block* [ztx lines block]
   (let [res (loop [[l & ls :as old-ls] lines
-                   ctx  {:state :none :result []}]
+                   ctx  {:state :none :result [] :block block}]
               (let [token (get-token l)
                     action (or (get-in block-parser [(:state ctx) token])
                                (get-in block-parser [(:state ctx) :*])
@@ -213,8 +214,8 @@
     res))
 
 
-(defn parse-block [ztx s]
+(defn parse-block [ztx s block]
   (let [lines (get-lines s)
-        res (into [:div] (parse-block* ztx lines))]
+        res (into [:div] (parse-block* ztx lines block))]
     res))
 

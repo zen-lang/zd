@@ -111,7 +111,8 @@
    {} (:zdb @ztx)))
 
 (defn get-page [ztx nm]
-  (get-in @ ztx [:zdb nm]))
+  (when-let [p (get-in @ ztx [:zdb nm])]
+    (assoc p :name nm)))
 
 (defn get-resource [ztx nm]
   (when-let [r (get-in @ ztx [:zdb nm :resource])]

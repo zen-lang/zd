@@ -39,6 +39,7 @@
    [:h4 (c* {:font-size "16px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "20px"})]
    [:h5 (c* {:font-size "14px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "16px"})]
    [:.menu-item (c* :cursor-pointer [:hover [:bg :blue-700]])]
+   [:.screenshot (c* :shadow-lg :border :rounded [:m 1] [:p 1])]
    [:ul (c* [:ml 4] [:mb 4])
     {:list-style "inside"
      :line-height "24px"}
@@ -274,8 +275,7 @@
                    attr]
                   [:div
                    (for [l (sort links)]
-                     [:div {:class (c [:py 0.5])} (zd.impl/symbol-link ztx l)]
-                     #_[:a {:href l :class (c :block [:py 0.5] [:text :gray-700] [:hover [:text :gray-800]])} l])]]))
+                     [:div {:class (c [:py 0.5])} (zd.impl/symbol-link ztx l)])]]))
           (into [:div {:class (c  [:py 2] [:px 0])}
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
@@ -447,8 +447,8 @@
   (->> (layout ztx (generate-page ztx doc) doc)
        (to-html)))
 
-(defn preview [ztx text]
-  (hiccup.core/html (page-content ztx (zd.parse/parse ztx text))))
+(defn preview [ztx text page]
+  (hiccup.core/html (page-content ztx (merge page (zd.parse/parse ztx text)))))
 
 (defn editor [ztx doc]
   (let [text (if (:zd/path doc) (slurp (:zd/path doc))
@@ -470,7 +470,7 @@
                                   (mapv (fn [x]
                                           {:name (str "^" (name x))
                                            :title (name x)})))
-                :preview (preview ztx text)
+                :preview (preview ztx text doc)
                 :doc (:zd/name doc)}]
     [:script "var zendoc="(cheshire.core/generate-string zendoc)]))
 

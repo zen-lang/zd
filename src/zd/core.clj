@@ -11,8 +11,9 @@
    [cheshire.core]
    [route-map.core :as route-map]
    [clojure.java.io :as io]
+   [ring.util.response]
    [clojure.string :as str])
-  (:import [java.io InputStream]))
+  (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]))
 
 
 (defn reload [ztx _opts]
@@ -80,8 +81,8 @@
                             [:body]])})
 
 (defmethod op :preview
-  [ztx _ req]
-  {:body (zd.pages/preview ztx (slurp (:body req)))
+  [ztx _ {{id :id} :params :as req}]
+  {:body (zd.pages/preview ztx (slurp (:body req)) {:name id})
    :status 200})
 
 (defmethod op :save
@@ -95,13 +96,36 @@
     (spit file content))
   {:body (str "/" id) :status 200})
 
+(defmethod op :save-file
+  [ztx {{id :id} :params} req]
+  (let [file-name (str (get-in req [:headers "file-name"]))
+        dir-path (str "files/" id)
+        file-path (str dir-path "/" file-name)
+        file (io/file file-path)]
+    (Files/copy ^java.io.InputStream (:body req)
+                ^java.nio.file.Path (.toPath file)
+                (into-array CopyOption [StandardCopyOption/REPLACE_EXISTING]))
+    {:body (cheshire.core/generate-string {:file file-path
+                                           :name file-name})
+     :status 200}))
+
+(defmethod op :file
+  [ztx {{id :id file-name :file} :params} req]
+  (let [file-path (str "files/" id "/" file-name)
+        file (io/file file-path)]
+    (if (.exists file)
+      (ring.util.response/file-response file-path)
+      {:status 404})))
+
 (def routes
   {:GET {:op :symbol}
    "editor" {:GET {:op :editor}}
-   "preview" {:POST {:op :preview}}
+   "rpc"  {:POST {:op :rpc}}
    [:id] {:GET {:op :symbol}
+          "preview" {:POST {:op :preview}}
           :POST {:op :save}
-          "rpc"  {:POST {:op :rpc}}
+          [:file] {:GET {:op :file}}
+          "file" {:POST {:op :save-file}}
           "edit" {:GET  {:op :edit}
                   :POST {:op :update}
                   :PUT  {:op :save}}}})
