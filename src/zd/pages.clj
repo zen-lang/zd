@@ -261,7 +261,7 @@
            :href (str name "/" "edit" "?" (get-in page [:request :query-string]))}
        [:i.fas.fa-edit]]))))
 
-
+;; TODO remove me later
 (defn links [ztx link-groups]
   [:div {:class (c [:text :gray-600])}
    (when (seq link-groups)
@@ -284,21 +284,26 @@
 
 (defn page-content [ztx {doc :doc req :request res :resource :as page}]
   [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
-   (->>
-    (for [block doc]
-      (let [block (assoc block :page page)]
-        (or (zd.methods/render-key ztx block)
-            (zd.methods/render-block ztx block)))))])
+   (for [block (->> doc
+                    (remove #(= (:path %) [:zd/backrefs])))]
+     (let [block (assoc block :page page)]
+       (or (zd.methods/render-key ztx block)
+           (zd.methods/render-block ztx block))))])
 
 
 (defn page [ztx {doc :doc req :request res :resource :as page}]
-  [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1 )}
+  [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1)}
    [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
     (breadcrumb ztx (:zd/name page) page)
     [:div {:class (c [:bg :white] {:color "#3b454e"})}
      (page-content ztx page)]]
    [:div {:class (c {:min-width "15em"})}
-    (links ztx (:backrefs page))]])
+    (let [backrefs
+          (->> doc
+               (filter #(= (:path %) [:zd/backrefs]))
+               first)]
+      ;; TODO do we need to assoc page here?
+      (zd.methods/render-block ztx (assoc backrefs :page page)))]])
 
 (defn edit-page [ztx {doc :doc _res :resource :as page}]
   [:div {:class (c [:mb 4])}

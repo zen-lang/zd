@@ -236,7 +236,6 @@
         block))
     doc)))
 
-
 (defn collect-keypaths [ztx blocks]
   (->> blocks
        (mapv (fn [x]
@@ -267,7 +266,49 @@
     (update-refs ztx refs)
     (collect-keypaths ztx (:doc data))))
 
+(defn invalid-refs->db [ztx invalid-idx]
+  (doseq [[resource refs] invalid-idx]
+    (let [errs (map (fn [[kp ref]]
+                      {:type :invalid-ref
+                       :refs ref
+                       :path kp})
+                    refs)]
+      (swap! ztx update-in [:zdb resource]
+             (fn [doc]
+               (-> doc
+                   (update :doc conj
+                           {:path [:zd/invalid-refs]
+                            :annotations {:block :zd/invalid-refs}
+                            :data errs})
+                   (update :resource assoc :zd/invalid-refs errs)))))))
+
+(defn unwrap-refs [to-resource refs refs-idx]
+  (->> refs
+       (map (fn [[k v]]
+              [k (reduce (fn [acc kp]
+                           (assoc acc kp to-resource))
+                         {}
+                         v)]))
+       (reduce (fn [acc [res new-kps]]
+                 (update acc res (fn [kps]
+                                   (reduce (fn [acc [kp ref]]
+                                             (update acc kp (fnil conj #{}) ref))
+                                           kps
+                                           new-kps))))
+               refs-idx)))
+
+(defn backrefs->db [ztx resource-name refs]
+  (swap! ztx update-in [:zdb resource-name]
+         (fn [doc]
+           (-> doc
+               (update :resource assoc :zd/backrefs refs)
+               (update :doc conj
+                       {:path [:zd/backrefs]
+                        :annotations {:block :zd/backrefs}
+                        :data refs})))))
+
 (defn load-dirs [ztx dirs]
+  ;; phase 1 - load resources
   (doseq [dir dirs]
     (let [dir (io/file dir)
           dir-path (.getPath dir)]
@@ -280,4 +321,22 @@
                   content (slurp f)]
               (load-content! ztx {:path path
                                   :resource-path resource-path
-                                  :content content}))))))))
+                                  :content content})))))))
+
+  ;; phase 2 - find invalid refs, add backrefs to resources
+  (loop [coll* (:zrefs @ztx)
+         invalid-refs {}]
+    (let [[resource-name refs] (first coll*)
+          doc (get-in @ztx [:zdb resource-name])]
+      (cond
+        (nil? resource-name)
+        (invalid-refs->db ztx invalid-refs)
+
+        (nil? doc)
+        (recur (rest coll*)
+               (unwrap-refs resource-name refs invalid-refs))
+
+        :else
+        (do (backrefs->db ztx resource-name refs)
+            (recur (rest coll*)
+                   invalid-refs))))))
