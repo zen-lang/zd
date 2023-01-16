@@ -177,12 +177,6 @@
   [:div.code-block
    [:pre {:class (c :text-sm)
           :style {:position "relative" :white-space "pre-wrap"}}
-    [:i.fas.fa-clipboard-list.copy-button
-     {:title "Click to Copy"
-      :style {:position  "relative"
-              :float     "right"
-              :top       "5px"
-              :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-" lang " hljs")} cnt]]])
 
 (defmethod process-block :default [ztx tp args cnt]
