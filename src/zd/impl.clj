@@ -380,6 +380,44 @@
         [:span {:class (c [:text :green-600])} (str (:path err))]
         [:span {:class (c)} (:message err)]])]))
 
+(defmethod render-block :zd/invalid-refs
+  [ztx {:keys [data]}]
+  [:div {:class (c  [:py 2] [:px 0])}
+   [:h3 "Invalid references"]
+   (for [{:keys [path refs]} data]
+     [:div {:class (c [:py 2] :text-sm)}
+      [:div
+       [:div {:class (c [:text :gray-600] {:font-weight "600"})}
+        (->> path
+             (map name)
+             (clojure.string/join "."))]]
+      [:div
+       (for [doc-symbol refs]
+         [:div {:class (c [:py 0.5] {:display "inline-block"
+                                     :margin-right "0.5rem"})}
+          (zd.impl/symbol-link ztx doc-symbol)])]])])
+
+(defmethod render-block :zd/backrefs
+  [ztx {:keys [data]}]
+  [:div {:class (c [:text :gray-600])}
+   (->> data
+        (reduce-kv (fn [acc doc-symbol kp-set]
+                     (->> kp-set
+                          (map (fn [kp] (str/join "." (map name kp))))
+                          (reduce (fn [acc kp]
+                                    (update acc kp (fnil conj []) doc-symbol))
+                                  acc)))
+                   {})
+        (map (fn [[keypath syms]]
+               [:div {:class (c [:py 2] :text-sm)}
+                [:div
+                 [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
+                  keypath]]
+                [:div
+                 (for [doc-symbol syms]
+                   [:div {:class (c [:py 0.5])} (zd.impl/symbol-link ztx doc-symbol)])]]))
+        (into [:div {:class (c  [:py 2] [:px 0])}
+               [:span {:class (c [:text :gray-600] {:font-weight 400})} "Referenced by"]]))])
 
 (def c-macro ^:sci/macro
   (fn [_&form _&env & rules]
