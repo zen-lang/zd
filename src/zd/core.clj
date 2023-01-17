@@ -82,7 +82,7 @@
 
 (defmethod op :preview
   [ztx _ {{id :id} :params :as req}]
-  {:body (zd.pages/preview ztx (slurp (:body req)) {:name id})
+  {:body (zd.pages/preview ztx (slurp (:body req)) {:name id :zd/file (str (str/replace id #"\." "/") ".zd")})
    :status 200})
 
 (defmethod op :save

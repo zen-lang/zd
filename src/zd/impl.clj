@@ -201,6 +201,7 @@
   [:div {:class (c [:px 0] [:py 1] [:bg :white] {:word-wrap "break"})}
    (zd.zentext/parse-block ztx data block)])
 
+;; TODO: fix all images
 (defmethod render-content :img
   [ztx {page :page {img :img} :annotations data :data}]
   (let [path (str/join "/" (butlast (str/split (:zd/file page) #"/")))
