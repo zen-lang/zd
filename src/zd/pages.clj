@@ -285,26 +285,29 @@
 
 (defn page-content [ztx {doc :doc req :request res :resource :as page}]
   [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
-   (for [block (->> doc
-                    (remove #(= (:path %) [:zd/backrefs])))]
+   (for [block doc]
      (let [block (assoc block :page page)]
        (or (zd.methods/render-key ztx block)
            (zd.methods/render-block ztx block))))])
 
 
 (defn page [ztx {doc :doc req :request res :resource :as page}]
-  [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1)}
-   [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
-    (breadcrumb ztx (:zd/name page) page)
-    [:div {:class (c [:bg :white] {:color "#3b454e"})}
-     (page-content ztx page)]]
-   [:div {:class (c {:min-width "15em"})}
-    (let [backrefs
-          (->> doc
-               (filter #(= (:path %) [:zd/backrefs]))
-               first)]
-      ;; TODO do we need to assoc page here?
-      (zd.methods/render-block ztx (assoc backrefs :page page)))]])
+  (let [infset #{[:zd/back-links]
+                 [:zd/broken-links]}
+        [attrs inferred] (->> doc
+                              (partition-by #(contains? infset (:path %))))]
+    [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1)}
+     [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
+      (breadcrumb ztx (:zd/name page) page)
+      [:div {:class (c [:bg :white] {:color "#3b454e"})}
+       (page-content ztx (assoc page :doc attrs))]]
+     [:div {:class (c {:min-width "15em"})}
+      (let [[back-links broken-links]
+            (->> inferred
+                 (sort-by #(first (:path %))))]
+        [:div
+         (zd.methods/render-key ztx back-links)
+         (zd.methods/render-key ztx broken-links)])]]))
 
 (defn edit-page [ztx {doc :doc _res :resource :as page}]
   [:div {:class (c [:mb 4])}
@@ -370,6 +373,7 @@
 ;;  :margin-top "80px"}
 
 (defn generate-page [ztx doc]
+  ;; TODO remove because backrefs are in the resource
   (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
     [:div {:class (c )}
      ;; (topbar ztx doc)

@@ -1,12 +1,13 @@
 (ns zd.impl
   (:require
+   [clojure.java.io :as io]
+   [clojure.pprint :as pprint]
    [clojure.string :as str]
    [stylo.core :refer [c]]
    [zd.db]
    [zd.zentext]
    [sci.core]
    [clj-yaml.core]
-   [clojure.pprint]
    [markdown.core]
    [zen.core]
    [cheshire.core]
@@ -369,7 +370,10 @@
               :float     "right"
               :top       "5px"
               :right     "20px"}}]
-    [:code {:style {:word-wrap "break-word"} :class (str "language-edn hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
+    [:code {:style {:word-wrap "break-word"} :class (str "language-edn hljs")}
+     (if (string? data)
+       data
+       (with-out-str (pprint/pprint data)))]]])
 
 (defmethod render-block :zen/errors
   [ztx {ann :annotations errors :data path :path :as block}]
@@ -381,27 +385,27 @@
         [:span {:class (c [:text :green-600])} (str (:path err))]
         [:span {:class (c)} (:message err)]])]))
 
-(defmethod render-block :zd/invalid-refs
-  [ztx {:keys [data]}]
+(defmethod render-key [:zd/broken-links]
+  [ztx {:keys [data] :as arg}]
   [:div {:class (c  [:py 2] [:px 0])}
-   [:h3 "Invalid references"]
-   (for [{:keys [path refs]} data]
+   [:span {:class (c [:text :gray-600] {:font-weight 400})} "Broken links"]
+   (for [{:keys [doc path refs]} data]
      [:div {:class (c [:py 2] :text-sm)}
-      [:div
-       [:div {:class (c [:text :gray-600] {:font-weight "600"})}
-        (->> path
-             (map name)
-             (clojure.string/join "."))]]
-      [:div
-       (for [doc-symbol refs]
-         [:div {:class (c [:py 0.5] {:display "inline-block"
-                                     :margin-right "0.5rem"})}
-          (zd.impl/symbol-link ztx doc-symbol)])]])])
+      [:div {:class (c [:text :gray-600] :border-b {:font-weight "400"})}
+       (->> path
+            (map name)
+            (clojure.string/join ".")
+            (str doc "/"))]
+      (for [doc-symbol refs]
+        [:div {:class (c [:py 0.5] {:display "inline-block"
+                                    :margin-right "0.5rem"})}
+         (zd.impl/symbol-link ztx doc-symbol)])])])
 
-(defmethod render-block :zd/backrefs
+(defmethod render-key [:zd/back-links]
   [ztx {:keys [data]}]
   [:div {:class (c [:text :gray-600])}
    (->> data
+        ;; move grouping logic to db?
         (reduce-kv (fn [acc doc-symbol kp-set]
                      (->> kp-set
                           (map (fn [kp] (str/join "." (map name kp))))
@@ -412,13 +416,13 @@
         (map (fn [[keypath syms]]
                [:div {:class (c [:py 2] :text-sm)}
                 [:div
-                 [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
+                 [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "400"})}
                   keypath]]
                 [:div
                  (for [doc-symbol syms]
                    [:div {:class (c [:py 0.5])} (zd.impl/symbol-link ztx doc-symbol)])]]))
         (into [:div {:class (c  [:py 2] [:px 0])}
-               [:span {:class (c [:text :gray-600] {:font-weight 400})} "Referenced by"]]))])
+               [:span {:class (c [:text :gray-600] {:font-weight 400})} "Linked by"]]))])
 
 (def c-macro ^:sci/macro
   (fn [_&form _&env & rules]

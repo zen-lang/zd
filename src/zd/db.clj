@@ -1,5 +1,7 @@
 (ns zd.db
   (:require
+   [clojure.set :as set]
+   [matcho.core :as matcho]
    [zen.core :as zen]
    [zd.parse]
    [sci.core]
@@ -78,6 +80,9 @@
 (defn update-refs [ztx refs]
   (swap! ztx update :zrefs deep-merge refs))
 
+(defn update-macros [ztx macros]
+  (swap! ztx update ::macros deep-merge macros))
+
 (defn get-refs [ztx symbol]
   (get-in @ztx [:zrefs symbol]))
 
@@ -137,7 +142,8 @@
                    (*collect-refs acc resource-name (conj path k) v))
                  acc))
 
-    (or (set? node) (sequential? node))
+    (and (or (set? node) (sequential? node))
+         (not (list? node)))
     (->> node
          (reduce (fn [acc v]
                    (*collect-refs acc resource-name (conj path :#) v))
@@ -147,8 +153,6 @@
 (defn collect-refs [resource-name resource]
   ;; {target {source #{[:path] [:path]}}}
   (*collect-refs {} resource-name [] resource))
-
-
 
 (defn gather-parent-tags [ztx resource-name]
   (->> (str/split resource-name #"\.")
@@ -243,19 +247,34 @@
                  (swap! ztx update :zd/keys (fn [acc] (conj (or acc #{})
                                                            (str/join (:path x))))))))))
 
+(defn *collect-macros [acc path docname node]
+  (cond
+    (and (list? node) (symbol? (first node)))
+    (update acc docname assoc path node)
+
+    (map? node)
+    (reduce (fn [acc [k v]]
+              (*collect-macros acc (conj path k) docname v))
+            acc
+            node)
+
+    :else acc))
+
+(defn collect-macros [{:keys [zd/name resource]}]
+  (*collect-macros {} [] name resource))
+
 (defn load-content! [ztx {:keys [resource-path path content]}]
   (let [resource-name (str/replace (str/replace resource-path #"\.zd$" "") #"/" ".")
         data (zd.parse/parse ztx content)
         parent-tags (gather-parent-tags ztx resource-name)
         tags (clojure.set/union (get-in data [:resource :zen/tags] #{}) parent-tags)
-        namespaces (keep namespace tags)
         data (cond-> data
                (seq tags)
                (assoc-in [:resource :zen/tags] tags))
-        _ (mapv #(zen/read-ns ztx (symbol %)) namespaces)
         data (assoc data :zd/name (symbol resource-name) :zd/file resource-path :zd/path path)
         data (enrich-doc-with-annotations ztx data)
         data (process-macroses ztx data)
+        macros (collect-macros data)
         refs (collect-refs (symbol resource-name) (:resource data))
         errors (->> (:errors (zen/validate ztx (or (:zen/tags (:resource data)) #{}) (:resource data)))
                     (remove #(= "unknown-key" (:type %))))
@@ -264,23 +283,22 @@
                data)]
     (create-resource ztx data)
     (update-refs ztx refs)
+    (update-macros ztx macros)
     (collect-keypaths ztx (:doc data))))
 
 (defn invalid-refs->db [ztx invalid-idx]
   (doseq [[resource refs] invalid-idx]
     (let [errs (map (fn [[kp ref]]
-                      {:type :invalid-ref
-                       :refs ref
-                       :path kp})
+                      {:refs ref :path kp :doc resource})
                     refs)]
       (swap! ztx update-in [:zdb resource]
              (fn [doc]
                (-> doc
                    (update :doc conj
-                           {:path [:zd/invalid-refs]
-                            :annotations {:block :zd/invalid-refs}
+                           {:path [:zd/broken-links]
+                            :annotations {}
                             :data errs})
-                   (update :resource assoc :zd/invalid-refs errs)))))))
+                   (update :resource assoc :zd/broken-links errs)))))))
 
 (defn unwrap-refs [to-resource refs refs-idx]
   (->> refs
@@ -301,14 +319,13 @@
   (swap! ztx update-in [:zdb resource-name]
          (fn [doc]
            (-> doc
-               (update :resource assoc :zd/backrefs refs)
+               (update :resource assoc :zd/back-links refs)
                (update :doc conj
-                       {:path [:zd/backrefs]
-                        :annotations {:block :zd/backrefs}
+                       {:path [:zd/back-links]
+                        :annotations {}
                         :data refs})))))
 
-(defn load-dirs [ztx dirs]
-  ;; phase 1 - load resources
+(defn load-resources! [ztx dirs]
   (doseq [dir dirs]
     (let [dir (io/file dir)
           dir-path (.getPath dir)]
@@ -321,9 +338,11 @@
                   content (slurp f)]
               (load-content! ztx {:path path
                                   :resource-path resource-path
-                                  :content content})))))))
+                                  :content content}))))))))
 
-  ;; phase 2 - find invalid refs, add backrefs to resources
+(defn infer-refs!
+  "append backrefs and invalid refs to resources"
+  [ztx]
   (loop [coll* (:zrefs @ztx)
          invalid-refs {}]
     (let [[resource-name refs] (first coll*)
@@ -340,3 +359,73 @@
         (do (backrefs->db ztx resource-name refs)
             (recur (rest coll*)
                    invalid-refs))))))
+
+(defn matches? [resource pattern]
+  (every? (fn [k]
+            (let [l (get resource k)
+                  r (get pattern k)]
+              (and l
+                   (cond
+                     (and (set? l) (set? r))
+                     (set/subset? r l)))))
+          (keys pattern)))
+
+(defn match-impl [ztx to-match pattern]
+  (->> (:zdb @ztx)
+       (filter (fn [[doc-name {:keys [resource] :as doc}]]
+                 (and (not= doc-name (:zd/name to-match))
+                      ;; TODO use matcho instead (fix set inclusion logic)
+                      (matches? resource pattern))))
+       (map first)
+       set))
+
+(defn query-doc [ztx {:keys [resource] :as doc} paths]
+  (get-in resource (first paths)))
+
+(defn query-impl [ztx doc expr]
+  (cond
+    (every? vector? expr)
+    (query-doc ztx doc (rest expr))
+
+    (= :* (first expr))
+    (->> (:zdb @ztx)
+         (mapcat (fn [[_ doc]]
+                   (query-doc ztx doc (rest expr))))
+         (filter identity))))
+
+(defn eval-macros! [ztx]
+  (let [eval-macro
+        (fn [[sym cfg]]
+          (let [doc (get-in @ztx [:zdb sym])]
+            (doall
+             (map (fn [[path macro]]
+                    (let [[exp & args] macro]
+                     ;; TODO commit zen.system version of hskb
+                      (cond
+                        (= exp 'query)
+                        [sym path (query-impl ztx doc args)]
+
+                        (= exp 'match)
+                        [sym path (match-impl ztx doc (first args))])))
+                  cfg))))
+
+        append-mresult
+        (fn [doc path v]
+          (update doc :doc
+                  (fn [blocks]
+                    (map (fn [block]
+                           (if (= (:path block) path)
+                             (assoc block :data v)
+                             block))
+                         blocks))))]
+    (doall
+     (->> (get @ztx ::macros)
+          (mapcat eval-macro)
+          (filter vector?)
+          (map (fn [[sym path result]]
+                 (swap! ztx update-in [:zdb sym] append-mresult path result)))))))
+
+(defn load-dirs [ztx dirs]
+  (load-resources! ztx dirs)
+  (infer-refs! ztx)
+  (eval-macros! ztx))
