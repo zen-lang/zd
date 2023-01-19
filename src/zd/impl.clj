@@ -38,6 +38,10 @@
   {:block :badge
    :badge params})
 
+(defmethod annotation :zd/links
+  [nm params]
+  {:block :zd/broken-links})
+
 (defmethod annotation :attribute
   [nm params]
   {:block :attribute
@@ -106,15 +110,15 @@
 
 (defn icon [ztx res]
   (when-let [icon (resolve-icon ztx res)]
-       (cond (= (:type icon) :img)
-             [:img {:src (:img icon)
-                    :class (c [:h 4] :inline-block [:mr 1]
-                              :border
-                              {:border-radius "100%" :margin-bottom "1px" })}]
-             (= (:type icon) :ico)
-             [:i {:class (str (str/join " " (map name (:icon icon)))
-                              " "
-                              (name (c [:mr 1] [:text :gray-500])))}])))
+    (cond (= (:type icon) :img)
+          [:img {:src (:img icon)
+                 :class (c [:h 4] :inline-block [:mr 1]
+                           :border
+                           {:border-radius "100%" :margin-bottom "1px"})}]
+          (= (:type icon) :ico)
+          [:i {:class (str (str/join " " (map name (:icon icon)))
+                           " "
+                           (name (c [:mr 1] [:text :gray-500])))}])))
 (defn symbol-link [ztx s & [opts]]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
@@ -185,7 +189,6 @@
    [:code.hljs cnt]])
 
 (defmethod render-key :default [_ & _] nil)
-
 
 (defmethod render-key
   [:summary]
@@ -267,12 +270,12 @@
   (let [s (if (keyword? k) (subs (str k) 1) (str k))]
     (str/capitalize (str/replace s #"-" " "))))
 
-
 (defn keypath [path title]
   (let [id (str/join path)]
     [:a {:id id :href (str "#" id)} (or title id)]))
 
 (defmethod key-data :default [ztx path data] data)
+
 (defmethod zd.methods/title-actions
   :override
   [ztx block]
@@ -347,7 +350,6 @@
   [ztx {ann :annotations data :data path :path :as block}]
   (table ztx (or (:table ann) {}) data))
 
-
 (defmethod render-content :yaml
   [ztx {ann :annotations data :data path :path :as block}]
   [:div.code-block
@@ -385,6 +387,25 @@
         [:span {:class (c [:text :green-600])} (str (:path err))]
         [:span {:class (c)} (:message err)]])]))
 
+(defmethod render-block :zd/broken-links
+  [ztx {:keys [data] :as arg}]
+  [:div {:class (c  [:py 2] [:px 0])}
+   (for [[docname links] (group-by :doc data)]
+     [:div
+      [:div {:class (c [:text :gray-600] :border-b {:font-weight 400
+                                                    :margin-top ".5rem"})}
+       (zd.impl/symbol-link ztx docname)]
+      (for [{:keys [path refs]} links]
+        [:div {:class (c [:py 2] :text-sm)}
+         [:div {:class (c [:text :gray-600] {:font-weight "400"})}
+          (->> path
+               (map name)
+               (clojure.string/join "."))]
+         (for [doc-symbol refs]
+           [:div {:class (c [:py 0.5] {:display "inline-block"
+                                       :margin-right "0.5rem"})}
+            (zd.impl/symbol-link ztx doc-symbol)])])])])
+
 (defmethod render-key [:zd/broken-links]
   [ztx {:keys [data] :as arg}]
   [:div {:class (c  [:py 2] [:px 0])}
@@ -394,11 +415,9 @@
       [:div {:class (c [:text :gray-600] :border-b {:font-weight "400"})}
        (->> path
             (map name)
-            (clojure.string/join ".")
-            (str doc "/"))]
+            (clojure.string/join "."))]
       (for [doc-symbol refs]
-        [:div {:class (c [:py 0.5] {:display "inline-block"
-                                    :margin-right "0.5rem"})}
+        [:div {:class (c [:py 0.5] {:margin-right "0.5rem"})}
          (zd.impl/symbol-link ztx doc-symbol)])])])
 
 (defmethod render-key [:zd/back-links]
@@ -452,7 +471,6 @@
   [ztx m args ctx]
   [:span "((" m (pr-str args) "))"])
 
-
 (defmethod inline-function
   :resource
   [ztx m [sym & path] ctx]
@@ -464,7 +482,6 @@
   [nm params]
   {:content :mermaid :mermaid params})
 
-
 (defmethod render-content :mermaid
   [ztx {{params :mermaid} :annotations data :data path :path}]
   [:div.mermaid data])
@@ -472,7 +489,6 @@
 (defmethod render-content :mm
   [ztx {{params :mermaid} :annotations data :data path :path}]
   [:div.mermaid data])
-
 
 (defmethod render-key
   [:zd/page]
@@ -519,7 +535,6 @@
                reference)]
              [:div {:class (c [:text :red-600])} (name reference)])]))]]))
 
-
 (defmethod render-key [:menu-order] [_ _block] [:div])
 (defmethod render-key [:logo] [_ _block] [:div])
 
@@ -541,7 +556,7 @@
 
 (defmethod inline-method :fa
   [ztx m s ctx]
-  (let [cls (->> 
+  (let [cls (->>
              (str/split s #"\s")
              (mapv str/trim)
              (remove str/blank?)
@@ -563,7 +578,6 @@
   [ztx {data :data}]
   [:div {:class (c [:px 0] [:py 2] [:bg :white])}
    (markdown.core/md-to-html-string data)])
-
 
 (defmethod render-key
   [:title]
@@ -597,7 +611,6 @@
          (or (get-in b [:annotations :title])
              (capitalize (name (last (:path b)))))]]))])
 
-
 (defmethod process-block "table" [ztx _ _ args]
   (let [[cols & rows] (->> (str/split-lines args) (mapv (fn [x] (str/split x #"\|"))))]
     [:table {:class (c :shadow-sm :rounded)}
@@ -608,7 +621,6 @@
                 (mapv (fn [x]
                         (into [:tr]
                               (->> x (mapv (fn [v] [:td {:class (c [:px 4] [:py 2] :border)} v]))))))))]))
-
 
 (defn mindmap-stack [stack lvl]
   (loop [[[slvl idx] & is :as st] stack]
@@ -646,7 +658,6 @@
     [:div
      [:svg.mindmap {:id id :width "912" :height "600" :margin "0px -30px"}]
      [:script (str "mindmap('#" id "', " (cheshire.core/generate-string (parse-mindmap data)) ");")]]))
-
 
 (defn collect-methods
   "Collect all methods dispatch values and docs of specified multimethod.
