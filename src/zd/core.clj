@@ -12,7 +12,9 @@
    [route-map.core :as route-map]
    [clojure.java.io :as io]
    [ring.util.response]
-   [clojure.string :as str])
+   [clojure.string :as str]
+   [stylo.core :refer [c]]
+   [gcp.storage])
   (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]))
 
 
@@ -77,6 +79,7 @@
   {:status 200
    :body (hiccup.core/html [:html
                             [:head
+                             [:script {:src "/js/core.js"}]
                              [:script {:src "/js/editor.js"}]]
                             [:body]])})
 
@@ -117,12 +120,58 @@
       (ring.util.response/file-response file-path)
       {:status 404})))
 
+(defmethod op :git-lfs-upload
+  [ztx {{id :id file-name :file} :params} req]
+  (println :upload req)
+  {:status 200
+   :body (cheshire.core/generate-string {:message "Not impl"})})
+
+(defmethod op :git-lfs-batch
+  [ztx {{id :id file-name :file} :params} req]
+  (let [params (cheshire.core/parse-string (slurp (:body req)) keyword)
+        ctx {:account  (gcp.storage/get-sa)
+             ;; TODO move to config
+             :bucket  "hsbizdev"}
+        objs (->> (:objects params)
+                  (mapv (fn [{oid :oid size :size}]
+                          {:oid oid
+                           :size size
+                           :actions
+                           {:upload   {:href (gcp.storage/generate-signed-url (assoc ctx :object  oid :method  "PUT"))}
+                            :download {:href (gcp.storage/generate-signed-url (assoc ctx :object  oid :method  "GET"))}}})))
+        resp {:transfer "basic"
+              :objects objs}]
+    (println :batch  objs)
+    {:status 200
+     :headers {"content-type" "application/vnd.git-lfs+json"}
+     :body (cheshire.core/generate-string resp)}))
+
+(defmulti widget (fn [ztx wgt page & [opts]] (keyword wgt)))
+
+(defmethod widget
+  :default
+  [ztx wgt page & [opts]]
+  [:div {:class (c [:text :red-500])}
+   "Widget - " (pr-str wgt) " is not implemented"])
+
+(defmethod op :widget
+  [ztx {{id :id wgt :widget} :params} req]
+  (if-let [page (zd.db/get-page ztx (symbol (or id "index")))]
+    {:status 200
+     :body (hiccup.core/html (widget ztx wgt page))}
+    {:status 200
+     :body (hiccup.core/html [:div "Error: " id " is not found"])}))
+
 (def routes
   {:GET {:op :symbol}
    "editor" {:GET {:op :editor}}
+   "git-lfs" {"objects" {"batch" {:POST {:op :git-lfs-batch}}}
+              "upload" {:PUT {:op :git-lfs-upload}
+                        :GET {:op :git-lfs-upload}}}
    "rpc"  {:POST {:op :rpc}}
    [:id] {:GET {:op :symbol}
           "preview" {:POST {:op :preview}}
+          "widgets" {[:widget] {:GET {:op :widget}}}
           :POST {:op :save}
           [:file] {:GET {:op :file}}
           "file" {:POST {:op :save-file}}
@@ -168,6 +217,11 @@
 
   (stop ztx)
 
-
+  (println 
+   (gcp.storage/generate-signed-url
+    {:account  (gcp.storage/get-sa)
+     :bucket  "hsbizdev"
+     :object  "index.json"
+     :method  "GET"}))
 
   )

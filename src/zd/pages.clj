@@ -143,6 +143,7 @@
     [:script {:src "/js/zendoc.js"}]
     ;; [:script {:src "/js/zeneditor.js"}]
     [:script {:src "/js/quick-score.min.js"}]
+    [:script {:src "/js/core.js"}]
     [:script {:src "/js/editor.js"}]
     [:script "hljs.highlightAll()"]]
    [:body {:class (c {})}
