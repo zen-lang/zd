@@ -215,11 +215,11 @@ var select = (ctx, dir) => {
     ctx.selection = sel;
 };
 
-var stop = (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
-};
+// var stop = (ev) => {
+//     ev.preventDefault();
+//     ev.stopPropagation();
+//     ev.stopImmediatePropagation();
+// };
 
 var save = (ctx)=>{
 

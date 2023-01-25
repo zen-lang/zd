@@ -127,10 +127,6 @@
 
 
 (comment
-
-  (generate-signed-url {:account  (get-sa)
-                        ;; :bucket  "bizdev"
-                        :object  "ups"
-                        :method  "PUT"})
+  (generate-signed-url {:account  (get-sa) :object  "ups" :method  "PUT"})
 
   )

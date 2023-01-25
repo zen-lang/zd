@@ -129,9 +129,7 @@
 (defmethod op :git-lfs-batch
   [ztx {{id :id file-name :file} :params} req]
   (let [params (cheshire.core/parse-string (slurp (:body req)) keyword)
-        ctx {:account  (gcp.storage/get-sa)
-             ;; TODO move to config
-             :bucket  "hsbizdev"}
+        ctx {:account  (gcp.storage/get-sa)}
         objs (->> (:objects params)
                   (mapv (fn [{oid :oid size :size}]
                           {:oid oid

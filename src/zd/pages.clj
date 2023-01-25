@@ -40,6 +40,34 @@
    [:h5 (c* {:font-size "14px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "16px"})]
    [:.menu-item (c* :cursor-pointer [:hover [:bg :blue-700]])]
    [:.screenshot (c* :shadow-lg :border :rounded [:m 1] [:p 1])]
+   [:.zd-search-popup
+    (c* :border :rounded
+        [:bg :white]
+        [:p 4]
+        :box-shadow {:z-index 100 :position "absolute"
+                     :top "1rem"
+                     :left "1rem"
+                     :right "1rem"
+                     :bottom "1rem"})
+    [:.zd-search
+     (c* :border :text-xl
+         :rounded
+         [:px 4] [:py 1]
+         {:width "100%"})]
+    [:.zd-comments (c* :text-sm [:text :gray-500] [:py 1])]
+    [:.zd-results (c* [:mt 2])
+     [:.zd-search-item (c* :cursor-pointer [:py 1] [:px 4] :flex [:space-x 2] :items-center [:hover [:bg :gray-200]] {:border "1px solid transparent"})
+      [:&.current (c* [:bg :gray-200] :border)]
+      [:i (c* [:text :gray-400])]
+      [:.zd-search-desc (c* :text-sm [:text :gray-500])]]]]
+
+   [:.zd-menu-item (c* :flex [:space-x 2] :items-center [:py 0.2]  :cursor-pointer [:px 6]
+                       {:white-space "nowrap"})
+    [:.zd-folder (c* [:text :transparent])]
+    [:&:hover (c* [:bg :gray-200])
+     [:.zd-folder.zd-empty (c* [:text :gray-500])]
+     [:.zd-folder (c* [:text :orange-400])]]
+    [:i (c* [:w 4] {:text-align "center"})]]
    [:ul (c* [:ml 4] [:mb 4])
     {:list-style "inside"
      :line-height "24px"}
@@ -57,33 +85,13 @@
 
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
-   [:.active-nav {:border-bottom "2px solid #666" :color "black"}]
    [:pre {:margin-top "1rem" :margin-bottom "1rem"}]
-   [:.closed {:display "none"}]
    [:.bolder (c* :font-bold)]
-   [:.nlSaver {:white-space "pre-wrap"}]
-   [:.searchResultContainer (c* [:px 6] [:py 3] :flex :flex-col
-                                [:hover :cursor-pointer [:bg :gray-200]])]
-   [:.searchResultContainerRow (c* :flex)]
-   [:.searchResultContainerSummaryRow (c* :border-t)]
-   [:.searchResultContainerVBar (c* [:h "30px"] [:w "2px"]
-                                    :rounded [:mr 2] [:bg :blue-500])]
    [:.badge
     [:p {:margin 0}]]
 
    [:.visible {:visibility "visible"}]
    [:.pl-4  {:padding-left "1rem"}]
-   [:.toggler-arrow {:padding-left "4px"
-               :padding-right "4px"
-               :padding-top "2px"
-               :padding-bottom "2px"}]
-   [:.rotateToggler {:transform "rotate(-90deg)"}]
-   [:.searchContainer {:position "fixed"
-                       :width "90%"
-                       :height "100%"
-                       :top 0
-                       :transition "transform 0.3s 0.3s"}]
-
 
    [:.mindmap
     [:.node
@@ -111,6 +119,59 @@
    [:style (stylo.core/compile-styles @stylo.core/styles)]
    [:style (garden.core/css common-style)]
    cnt])
+
+(defn build-tree [ztx doc]
+  (->>
+   (sort-by first (:zdb @ztx))
+   (filter #(not (contains? #{'logo} (get % 0))))
+   (reduce (fn [acc [nm doc]]
+             (let [parts (interpose :items (str/split (name nm) #"\."))]
+               (assoc-in acc parts {:title (or (get-in doc [:resource :title])
+                                               (last parts))
+                                    :zd/name nm
+                                    :avatar    (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
+                                    :icon      (get-in doc [:resource :icon])
+                                    :menu-order (get-in doc [:resource :menu-order] 10)
+                                    :name      (last parts)
+                                    :href (str nm)}))) {})))
+
+(defn normalize-tree [tree]
+  (->> tree
+       (mapv (fn [[k v]]
+               (if (:items v)
+                 (update v :items normalize-tree)
+                 v)))
+       (sort-by (fn [x] [(get x :menu-order 1000) (:zd/name x)]))))
+
+(defn build-navigation [ztx]
+  (let [resources (->> (:zdb @ztx)
+                       (sort-by first)
+                       (reduce (fn [acc [k v]]
+                                 (assoc acc k (select-keys (:resource v) [:title :tags :icon :logo :desc :menu-order]))) {}))
+        tree (->> resources
+                  (sort-by first)
+                  (reduce (fn [acc [k v]]
+                            (let [path (str/split (name k) #"\.")]
+                              (assoc-in acc path (-> (if-let [mo (:menu-order v)] {:menu-order mo} {})
+                                                     (assoc :name k)))))
+                          {}))
+        resources (->> resources
+                       (reduce (fn [acc [k v]]
+                                 (let [path (str/split (name k) #"\.")
+                                       items (dissoc (get-in tree path) :menu-order :name)]
+                                   (assoc acc k
+                                          (cond-> (assoc v :name k)
+                                            (seq items) (assoc :items
+                                                               (->> items
+                                                                    (sort-by (fn [[k v]] [(or (:menu-order v) 100000) k]))
+                                                                    (mapv (fn [[kk v]] (or (:name v) (str k "." kk))))))))))
+                               {}))]
+    {:resources resources
+     :tree tree
+     :items (->> (dissoc tree 'index)
+                 (sort-by (fn [[k v]] [(get v :menu-order 1000000) k]))
+                 (mapv (fn [[k v]] (:name v)))
+                 (into ['index]))}))
 
 (defn layout [ztx content & [doc]]
   (zd.db/index-refs ztx)
@@ -145,33 +206,19 @@
     [:script {:src "/js/quick-score.min.js"}]
     [:script {:src "/js/core.js"}]
     [:script {:src "/js/editor.js"}]
-    [:script "hljs.highlightAll()"]]
+    ]
    [:body {:class (c {})}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
                 {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
     content
-    [:script (format "\nconst searchData = %s;\n%s"
-                     (json/encode (zd.db/index-refs ztx))
-                     (slurp (io/resource "js/tree.js")))]
-
+    [:script "var zd={};"]
+    [:script "zd.nav="(cheshire.core/generate-string (build-navigation ztx))]
+    [:script "hljs.highlightAll()"]
     [:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
     [:script "mermaid.initialize({startOnLoad:true});"]]])
 
-(defn build-tree [ztx doc]
-  (->>
-   (sort-by first (:zdb @ztx))
-   (filter #(not (contains? #{'logo} (get % 0))))
-   (reduce (fn [acc [nm doc]]
-             (let [parts (interpose :items (str/split (name nm) #"\."))]
-               (assoc-in acc parts {:title (or (get-in doc [:resource :title])
-                                               (last parts))
-                                    :zd/name nm
-                                    :avatar    (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
-                                    :icon      (get-in doc [:resource :icon])
-                                    :menu-order (get-in doc [:resource :menu-order] 10)
-                                    :name      (last parts)
-                                    :href (str nm)}))) {})))
+
 
 (defn build-menu* [ztx {ref :ref :as item} doc]
   (let [res  (zd.db/get-resource ztx ref)
@@ -238,24 +285,40 @@
             node-content)])])
 
 (defn navigation [ztx doc]
-  [:aside#aside {:class (c [:text :gray-600] [:px 6] [:py 4]  :text-sm
-                           {:max-width "300px"})}
-   [:div {:id "nav-files"}
-    (for [[k it] (->> (build-tree ztx doc)
-                      (sort-by menu-item-sort))]
-      (render-items doc it k))]])
+  [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm
+                   :border-r
+                   [:bg :gray-100]
+                   {:height "100vh"
+                    :overflow-y "auto"
+                    :min-width "300px"
+                    :max-width "400px"})}
+   [:div#search {:class (c [:px 5] [:py 2] [:bg :gray-200]
+                           :flex :items-center
+                           [:space-x 2]
+                           [:mb 2]
+                           :cursor-pointer
+                           :border-b [:hover [:text :blue-500]])}
+    [:i.fa-solid.fa-magnifying-glass ]
+    [:span "[ctrl-k]"]]
+   [:aside#aside
+    {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm {})}]])
 
 
 (defn breadcrumb [_ztx name & [page]]
   (let [parts (str/split (str name) #"\.")]
-    (-> 
+    (->
      (->> (range (count parts))
-          (mapv (fn [x]
+          (mapcat (fn [x]
                   (let [pth (into [] (take (inc x) parts))
                         nm  (str/join "." pth)]
-                    [:a {:href (str "/" nm)
-                         :class (c [:text :blue-500] [:px 2] {:border-right "1px solid #ddd"})}
-                     (last pth)])))
+                    [[:a {:href (str "/" nm)
+                          :class (c [:text :blue-500] [:px 2] )}
+                      (last pth)]
+                     [:a {:data-dir nm
+                          :href (str "/" nm)
+                          :class (c [:px 2] [:pr 4] :cursor-pointer [:text :orange-500] {:border-right "1px solid #ddd"}
+                                    [:hover [:text :orange-600]])}
+                      [:i.fa-solid.fa-folder]]])))
           (into [:div {:class (c :flex :flex-1 :items-center)}]))
      (conj
       [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
@@ -280,8 +343,8 @@
           (into [:div {:class (c  [:py 2] [:px 0])}
                  [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
 
-(def page-cls (c [:mr 12] {:min-width "30em" :max-width "50em"}))
-(def full-page-cls (c [:mr 12] ))
+(def page-cls (c [:mr 12] :flex-1 {:min-width "30em"} [:p 6]))
+(def full-page-cls (c :flex-1 [:mr 12] [:p 4]))
 
 (defn page-content [ztx {doc :doc req :request res :resource :as page}]
   [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
@@ -296,18 +359,21 @@
                  [:zd/broken-links]}
         [attrs inferred] (->> doc
                               (partition-by #(contains? infset (:path %))))]
-    [:div {:class (c :inline-flex [:py 4] [:px 8] :flex-1)}
+    [:div {:class (c :flex :flex-1)}
      [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
       (breadcrumb ztx (:zd/name page) page)
       [:div {:class (c [:bg :white] {:color "#3b454e"})}
        (page-content ztx (assoc page :doc attrs))]]
-     [:div {:class (c {:min-width "15em"})}
-      (let [[back-links broken-links]
-            (->> inferred
-                 (sort-by #(first (:path %))))]
-        [:div
-         (zd.methods/render-key ztx back-links)
-         (zd.methods/render-key ztx broken-links)])]]))
+     (let [[back-links broken-links]
+           (->> inferred
+                (sort-by #(first (:path %))))]
+       (when (or (seq back-links) (seq broken-links)) 
+         [:div {:class (c [:bg :gray-100] [:p 6] :border-l {:height "100vh"
+                                                            :overflow-y "auto"
+                                                            :min-width "15em"
+                                                            :max-width "35em"})}
+          (zd.methods/render-key ztx back-links)
+          (zd.methods/render-key ztx broken-links)]))]))
 
 (defn edit-page [ztx {doc :doc _res :resource :as page}]
   [:div {:class (c [:mb 4])}
@@ -375,14 +441,10 @@
 (defn generate-page [ztx doc]
   ;; TODO remove because backrefs are in the resource
   (let [link-groups (zd.db/group-refs-by-attr ztx (:zd/name doc))]
-    [:div {:class (c )}
-     ;; (topbar ztx doc)
-     [:div {:class (c :flex :items-top)}
-      (navigation ztx doc)
-      (page ztx (assoc doc :backrefs link-groups))]
-     [:div {:class (c {:position "absolute" :top "1rem" :right "2rem"})}
-      (search)]
-     (search-container ztx doc)]))
+    [:div {:class (c :flex :items-top :w-full)}
+     (navigation ztx doc)
+     [:div#page {:class (c :flex-1 {:height "100vh" :overflow-y "auto"})}
+      (page ztx (assoc doc :backrefs link-groups))]]))
 
 (defn generate-edit-page [ztx doc]
   (page ztx doc))
@@ -454,8 +516,11 @@
 
 
 (defn render-page [ztx doc]
-  (->> (layout ztx (generate-page ztx doc) doc)
-       (to-html)))
+  (if (get-in doc [:request :headers "x-body"])
+    (->> (page ztx doc)
+         (to-html))
+    (->> (layout ztx (generate-page ztx doc) doc)
+         (to-html))))
 
 (defn preview [ztx text page]
   (hiccup.core/html (page-content ztx (merge page (zd.parse/parse ztx text)))))

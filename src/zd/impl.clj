@@ -108,9 +108,11 @@
   (when-let [icon (resolve-icon ztx res)]
        (cond (= (:type icon) :img)
              [:img {:src (:img icon)
-                    :class (c [:h 4] :inline-block [:mr 1]
+                    :class (c :inline-block [:mr 1]
+                              [:h 4] [:w 4]
                               :border
-                              {:border-radius "100%" :margin-bottom "1px" })}]
+                              {:border-radius "100%"
+                               :margin-bottom "1px" })}]
              (= (:type icon) :ico)
              [:i {:class (str (str/join " " (map name (:icon icon)))
                               " "
@@ -568,9 +570,9 @@
 (defmethod render-key
   [:title]
   [_ {title :data :as block}]
-  [:h1 {}
+  [:h1 {:class (c :flex :items-center)}
    (if-let [img (or (get-in block [:page :resource :avatar]) (get-in block [:page :resource :logo]))]
-     [:img {:src img :class (c [:w 12] :inline-block [:mr 4] {:border-radius "100%"})}]
+     [:img {:src img :class (c [:w 8] [:h 8] :inline-block [:mr 2] {:border-radius "100%"})}]
      (when-let [icon (get-in block [:page :resource :icon])]
        [:i {:class (str (str/join " " (map name icon))
                         " "
