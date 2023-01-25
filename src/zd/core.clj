@@ -4,7 +4,7 @@
   (:require
    [zen.core :as zen]
    [zd.db]
-   [zd.pages]
+   [zd.pages :as pages]
    [zd.web]
    [clojure.walk]
    [edamame.core]
@@ -17,7 +17,6 @@
    [gcp.storage])
   (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]))
 
-
 (defn reload [ztx _opts]
   (swap! ztx dissoc :zdb)
   (let [dirs (:zd/paths @ztx)]
@@ -25,13 +24,11 @@
     (zd.db/load-dirs ztx dirs))
   :ok)
 
-
 (defmulti op (fn [ztx {{op :op} :match} req] op))
 
 (defmethod op :default
   [_ {{op :op} :match} _]
   {:status 404 :body (format "can't find %s operation" op)})
-
 
 (defmulti rpc (fn [_ztx req] (when-let [m (:method req)] (keyword m))))
 
@@ -59,11 +56,10 @@
 
 (defmethod op :edit
   [ztx {{id :id} :params} req]
-  (if-let [page (or (zd.db/get-page ztx (symbol (or id "index")))
-                    {:zd/name (symbol id)})]
+  (let [page (or (zd.db/get-page ztx (symbol id))
+                 {:zd/name (symbol id)})]
     {:status 200
-     :body (zd.pages/render-edit-page ztx (assoc page :request req))}
-    {:status 404 :body "Ups"}))
+     :body (zd.pages/render-edit-page ztx (assoc page :request req))}))
 
 (defmethod op :update
   [ztx {{id :id} :params} req]
@@ -93,11 +89,24 @@
   (println :save id)
   (let [content (slurp (:body req))
         parts (str/split id #"\.")
-        dir (str "docs/" (str/join "/" (butlast parts)))
-        file (str "docs/" (str/join "/" parts) ".zd")]
-    (.mkdirs (io/file dir))
-    (spit file content))
-  {:body (str "/" id) :status 200})
+        doc (zd.parse/parse ztx content)
+        dirname (str/join "/" (butlast parts))]
+    ;; TODO load the document into the db
+    (if (= (last parts) "_draft")
+      (if-let [docname (not-empty (get-in doc [:resource :zd/filename]))]
+        (let [filename
+              (str (str/join (butlast parts))
+                   (-> (str "/" docname)
+                       str/lower-case
+                       (str/replace #"\s" "")))]
+          (.mkdirs (io/file (str "docs/" dirname)))
+          (spit (str "docs/" filename ".zd") content)
+          {:status 200 :body (str "/" (str/replace filename "/" "."))})
+        {:status 422 :body "Add :zd/filename"})
+      (let [filename (str/join "/" parts)]
+        (.mkdirs (io/file (str "docs/" dirname)))
+        (spit (str "docs/" filename ".zd") content)
+        {:status 200 :body (str "/" id)}))))
 
 (defmethod op :save-file
   [ztx {{id :id} :params} req]
@@ -162,7 +171,9 @@
 
 (def routes
   {:GET {:op :symbol}
+   ;; TODO remove editor?
    "editor" {:GET {:op :editor}}
+   ;; TODO review this api
    "git-lfs" {"objects" {"batch" {:POST {:op :git-lfs-batch}}}
               "upload" {:PUT {:op :git-lfs-upload}
                         :GET {:op :git-lfs-upload}}}
@@ -174,9 +185,9 @@
           [:file] {:GET {:op :file}}
           "file" {:POST {:op :save-file}}
           "edit" {:GET  {:op :edit}
+                  ;; TODO remove post?
                   :POST {:op :update}
                   :PUT  {:op :save}}}})
-
 
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (println m uri (:params req))
@@ -187,13 +198,11 @@
     (op ztx match (update req :params merge (:params match)))
     {:status 404 :body (str m " " uri " not found")}))
 
-
 (defn start [ztx opts]
   (swap! ztx assoc :zd/opts (update opts :route-map (fn [x] (merge-with merge (or x {}) routes))))
   (reload ztx opts)
   (zen.core/read-ns ztx 'zd)
   (zd.web/start ztx opts #'dispatch))
-
 
 (defn stop [ztx]
   (zd.web/stop ztx))
@@ -212,14 +221,11 @@
 
   (reload ztx {:port 3031})
 
-
   (stop ztx)
 
-  (println 
+  (println
    (gcp.storage/generate-signed-url
     {:account  (gcp.storage/get-sa)
      :bucket  "hsbizdev"
      :object  "index.json"
-     :method  "GET"}))
-
-  )
+     :method  "GET"})))

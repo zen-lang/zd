@@ -226,7 +226,11 @@ var save = (ctx)=>{
     var value = ctx.editor.els.textarea.value;
     var doc = ctx.doc;
     fetch(`/${doc}`, {method: 'POST', body: value}).then((resp)=> {
-        window.location.href = `/${doc}`;
+        if(resp.status == 200){
+          resp.text().then((docid)=> {
+             window.location.href = docid;
+          });
+        }
     });
 }
 
