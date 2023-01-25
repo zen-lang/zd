@@ -263,8 +263,10 @@
 (defn collect-macros [{:keys [zd/name resource]}]
   (*collect-macros {} [] name resource))
 
+(def file-separator-regex (re-pattern (System/getProperty "file.separator")))
+
 (defn load-content! [ztx {:keys [resource-path path content]}]
-  (let [resource-name (str/replace (str/replace resource-path #"\.zd$" "") #"/" ".")
+  (let [resource-name (str/replace (str/replace resource-path #"\.zd$" "") file-separator-regex ".")
         data (zd.parse/parse ztx content)
         parent-tags (gather-parent-tags ztx resource-name)
         tags (clojure.set/union (get-in data [:resource :zen/tags] #{}) parent-tags)
@@ -324,6 +326,7 @@
                        {:path [:zd/back-links]
                         :annotations {}
                         :data refs})))))
+
 
 (defn load-resources! [ztx dirs]
   (doseq [dir dirs]
