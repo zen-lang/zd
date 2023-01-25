@@ -67,7 +67,7 @@
     [:&:hover (c* [:bg :gray-200])
      [:.zd-folder.zd-empty (c* [:text :gray-500])]
      [:.zd-folder (c* [:text :orange-400])]]
-    [:i (c* [:w 4] {:text-align "center"})]]
+    [:i (c* [:w 5] {:text-align "center"})]]
    [:ul (c* [:ml 4] [:mb 4])
     {:list-style "inside"
      :line-height "24px"}
