@@ -263,7 +263,12 @@
 (defn collect-macros [{:keys [zd/name resource]}]
   (*collect-macros {} [] name resource))
 
-(def file-separator-regex (re-pattern (System/getProperty "file.separator")))
+
+(def file-separator-regex
+  (re-pattern
+   (java.util.regex.Pattern/quote 
+    (System/getProperty "file.separator"))))
+
 
 (defn load-content! [ztx {:keys [resource-path path content]}]
   (let [resource-name (str/replace (str/replace resource-path #"\.zd$" "") file-separator-regex ".")
