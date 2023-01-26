@@ -497,7 +497,7 @@
 
 (def default-tpl ":title \"\"\n:tags #{}")
 
-(def filename-tpl "^hide\n;; enter document (file) name. required\n:zd/filename \"\"\n\n")
+(def filename-tpl "^hide\n;; enter file name. required\n:zd/filename \"\"\n\n")
 
 (defn render-page [ztx doc]
   (if (get-in doc [:request :headers "x-body"])
