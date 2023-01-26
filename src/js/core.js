@@ -136,15 +136,19 @@ var update_widgets = ()=> {
 }
 
 var load_page = (href, do_push)=>{
-
     fetch(href,{headers: {'x-body': 'true'}}).then((res)=>{
-        res.text().then((txt)=>{
-            if(do_push){
-                window.history.pushState({href: href}, '', href);
-            }
-            document.getElementById('page').innerHTML= txt;
-            update_widgets();
-        });
+        console.log('redirect?', res);
+        if(res.redirected){
+            window.location.href = res.url;
+        } else {
+            res.text().then((txt)=>{
+                if(do_push){
+                    window.history.pushState({href: href}, '', href);
+                }
+                document.getElementById('page').innerHTML= txt;
+                update_widgets();
+            });
+        }
     });
 }
 
