@@ -37,7 +37,7 @@
            (.schedule timer new-task timeout)))
        {:task-atom task}))))
 
-(defn reload-hard [ztx _opts]
+(defn reload-hard [ztx & [_opts]]
   (println :reload)
   (swap! ztx dissoc :zdb)
   (let [dirs (:zd/paths @ztx)]
@@ -131,6 +131,7 @@
       (let [filename (str/join "/" parts)]
         (.mkdirs (io/file (str "docs/" dirname)))
         (spit (str "docs/" filename ".zd") content)
+        (reload-hard ztx)
         {:status 200 :body (str "/" id)}))))
 
 (defmethod op :save-file
