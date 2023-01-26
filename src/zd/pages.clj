@@ -497,6 +497,8 @@
 
 (def default-tpl ":title \"\"\n:tags #{}")
 
+(def filename-tpl "^hide\n;; enter document (file) name. required\n:zd/filename \"\"\n\n")
+
 (defn render-page [ztx doc]
   (if (get-in doc [:request :headers "x-body"])
     (->> (page ztx doc)
@@ -520,7 +522,10 @@
                               :icon ico})))
         keypaths (->> (:zd/keys @ztx)
                       (mapv (fn [x] {:name x})))
-        zendoc {:text text
+        docname (-> (str (:zd/name doc))
+                    (str/split #"\.")
+                    last)
+        zendoc {:text (if (= "_draft" docname) (str filename-tpl text) text)
                 :symbols symbols
                 :keys keypaths
                 :icons  zd.icons/icons

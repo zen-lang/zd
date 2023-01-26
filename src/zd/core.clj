@@ -2,6 +2,7 @@
 ;; :summary "......"
 (ns zd.core
   (:require
+   [zd.parse]
    [zen.core :as zen]
    [zd.db]
    [zd.pages :as pages]
@@ -186,7 +187,6 @@
           [:file] {:GET {:op :file}}
           "file" {:POST {:op :save-file}}
           "edit" {:GET  {:op :edit}
-                  ;; TODO remove post?
                   :POST {:op :update}
                   :PUT  {:op :save}}}})
 
