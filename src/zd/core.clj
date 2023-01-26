@@ -37,14 +37,16 @@
            (.schedule timer new-task timeout)))
        {:task-atom task}))))
 
+(defn reload-hard [ztx _opts]
+  (println :reload)
+  (swap! ztx dissoc :zdb)
+  (let [dirs (:zd/paths @ztx)]
+    (println "load dirs: " dirs)
+    (zd.db/load-dirs ztx dirs)))
+
 (defn reload [ztx _opts]
   (println :request-reload)
-  (debounce (fn []
-              (println :reload)
-              (swap! ztx dissoc :zdb)
-              (let [dirs (:zd/paths @ztx)]
-                (println "load dirs: " dirs)
-                (zd.db/load-dirs ztx dirs))))
+  (debounce #(reload-hard ztx _opts))
   :ok)
 
 (defmulti op (fn [ztx {{op :op} :match} req] op))
@@ -216,6 +218,7 @@
   (if-let [match (some->> (get-in @ztx [:zd/opts :route-map])
                           (route-map.core/match [m uri]))]
     (do
+      (println :match (:match match))
       (when (and (get-in match [:params :id])
                  (not (get-in @ztx [:zd/opts :production])))
         (reload ztx {}))
@@ -224,7 +227,7 @@
 
 (defn start [ztx opts]
   (swap! ztx assoc :zd/opts (update opts :route-map (fn [x] (merge-with merge (or x {}) routes))))
-  (reload ztx opts)
+  (reload-hard ztx opts)
   (zen.core/read-ns ztx 'zd)
   (zd.web/start ztx opts #'dispatch))
 
