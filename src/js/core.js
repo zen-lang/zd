@@ -467,7 +467,11 @@ main(()=>{
     }
     render_menu(sym);
 
-    window.addEventListener('popstate',(ev)=> { load_page(ev.state.href,false);});
+    window.addEventListener('popstate',(ev)=> {
+        console.log('pop',ev.state, window.location.href);
+        var href = window.location.href;
+        load_page(href,false);
+    });
     document.addEventListener('keydown', on_hotkey);
     document.addEventListener('click', on_link_click);
     document.addEventListener('dblclick', on_link_dblclick);

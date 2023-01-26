@@ -18,6 +18,7 @@
   (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]))
 
 (defn reload [ztx _opts]
+  (println :reload "todo - optimize")
   (swap! ztx dissoc :zdb)
   (let [dirs (:zd/paths @ztx)]
     (println "load dirs: " dirs)
@@ -191,11 +192,13 @@
 
 (defn dispatch [ztx {uri :uri m :request-method :as req}]
   (println m uri (:params req))
-  (when-not (get-in @ztx [:zd/opts :production])
-    (reload ztx {}))
   (if-let [match (some->> (get-in @ztx [:zd/opts :route-map])
                           (route-map.core/match [m uri]))]
-    (op ztx match (update req :params merge (:params match)))
+    (do
+      (when (and (get-in match [:params :id])
+                 (not (get-in @ztx [:zd/opts :production])))
+        (reload ztx {}))
+      (op ztx match (update req :params merge (:params match))))
     {:status 404 :body (str m " " uri " not found")}))
 
 (defn start [ztx opts]
