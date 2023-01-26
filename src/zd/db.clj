@@ -327,13 +327,15 @@
          (fn [doc]
            (-> doc
                (update :resource assoc :zd/back-links refs)
-               (update :doc conj
-                       {:path [:zd/back-links]
-                        :annotations {}
-                        :data refs})))))
+               (update :doc conj {:path [:zd/back-links]
+                                  :annotations {}
+                                  :data refs})))))
 
+(defn reset-zdb! [ztx]
+  (swap! ztx assoc :zrefs {}))
 
 (defn load-resources! [ztx dirs]
+  (reset-zdb! ztx)
   (doseq [dir dirs]
     (let [dir (io/file dir)
           dir-path (.getPath dir)]
