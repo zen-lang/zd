@@ -314,9 +314,14 @@ var textarea_style = merge(poss, {overflow: 'hidden', position: absolute, margin
 
 var editor = (zendoc) => {
     var symIdx = new quickScore.QuickScore(zendoc.symbols, ["name", "title"]);
+    symIdx.config.maxIterations = 1000;
     var keysIdx = new quickScore.QuickScore(zendoc.keys, ["name", "title"]);
+    keysIdx.config.maxIterations = 1000;
     var iconsIdx = new quickScore.QuickScore(zendoc.icons, ["name", "title"]);
+    iconsIdx.config.maxIterations = 1000;
     var annotationsIdx = new quickScore.QuickScore(zendoc.annotations, ["name", "title"]);
+    annotationsIdx.config.maxIterations = 1000;
+
     var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, annotations: annotationsIdx, doc: zendoc.doc};
     var in_chrome = (window.location.search || '').includes('chrome') || document.body.getBoundingClientRect().width < 800;
 

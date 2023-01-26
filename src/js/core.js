@@ -488,6 +488,7 @@ main(()=>{
         search_items.push(zd.nav.resources[k]);
     }
     var searchIdx = new quickScore.QuickScore(search_items, ["name", "title"]);
+    searchIdx.config.maxIterations = 1000;
     zd.searchIdx = searchIdx;
 
 
