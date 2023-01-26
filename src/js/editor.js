@@ -343,6 +343,8 @@ var editor = (zendoc) => {
         fetch(`/${ctx.doc}/preview`, {method: 'POST', body: ev.target.value}).then((resp)=> {
             resp.text().then((txt)=> {
                 ctx.preview.innerHTML = txt;
+                // reload widgets
+                update_widgets();
             });
         });
     };
@@ -400,6 +402,7 @@ var editor = (zendoc) => {
                           append: ctx.container});
     }
     window.ctx = ctx;
+    update_widgets();
     return ctx;
 };
 
