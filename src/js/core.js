@@ -136,7 +136,7 @@ var update_widgets = ()=> {
 }
 
 var load_page = (href, do_push)=>{
-    fetch(href,{headers: {'x-body': 'true'}}).then((res)=>{
+    fetch(href,{headers: {'x-body': 'true', 'cache-control': 'no-cache'}}).then((res)=>{
         console.log('redirect?', res);
         if(res.redirected){
             window.location.href = res.url;

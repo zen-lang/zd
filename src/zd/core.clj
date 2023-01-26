@@ -16,14 +16,35 @@
    [clojure.string :as str]
    [stylo.core :refer [c]]
    [gcp.storage])
-  (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]))
+  (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]
+           [java.util Timer TimerTask]))
+
+(defn debounce
+  ([f] (debounce f 300))
+  ([f timeout]
+   (let [timer (Timer.)
+         task (atom nil)]
+     (with-meta
+       (fn [& args]
+         (when-let [t ^TimerTask @task]
+           (.cancel t))
+         (let [new-task (proxy [TimerTask] []
+                          (run []
+                            (apply f args)
+                            (reset! task nil)
+                            (.purge timer)))]
+           (reset! task new-task)
+           (.schedule timer new-task timeout)))
+       {:task-atom task}))))
 
 (defn reload [ztx _opts]
-  (println :reload "todo - optimize")
-  (swap! ztx dissoc :zdb)
-  (let [dirs (:zd/paths @ztx)]
-    (println "load dirs: " dirs)
-    (zd.db/load-dirs ztx dirs))
+  (println :request-reload)
+  (debounce (fn []
+              (println :reload)
+              (swap! ztx dissoc :zdb)
+              (let [dirs (:zd/paths @ztx)]
+                (println "load dirs: " dirs)
+                (zd.db/load-dirs ztx dirs))))
   :ok)
 
 (defmulti op (fn [ztx {{op :op} :match} req] op))
