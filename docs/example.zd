@@ -1,0 +1,138 @@
+:rdf.type pub.Post
+:title "This is article ...."
+:pub.author person.niquola
+:pub.date "2023-01-29"
+
+.home :address-of
+:country loc.countries.ru
+:city loc.cities.spb
+
+:pub.summary /
+
+ Here is some text
+ bla bla bla
+
+:table-of-content
+
+;; example of inlined resource
+.intro :post.chapter-of
+:post.title "Introduction"
+:post.text /
+ Here is some text
+
+.example-1 :post.chapter-of
+:post.title "Example"
+:post.text /
+
+ Here is some text #.intro
+
+
+
+
+[{:zd.id 'posts.mdm
+  :zd.file "[base]/posts/mdm"
+  :zd.doc [:pub.author :pub.summary 'posts.mdm.intro 'posts.mdm.example-1]
+  :zd.ann {:pub.author {:loc [[10 0] [10 40]]}}
+  :zd.errors [{} {}]
+  :zd.readonly true
+
+  :title "...."
+  ;; deduced from .title sameAs rdf.label
+  :rdfs.label "...."
+
+  :pub.author ""
+  :pub.summary ""}
+
+ {:zd.id 'posts.mdm.intro
+  :zd.doc [:title :text]
+  :chapter-of 'posts.mdm
+  :title "..."
+  :text "....."}]
+
+---
+ent
+
+.work-in
+:reverse :ent.employee
+
+.employee
+:reverse  ent.work-in
+
+person.john
+:ent.work-in org.google
+
+person.ivan
+:ent.work-in org.google
+
+org.google
+:ent.employee #{person.john person.ivan}
+
+
+----
+
+:zd.id person.john
+
+;; :employeed #{}
+.& :emploee.person
+:company org.google
+:role roles.cto
+:status :active
+
+----
+
+:zd.id org.my-org
+:title "...."
+
+.linkedin :profile-of
+:id "......"
+:db x.linkedin
+:employees.number 3000
+
+.crunchbase :profile-of
+:id "..."
+:db x.crunchbase
+:funding "..."
+
+----
+
+tags.cql
+:link tech.cql -> redirect
+
+----
+
+:zd.id tech.cql
+:type tech.spec tech.lang
+:author persons.brin-rodes
+:desc /
+  This is ....
+
+----
+
+:zd.id my-report
+
+:zd.-menu-order
+:zd.-icon ""
+:zd.-logo ""
+:zd.-file ""
+
+^table
+:data (load "file.csv")
+
+^widget
+:pipedrive.org "234"
+
+^datalog true
+:query
+{:where
+ [[?e :rdf.type  terms.organization] 
+  [?e :rdf.type  terms.vendor]
+  [?e :vendor-of terms.cds]
+  [?e :customer-of orgs.health-samurai]
+  [?e :country  loc.us]
+  [?p :employee ?e]
+  [?p :role roles.cto]
+  [?p :member-of communities.hdh]]}
+
+<- match version
+{?e {:rdf.type terms.org ...}
+ ?p {:employee ?e :attr ...}}

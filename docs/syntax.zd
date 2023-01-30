@@ -1,0 +1,88 @@
+:title "Syntax"
+
+:resource /
+
+Every resource has an :zd.id 'a.b.c (type symbol)
+it means resource is located in '[paths]/a/b/c.zd' file or as nested in 'a.b
+
+:types /
+
+Resource has a :rdf.type (rdf:type) #{} (from rdf schema), which should point to instance of rdf.Class
+
+:properties /
+
+Every property recomended to be defined by resource with same name - :rdf.type => 'rdf.type
+Property may have a domain - default domain is rdf.Resource
+
+:contained-resources /
+
+Contained resources may be defined with .<name> notation inside parent resources
+full name of nested resource is <parent>.<name>. Nested resource will have :zd.defined-in <parent> attribute
+Only one level of nesting is required
+
+```zd
+  file: person.niquola
+  :name "..."
+
+  .gmail :person
+  :type #{ foaf.SocialAccount }
+
+  .linkedin :person
+  :type #{ foaf.SocialAccount }
+  :network social.linkedin
+
+
+```
+
+:anonimous-resources /
+
+Resource may be anonimous if it's name is .&
+
+```zd
+  file: person.niquola
+  .& :job.person
+  :type #{ job } ;; can be deduced from attribute  <job.Role> job.person <foaf.Person>
+  :company org.health-samurai
+  :status job.status.active
+
+  .& :job.person
+  :company institude of human brain
+```
+
+:annotations /
+
+  Any resource property can be annotated for rendering
+
+```zd
+  ^zd.badge {}
+  :name "..."
+```
+
+:resource-format /
+
+
+```edn
+ {:zd.id 'a.b.c
+  :prop-1 "val"
+  :prop-2 "val"
+  :zd.ann {:key {'ann {params...}} }
+  :zd.doc [:prop-1 :prop-2]}
+
+```
+
+
+zd resource
+----
+zd.zd
+
+.id :defined-in .
+:type #{ rdf.Property }
+:title "..."
+
+.file :defined-in .
+:rdf.domain rdf.Resource
+
+.title :defined-in .
+:rdf.domain rdf.Resource
+:rdf.same-as rdf.label
+
