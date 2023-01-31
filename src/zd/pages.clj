@@ -117,29 +117,6 @@
    [:style (garden.core/css common-style)]
    cnt])
 
-(defn build-tree [ztx doc]
-  (->>
-   (sort-by first (:zdb @ztx))
-   (filter #(not (contains? #{'logo} (get % 0))))
-   (reduce (fn [acc [nm doc]]
-             (let [parts (interpose :items (str/split (name nm) #"\."))]
-               (assoc-in acc parts {:title (or (get-in doc [:resource :title])
-                                               (last parts))
-                                    :zd/name nm
-                                    :avatar    (or (get-in doc [:resource :avatar]) (get-in doc [:resource :logo]))
-                                    :icon      (get-in doc [:resource :icon])
-                                    :menu-order (get-in doc [:resource :menu-order] 10)
-                                    :name      (last parts)
-                                    :href (str nm)}))) {})))
-
-(defn normalize-tree [tree]
-  (->> tree
-       (mapv (fn [[k v]]
-               (if (:items v)
-                 (update v :items normalize-tree)
-                 v)))
-       (sort-by (fn [x] [(get x :menu-order 1000) (:zd/name x)]))))
-
 (defn build-navigation [ztx]
   (let [resources (->> (:zdb @ztx)
                        (sort-by first)
@@ -202,20 +179,17 @@
     ;; [:script {:src "/js/zeneditor.js"}]
     [:script {:src "/js/quick-score.min.js"}]
     [:script {:src "/js/core.js"}]
-    [:script {:src "/js/editor.js"}]
-    ]
+    [:script {:src "/js/editor.js"}]]
    [:body {:class (c {})}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
                 {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
     content
     [:script "var zd={};"]
-    [:script "zd.nav="(cheshire.core/generate-string (build-navigation ztx))]
+    [:script "zd.nav=" (cheshire.core/generate-string (build-navigation ztx))]
     [:script "hljs.highlightAll()"]
     [:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
     [:script "mermaid.initialize({startOnLoad:true});"]]])
-
-
 
 (defn build-menu* [ztx {ref :ref :as item} doc]
   (let [res  (zd.db/get-resource ztx ref)
@@ -282,33 +256,32 @@
 
 (defn navigation [ztx doc]
   [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm
-                   :border-r
-                   [:bg :gray-100]
-                   {:height "100vh"
-                    :overflow-y "auto"
-                    :min-width "300px"
-                    :max-width "400px"})}
+                            :border-r
+                            [:bg :gray-100]
+                            {:height "100vh"
+                             :overflow-y "auto"
+                             :min-width "300px"
+                             :max-width "400px"})}
    [:div#search {:class (c [:px 5] [:py 2] [:bg :gray-200]
                            :flex :items-center
                            [:space-x 2]
                            [:mb 2]
                            :cursor-pointer
                            :border-b [:hover [:text :blue-500]])}
-    [:i.fa-solid.fa-magnifying-glass ]
+    [:i.fa-solid.fa-magnifying-glass]
     [:span "[ctrl-k]"]]
    [:aside#aside
     {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm {})}]])
 
 (defn breadcrumb [ztx name page]
-  (let [doc-tree (build-tree ztx page)
-        parts (str/split (str name) #"\.")
+  (let [parts (str/split (str name) #"\.")
         layout
         (->> (range (count parts))
              (mapcat (fn [x]
                        (let [pth (into [] (take (inc x) parts))
                              nm  (str/join "." pth)]
                          [[:a {:href (str "/" nm)
-                               :class (c [:text :blue-500] [:px 2] )}
+                               :class (c [:text :blue-500] [:px 2])}
                            (last pth)]
                           [:a {:data-dir nm
                                :href (str "/" nm)
@@ -316,42 +289,39 @@
                                          {:border-right "1px solid #ddd"}
                                          [:hover [:text :orange-600]])}
                            [:i.fa-solid.fa-folder]]])))
-          (into [:div {:class (c :flex :flex-1 :items-center)}]))
+             (into [:div {:class (c :flex :flex-1 :items-center)}]))
 
         edit-btn
         [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
              :href (str name "/" "edit" "?" (get-in page [:request :query-string]))}
          [:i.fas.fa-edit]]
 
-        doc-node
-        (get-in doc-tree (interpose :items parts))]
-    (cond-> (conj layout edit-btn)
+        create-btn
+        [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
+             :href (cond->> (str "_draft/edit?" (get-in page [:request :query-string]))
+                     (not= name 'index) (str name "."))}
+         [:i.fas.fa-plus]]
 
-(contains? doc-node :items)
-(into [[:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
-                  :href (str name "." "_draft" "/"  "edit" "?" (get-in page [:request :query-string]))}
-              [:i.fas.fa-plus]]
-             [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
-                  :href (str name "." "_template" "/" "edit" "?" (get-in page [:request :query-string]))}
-              [:span "Template"]]]))))
+        templ-btn
+        [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :gray-700]])
+             :href (cond->> (str "_template/edit?" (get-in page [:request :query-string]))
+                     (not= name 'index) (str name "."))}
+         [:span "Template"]]
 
-;; TODO remove me later
-(defn links [ztx link-groups]
-  [:div {:class (c [:text :gray-600])}
-   (when (seq link-groups)
-     (->> link-groups
-          (reduce-kv (fn [acc k v]
-                       (update acc (first k) (fnil into []) v))
-                     {})
-          (map (fn [[attr links]]
-                 [:div {:class (c [:py 2] :text-sm)}
-                  [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "600"})}
-                   attr]
-                  [:div
-                   (for [l (sort links)]
-                     [:div {:class (c [:py 0.5])} (zd.impl/symbol-link ztx l)])]]))
-          (into [:div {:class (c  [:py 2] [:px 0])}
-                 [:span {:class (c [:text :black] :font-bold)} "Referenced By"]])))])
+        del-script
+        (format "fetch('/%s', {method: 'DELETE'}).then((resp)=> {
+                  resp.text().then((docid) => {window.location.href = docid})})"
+                name)
+
+        del-btn
+        (when-not (= name 'index)
+          [:a {:class (c [:mx 4] [:text :red-600] [:hover [:text :red-700]]
+                         {:font-size "1.1rem"})
+               :href ""
+               :onclick del-script}
+           [:i.fas.fa-xmark]])]
+
+    (conj layout edit-btn create-btn templ-btn del-btn)))
 
 (def page-cls (c [:mr 12] :flex-1 {:min-width "30em"} [:p 6]))
 (def full-page-cls (c :flex-1 [:mr 12] [:p 4]))
@@ -376,7 +346,7 @@
      (let [[back-links broken-links]
            (->> inferred
                 (sort-by #(first (:path %))))]
-       (when (or (seq back-links) (seq broken-links)) 
+       (when (or (seq back-links) (seq broken-links))
          [:div {:class (c [:bg :gray-100] [:p 6] :border-l {:height "100vh"
                                                             :overflow-y "auto"
                                                             :min-width "15em"
@@ -497,8 +467,6 @@
 
 (def default-tpl ":title \"\"\n:tags #{}")
 
-(def filename-tpl "^hide\n;; enter file name. required\n:zd/filename \"\"\n\n")
-
 (defn render-page [ztx doc]
   (if (get-in doc [:request :headers "x-body"])
     (->> (page ztx doc)
@@ -510,10 +478,14 @@
   (hiccup.core/html (page-content ztx (merge page (zd.parse/parse ztx text)))))
 
 (defn editor [ztx doc]
-  (let [text (if (:zd/path doc)
-               (slurp (:zd/path doc))
-               (or (find-template ztx (:zd/name doc))
-                   default-tpl))
+  (let [header
+        (str ":zd/docname " (:zd/name doc) "\n")
+
+        text (str header
+                  (if (:zd/path doc)
+                    (slurp (:zd/path doc))
+                    (or (find-template ztx (:zd/name doc))
+                        default-tpl)))
         symbols (->> (:zdb @ztx)
                      (mapv (fn [[k {{ico :icon logo :logo tit :title} :resource}]]
                              {:title tit
@@ -522,10 +494,8 @@
                               :icon ico})))
         keypaths (->> (:zd/keys @ztx)
                       (mapv (fn [x] {:name x})))
-        docname (-> (str (:zd/name doc))
-                    (str/split #"\.")
-                    last)
-        zendoc {:text (if (= "_draft" docname) (str filename-tpl text) text)
+
+        zendoc {:text text
                 :symbols symbols
                 :keys keypaths
                 :icons  zd.icons/icons
