@@ -16,7 +16,9 @@
    [clojure.string :as str]
    [stylo.core :refer [c]]
    [gcp.storage])
-  (:import [java.io InputStream] [java.nio.file Files CopyOption StandardCopyOption FileSystems]
+  (:import [java.io InputStream]
+           [java.nio.file Files CopyOption StandardCopyOption FileSystems]
+           [java.io StringReader]
            [java.util Timer TimerTask]))
 
 (defn debounce
@@ -107,32 +109,84 @@
 (defmethod op :preview
   [ztx _ {{id :id} :params :as req}]
   {:body (zd.pages/preview ztx (slurp (:body req)) {:zd/name id :name id :zd/file (str (str/replace id #"\." "/") ".zd")})
+
    :status 200})
+
+(defn parse-doc [doc]
+  (->> doc
+       (StringReader.)
+       (io/reader)
+       (line-seq)
+       (map (fn [s]
+              (if (str/starts-with? s ":")
+                (map #(apply str %)
+                     (split-with #(not= \space %) s))
+                s)))))
+
+(defn unparse-doc [doc]
+  (->> doc
+       (map (fn [bl]
+              (if (seq? bl)
+                (apply str bl)
+                bl)))
+       (str/join "\n")))
+
+(defn inferred-block? [block]
+  ;; TODO add :zd/schema
+  (and (seq? block) (= (first block) ":zd/docname")))
+
+(defmethod op :delete
+  [ztx {{:keys [id]} :params} req]
+  (let [parts (str/split id #"\.")
+        filepath
+        ;; TODO scan all paths?
+        (str (first (:zd/paths @ztx))
+             "/"
+             (str/join "/" parts)
+             ".zd")
+
+        redirect
+        (if-let [parent (not-empty (butlast parts))]
+          (str "/" (str/join "." parent))
+          "/index")]
+    (io/delete-file filepath :silent)
+    ;; TODO load single document into db
+    (reload-hard ztx)
+    {:status 200 :body redirect}))
 
 (defmethod op :save
   [ztx {{id :id} :params} {uri :uri :as req}]
   (println :save id)
   (let [content (slurp (:body req))
-        parts (str/split id #"\.")
-        doc (zd.parse/parse ztx content)
-        dirname (str/join "/" (butlast parts))]
-    ;; TODO load the document into the db
-    (if (= (last parts) "_draft")
-      (if-let [docname (not-empty (get-in doc [:resource :zd/filename]))]
-        (let [filename
-              (str (str/join (butlast parts))
-                   (-> (str "/" docname)
-                       str/lower-case
-                       (str/replace #"\s" "")))]
-          (.mkdirs (io/file (str "docs/" dirname)))
-          (spit (str "docs/" filename ".zd") content)
-          {:status 200 :body (str "/" (str/replace filename "/" "."))})
-        {:status 422 :body "Add :zd/filename"})
-      (let [filename (str/join "/" parts)]
-        (.mkdirs (io/file (str "docs/" dirname)))
-        (spit (str "docs/" filename ".zd") content)
-        (reload-hard ztx)
-        {:status 200 :body (str "/" id)}))))
+        parsed (parse-doc content)
+        docname
+        (->> parsed
+             (filter inferred-block?)
+             first second str/trim)
+        content*
+        (->> parsed
+             (remove inferred-block?)
+             (unparse-doc))]
+
+    (cond
+      (or (empty? docname)
+          (str/ends-with? docname ".")) {:status 422 :body "Add not empty :zd/docname"}
+      (str/ends-with? docname "_draft") {:status 422 :body "Change :zd/docname from _draft"}
+      :else
+      ;; TODO prefix with :zd/paths from ztx
+      (let [dirname
+            (->> (str/split docname #"\.")
+                 butlast
+                 (str/join "/")
+                 (str "docs/"))
+
+            filename (str "docs/" (str/replace docname "." "/") ".zd")]
+
+            (.mkdirs (io/file dirname))
+            (spit filename content*)
+            ;; TODO load single document into db
+            (reload-hard ztx)
+            {:status 200 :body (str "/" docname)}))))
 
 (defmethod op :save-file
   [ztx {{id :id} :params} req]
@@ -207,6 +261,7 @@
    [:id] {:GET {:op :symbol}
           "preview" {:POST {:op :preview}}
           "widgets" {[:widget] {:GET {:op :widget}}}
+          :DELETE {:op :delete}
           :POST {:op :save}
           [:file] {:GET {:op :file}}
           "file" {:POST {:op :save-file}}

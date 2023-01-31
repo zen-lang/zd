@@ -314,6 +314,15 @@
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
     (render-content ztx block)]])
 
+(defmethod render-key [:zd/docname]
+  [ztx {data :data path :path :as block}]
+  [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}
+   [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700]
+                    {:font-weight "400" :padding-top ".3rem"})}
+    [:i.fas.fa-file]]
+   [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
+    data]])
+
 (defmethod render-block :attribute
   [ztx {data :data path :path :as block}]
   (when (= path [:birthdate]) (def d block))
