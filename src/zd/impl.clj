@@ -110,17 +110,17 @@
 
 (defn icon [ztx res]
   (when-let [icon (resolve-icon ztx res)]
-       (cond (= (:type icon) :img)
-             [:img {:src (:img icon)
-                    :class (c :inline-block [:mr 1]
-                              [:h 4] [:w 4]
-                              :border
-                              {:border-radius "100%"
-                               :margin-bottom "1px" })}]
-             (= (:type icon) :ico)
-             [:i {:class (str (str/join " " (map name (:icon icon)))
-                              " "
-                              (name (c [:mr 1] [:text :gray-500])))}])))
+    (cond (= (:type icon) :img)
+          [:img {:src (:img icon)
+                 :class (c :inline-block [:mr 1]
+                           [:h 4] [:w 4]
+                           :border
+                           {:border-radius "100%"
+                            :margin-bottom "1px"})}]
+          (= (:type icon) :ico)
+          [:i {:class (str (str/join " " (map name (:icon icon)))
+                           " "
+                           (name (c [:mr 1] [:text :gray-500])))}])))
 (defn symbol-link [ztx s & [opts]]
   (if-let [res (zd.db/get-resource ztx (symbol s))]
     [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
@@ -435,7 +435,7 @@
   [ztx {:keys [data]}]
   [:div {:class (c [:text :gray-600])}
    (->> data
-        ;; move grouping logic to db?
+      ;; move grouping logic to db?
         (reduce-kv (fn [acc doc-symbol kp-set]
                      (->> kp-set
                           (map (fn [kp] (str/join "." (map name kp))))
@@ -672,7 +672,7 @@
 
 (defn collect-methods
   "Collect all methods dispatch values and docs of specified multimethod.
-  Docs are assumed to be in the :zd key of method metadata."
+Docs are assumed to be in the :zd key of method metadata."
   [sym]
   (into {}
         (map (fn [[k v]]
@@ -681,9 +681,9 @@
 
 (defn make-methods-list
   "Make a hiccup definition list of multimethods
-  This creates a hiccup html definition list (dl)
-  each dt is a method dispatch name
-  and dd is a documentation (if provided)"
+This creates a hiccup html definition list (dl)
+each dt is a method dispatch name
+and dd is a documentation (if provided)"
   [multi]
   [:dl {:class (c [:mb 6])}
    (for [[method doc] (collect-methods multi)]
