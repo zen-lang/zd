@@ -48,7 +48,15 @@
 
 (defmethod db-filter :where
   [_ preds data]
-  (let [where (apply every-pred preds)]
+  (let [where
+        (->> preds
+             (map (fn [p]
+                    (let [expr (read-string (str/replace (str p) #"%" "document"))
+                          fun (list 'fn '[document] expr)]
+                      (fn [document]
+                        (try (apply (eval fun) [document])
+                             (catch Exception e false))))))
+             (apply every-pred))]
     (filterv where data)))
 
 (defn apply-filters
