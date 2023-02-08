@@ -20,16 +20,13 @@ function registerHoverFlagger(el) {
   el.onmouseleave = () => delete el.dataset.hovered
 }
 
-function renderPreview() {
-  const prNode = document.getElementById("edit-preview")
-  const editorNode = document.getElementById("edit-page")
-
+function renderPreview(previewNode, editorNode) {
   const text = editorNode.value
   fetch(document.URL, { method: "POST", body: text })
     .then(response => response.text())
     .then(data => {
-      prNode.innerHTML = data
-      window.requestAnimationFrame(() => syncScroll(editorNode, prNode))
+        previewNode.innerHTML = data
+        window.requestAnimationFrame(() => syncScroll(editorNode, previewNode))
     })
 }
 
@@ -53,7 +50,9 @@ document.addEventListener("DOMContentLoaded", function() {
   const prNode = document.getElementById("edit-preview")
   const editorNode = document.getElementById("edit-page")
 
-  renderPreview()
+  if (!prNode || !editorNode) return
+
+  renderPreview(prNode, editorNode)
   editorNode.addEventListener("input", _.debounce(renderPreview, 200))
 
   registerHoverFlagger(prNode)
