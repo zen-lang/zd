@@ -1,0 +1,94 @@
+:title "RDFS"
+
+:rdfs.comment /
+
+&rdf.Property
+:a rdf.Class
+
+&.Resource
+:a rdfs.Class
+:rdfs.comment "The class resource, everything."
+
+&.Class
+:a rdfs.Class
+:rdfs.comment "The class of classes."
+:rdfs.subClassOf rdfs.Resource
+
+&.subClassOf
+:a rdf.Property
+:rdfs.comment "The subject is a subclass of a class."
+:rdfs.range rdfs.Class
+:rdfs.domain rdfs.Class
+
+&.subPropertyOf
+:a rdf.Property
+:rdfs.comment "The subject is a subproperty of a property."
+:rdfs.range rdf.Property
+:rdfs.domain rdf.Property
+
+&.comment
+:a rdf:Property
+:rdfs.comment "A description of the subject resource."
+:rdfs.domain rdfs.Resource
+:rdfs.range rdfs.Literal
+
+&.label
+:a rdf:Property
+:rdfs.comment "A human-readable name for the subject."
+:rdfs.domain rdfs.Resource
+:rdfs.range rdfs.Literal
+
+&.domain
+:a rdf:Property
+:rdfs.comment "A domain of the subject property."
+:rdfs.range rdfs.Class
+:rdfs.domain rdf:Property
+
+&.range
+:a rdf:Property
+:rdfs.comment "A range of the subject property."
+:rdfs.range rdfs.Class
+:rdfs.domain rdf:Property
+
+&.seeAlso
+:a rdf:Property
+:rdfs.comment "Further information about the subject resource."
+:rdfs.range rdfs.Resource
+:rdfs.domain rdfs.Resource
+
+&.isDefinedBy
+:a rdf:Property
+:rdfs.subPropertyOf rdfs.seeAlso
+:rdfs.comment "The defininition of the subject resource."
+:rdfs.range rdfs.Resource
+:rdfs.domain rdfs.Resource
+
+&.Literal
+:a rdfs.Class
+:rdfs.comment "The class of literal values, eg. textual strings and integers."
+:rdfs.subClassOf rdfs.Resource
+
+&.Container
+:a rdfs.Class
+:rdfs.subClassOf rdfs.Resource
+:rdfs.comment "The class of RDF containers."
+
+&.ContainerMembershipProperty
+:a rdfs.Class
+:rdfs.comment /
+
+  The class of container membership properties, rdf:_1, rdf:_2, ...,
+  all of which are sub-properties of 'member'.
+
+:rdfs.subClassOf rdf:Property
+
+&.member
+:a rdf:Property
+:rdfs.comment "A member of the subject resource."
+:rdfs.domain rdfs.Resource
+:rdfs.range rdfs.Resource
+
+&.Datatype
+:a rdfs.Class
+:rdfs.comment "The class of RDF datatypes."
+:rdfs.subClassOf rdfs.Class

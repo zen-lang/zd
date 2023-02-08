@@ -1,0 +1,37 @@
+:a foaf.Person
+:name "Nikolai Ryzhikov"
+:photo "http://"
+:skills #{}
+:telegram "niquola"
+:twitter "niquola"
+:linkedin.person "....."
+:email #{"niquola@gmail.com" "niquola@health-samurai.io"}
+
+&.notes.2023-02-01 ;; :part-of
+:a #{notes TODO}
+:author persons.niquola
+:desc /
+
+# Title
+## Sub title
+### Other title
+
+&.jobs.hs :work-at ;; :a Employee
+:role CTO
+:role.company organizations.health-samurai
+
+&.needs.for-speed :needs ;; :a needs
+:desc /
+
+Here is a need
+~:
+
+;; calculate
+^table
+:linked-persons
+{:select [(pull e [:name])]
+ :where [[e :linked .]
+         [e :a foaf.Person]]}
+
+;; render deduced field
+:zd/children
