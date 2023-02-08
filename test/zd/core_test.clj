@@ -1,1 +1,0 @@
-(ns zd.core-test)

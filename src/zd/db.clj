@@ -7,7 +7,7 @@
    [sci.core]
    [clojure.data.csv]
    [clj-yaml.core :as yaml]
-   [zd.deep-merge :refer [deep-merge]]
+   [zen-web.utils :refer [deep-merge]]
    [clojure.java.io :as io]
    [clojure.string :as str]))
 
@@ -339,11 +339,7 @@
                                   :annotations {}
                                   :data refs})))))
 
-(defn reset-zdb! [ztx]
-  (swap! ztx assoc :zrefs {}))
-
 (defn load-resources! [ztx dirs]
-  (reset-zdb! ztx)
   (doseq [dir dirs]
     (let [dir (io/file dir)
           dir-path (.getPath dir)]

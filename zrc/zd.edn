@@ -1,0 +1,97 @@
+{:ns zd
+ :import #{zen-web}
+
+ view
+ {:zen/tags {zen/tag zen/schema}
+  :zen/desc "opclass that renders hiccup by keypath"
+  :type zen/map}
+
+ document-engine
+ {:zen/tags #{zen/schema zen/engine}
+  :zen/state-key :zendoc
+  :type zen/map}
+
+ config
+ {:zen/tags #{zen/tag zen/schema}
+  :type zen/map
+  :require #{:engine :paths}
+  :schema-key {:key :engine}
+  :keys {:paths {:type zen/vector
+                 :every {:type zen/string}}
+         :engine {:type zen/symbol}
+         :layout {:type zen/symbol
+                  :tags #{view}}}}
+
+ sidebar
+ {:zen/tags #{view}
+  :zen/desc "left-sided sidebar"
+  :styles :common}
+
+ dev-reload
+ {:zen/tags #{zen-web/middleware}
+  :dir #{:in}}
+
+ render-page
+ {:zen/tags #{zen/op zen-web/op}}
+
+ save-zendoc
+ {:zen/tags #{zen-web/op zen/op}}
+
+ delete-zendoc
+ {:zen/tags #{zen-web/op zen/op}}
+
+ render-preview
+ {:zen/tags #{zen-web/op zen/op}}
+
+ render-editor
+ {:zen/tags #{zen-web/op zen/op}}
+
+ update-zendoc
+ {:zen/tags #{zen-web/op zen/op}}
+
+ render-widget
+ {:zen/tags #{zen-web/op zen/op}}
+
+ get-file
+ {:zen/tags #{zen-web/op zen/op}}
+
+ save-file
+ {:zen/tags #{zen-web/op zen/op}}
+
+ layout
+ {:zen/tags #{zen-web/op zen/op zen-web/middleware}
+  :zen/desc "wrap response in standard zd layout"
+  :dir #{:out}}
+
+ resolve-page
+ {:zen/tags #{zen-web/middleware zen/op zen-web/op}
+  :zen/desc "resolve page from route-params to db record"
+  :dir #{:in}}
+
+ snap-config
+ {:zen/tags #{zen-web/middleware zen/op zen-web/op}
+  :zen/desc "mount zendoc config from ztx"
+  :dir #{:in}}
+
+ ->index
+ {:zen/tags #{zen/op zen-web/op}
+  :engine zen-web.engines/redirect
+  :to "/index"}
+
+ api
+ {:zen/tags #{zen-web/api}
+  :GET ->index
+  :engine zen-web/routemap
+  :mw [zen-web/defaults]
+  ;; TODO disable dev-reload in prod env
+  [:id] {:mw [snap-config dev-reload resolve-page layout]
+         :GET render-page
+         :POST save-zendoc
+         :DELETE delete-zendoc
+         "preview" {:POST render-preview}
+         "widgets" {[:widget-id] {:GET render-widget}}
+         [:file] {:GET get-file}
+         "file" {:POST save-file}
+         "edit" {:POST update-zendoc
+                 :PUT save-zendoc
+                 :GET render-editor}}}}
