@@ -99,12 +99,12 @@ const searchHandler = (e) =>
 
 document
     .getElementById("searchInput")
-    .addEventListener("input", throttle(searchHandler, 300))
+    ?.addEventListener("input", throttle(searchHandler, 300))
 
 
 document
     .getElementById("searchContainerClose")
-    .addEventListener("click", (_e) =>
+    ?.addEventListener("click", (_e) =>
         {
             document
                 .getElementById("searchContainer")
@@ -121,7 +121,7 @@ document
 
 document
     .getElementById("overlay")
-    .addEventListener("click", (_e) =>
+    ?.addEventListener("click", (_e) =>
         {
             document
                 .getElementById("searchContainer")
@@ -138,7 +138,7 @@ document
 
 document
     .getElementById("searchButton")
-    .addEventListener("click", (_e) =>
+    ?.addEventListener("click", (_e) =>
         {
             document
                 .getElementById("searchContainer")
