@@ -1,14 +1,11 @@
 {:paths ["zrc" "src"]
- :deps  {org.clojure/clojure                                 {:mvn/version "1.11.1"}
-         com.xtdb/xtdb-core                                  {:mvn/version "1.23.0"}
+ :deps  {com.xtdb/xtdb-core                                  {:mvn/version "1.23.0"}
          borkdude/edamame                                    {:mvn/version "0.0.18"}
          cheshire/cheshire                                   {:mvn/version "5.10.0"}
          clj-commons/clj-yaml                                {:mvn/version "0.7.106"}
          clj-time/clj-time                                   {:mvn/version "0.15.2"}
          hawk/hawk                                           {:mvn/version "0.2.11"}
          hiccup/hiccup                                       {:mvn/version "2.0.0-alpha2"}
-         http-kit/http-kit                                   {:mvn/version "2.5.3"}
-         clj-http/clj-http                                   {:mvn/version "3.12.3"} ;; replace with HTTP-KIT
          markdown-clj/markdown-clj                           {:mvn/version "1.10.5"}
          org.clojure/data.xml                                {:mvn/version "0.2.0-alpha6"}
          org.clojure/data.csv                                {:mvn/version "1.0.1"}
@@ -19,14 +16,11 @@
          ring/ring-defaults                                  {:mvn/version "0.3.3"}
          stylo/stylo                                         {:git/url "https://github.com/HealthSamurai/macrocss"
                                                               :sha "3423951651da97b533020b4b70a29607c6979508"}
-         zen-lang/zen                                        {:git/url "https://github.com/zen-lang/zen" :sha "77a51fe414c552755876b517d06e3c625f322c45"}
-         ;; we do not need this dep - three lines of code
-         route-map/route-map                                 {:mvn/version "0.0.7"}
          ring-basic-authentication/ring-basic-authentication {:mvn/version "1.0.5"}
          org.bouncycastle/bcpkix-jdk15on                     {:mvn/version "1.70"}
-         }
+         zen-lang/zen-web {:local/root "libs/zen-web"}}
  :aliases
- {:nrepl {:extra-paths ["dev" "docs" "test"]
+ {:nrepl {:extra-paths ["docs" "test"]
           :extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "2.5.1"}
                         cider/cider-nrepl             {:mvn/version "LATEST"}
                         healthsamurai/matcho          {:mvn/version "0.3.8"}
@@ -34,16 +28,8 @@
           :jvm-opts    ["-XX:-OmitStackTraceInFastThrow"]
           :main-opts   ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}
 
-  :test  {:extra-paths ["test" "test-ui" "resources"]}
-
   :kaocha
-  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.0.861"}}
+  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.77.1236"}}
+   :extra-paths ["test"]
    :jvm-opts   ^:replace ["-XX:-OmitStackTraceInFastThrow"]
-   :main-opts  ["-m" "kaocha.runner" "--config-file" "test/test.edn"]}
-
-  :build
-  {:extra-paths ["build"]
-   :jvm-opts    ^:replace ["-XX:-OmitStackTraceInFastThrow"]
-   :extra-deps
-   {io.github.clojure/tools.build {:git/url "https://github.com/HealthSamurai/tools.build"
-                                   :sha     "ae0f233d380fbbf920d01690e63adf6253bc313e"}}}}}
+   :main-opts  ["-m" "kaocha.runner"]}}}

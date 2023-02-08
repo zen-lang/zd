@@ -1,6 +1,5 @@
 (ns zd.impl
   (:require
-   [clojure.java.io :as io]
    [clojure.pprint :as pprint]
    [clojure.string :as str]
    [stylo.core :refer [c]]
@@ -11,7 +10,8 @@
    [markdown.core]
    [zen.core]
    [cheshire.core]
-   [zd.methods :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]])
+   [zd.methods
+    :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]])
   (:import (java.time.format DateTimeFormatter)
            (java.time LocalDate)))
 
@@ -197,10 +197,6 @@
   [ztx block]
   [:div {:class (c [:text :gray-600])}
    (render-content ztx block)])
-
-(defn render-md [ztx data]
-  (when data
-    (zd.zentext/parse-block ztx data)))
 
 (defmethod render-content :md
   [ztx {data :data :as block}]

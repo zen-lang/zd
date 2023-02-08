@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [clojure.java.io :as io]
-   [zd.deep-merge :refer [deep-merge]]
+   [zen-web.utils :refer [deep-merge]]
    [zd.methods :refer [annotation]]
    [edamame.core])
   (:import [java.io StringReader]))
