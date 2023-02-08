@@ -1,3 +1,11 @@
+function debounce(cb, timeout = 300) {
+  let timer
+  return (...args) => {
+    window.clearTimeout(timer)
+    timer = window.setTimeout(() => cb.apply(this, args), timeout)
+  }
+}
+
 function syncScroll(elScrolled, elToSync) {
   const scrollPercentage = elScrolled.scrollTop / (elScrolled.scrollHeight - elScrolled.offsetHeight)
   elToSync.scrollTop = scrollPercentage * (elToSync.scrollHeight - elToSync.offsetHeight)
@@ -53,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
   if (!prNode || !editorNode) return
 
   renderPreview(prNode, editorNode)
-  editorNode.addEventListener("input", _.debounce(renderPreview, 200))
+  editorNode.addEventListener("input", debounce(renderPreview, 200))
 
   registerHoverFlagger(prNode)
   registerHoverFlagger(editorNode)
