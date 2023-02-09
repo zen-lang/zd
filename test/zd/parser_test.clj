@@ -45,6 +45,7 @@ Multiline text
 
 (deftest test-parser
 
+  (is (= 1 1))
   (sut/parse ztx {} ":title \"value\"")
 
 
