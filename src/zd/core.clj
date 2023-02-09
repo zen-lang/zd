@@ -4,9 +4,10 @@
    [zd.layout]
    [hiccup.core :as hiccup]
    [zen-web.core :as web]
-   [zd.methods :as methods]
+   [zd.methods :as meth]
    [zen.core :as zen]
    [zd.db :as db]
+   [zd.datalog]
    [zd.pages :as pages]
    [cheshire.core :as json]
    [clojure.java.io :as io]
@@ -37,10 +38,9 @@
        {:task-atom task}))))
 
 (defn reload-hard [ztx dirs]
-  (println :reload)
   (swap! ztx dissoc :zdb)
   (swap! ztx assoc :zrefs {})
-  (println "load dirs: " dirs)
+  (zen/pub ztx 'zd/reload {:dirs dirs})
   (db/load-dirs ztx dirs))
 
 (defn reload [ztx config]
@@ -208,7 +208,7 @@
   [ztx _cfg {{id :id wgt :widget-id} :route-params :keys [page]} & opts]
   (if-not (nil? page)
     {:status 200
-     :body (methods/widget ztx wgt page)}
+     :body (meth/widget ztx wgt page)}
     {:status 200
      :body [:div "Error: " id " is not found"]}))
 
@@ -216,8 +216,9 @@
   [ztx _cfg {page :page {lay-sym :layout} :zd/config :as req} {bdy :body :as resp} & args]
   (when (and (not (string? bdy)) (= 200 (:status resp)))
     {:headers {"Content-Type" "text/html"}
-     :body (methods/layout ztx (zen/get-symbol ztx lay-sym) bdy page)}))
+     :body (meth/layout ztx (zen/get-symbol ztx lay-sym) bdy page)}))
 
+;; this should be done as db start
 (defmethod zen/start 'zd/document-engine
   [ztx config & opts]
   (reload-hard ztx (:paths config))
@@ -227,6 +228,7 @@
   [ztx config & opts]
   ;; TODO dissoc zendoc state from memory
   )
+
 ;; TODO add to zen-web
 #_(op ztx match (update req :params merge (:params match)))
 

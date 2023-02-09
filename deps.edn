@@ -19,6 +19,9 @@
                                                               :sha "3423951651da97b533020b4b70a29607c6979508"}
          ring-basic-authentication/ring-basic-authentication {:mvn/version "1.0.5"}
          org.bouncycastle/bcpkix-jdk15on                     {:mvn/version "1.70"}
+
+         zen-lang/zen {:git/url "https://github.com/zen-lang/zen"
+                       :sha "caf9ba16124ceff98cddc9ea702d157e16e2cad7"}
          zen-lang/zen-web {:local/root "libs/zen-web"}}
  :aliases
  {:nrepl {:extra-paths ["docs" "test"]

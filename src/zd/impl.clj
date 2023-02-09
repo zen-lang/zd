@@ -10,6 +10,7 @@
    [markdown.core]
    [zen.core]
    [cheshire.core]
+   [zd.datalog]
    [zd.methods
     :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]])
   (:import (java.time.format DateTimeFormatter)
@@ -24,6 +25,7 @@
 (defmethod annotation :collapse
   [nm params]
   {:collapse (or params {})})
+
 
 (defmethod annotation :default
   [nm params]
@@ -90,6 +92,10 @@
 (defmethod annotation :yaml
   [nm params]
   {:content :yaml})
+
+(defmethod annotation :datalog
+  [nm params]
+  {:content :datalog})
 
 (defn get-parent [ztx res]
   (when-let [nm (:zd/name res)]
@@ -368,6 +374,22 @@
               :top       "5px"
               :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
+
+(defmethod render-content :datalog
+  [ztx {ann :annotations data :data path :path :as block}]
+  (try 
+    (let [res (zd.datalog/query ztx data)]
+      [:table (->> res
+                   (mapv (fn [x]
+                           (->> x
+                                (mapv (fn [v]
+                                        [:td {:class (c :border [:px 2] [:py 1])}
+                                         (cond (string? v) v :else (pr-str v))]))
+                                (into [:tr]))))
+                   (into [:tbody]))])
+    (catch Exception e
+      [:div (pr-str data) [:br] (pr-str e)]
+      )))
 
 (defmethod render-content :edn
   [ztx {ann :annotations data :data path :path :as block}]

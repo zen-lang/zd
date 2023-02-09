@@ -286,7 +286,8 @@
         data (cond-> data
                (seq tags)
                (assoc-in [:resource :zen/tags] tags))
-        data (assoc data :zd/name (symbol resource-name) :zd/file resource-path :zd/path path)
+        resource-symbol (symbol resource-name)
+        data (assoc data :zd/name resource-symbol :zd/file resource-path :zd/path path)
         data (enrich-doc-with-annotations ztx data)
         data (process-macroses ztx data)
         macros (collect-macros data)
@@ -299,7 +300,8 @@
     (create-resource ztx data)
     (update-refs ztx refs)
     (update-macros ztx macros)
-    (collect-keypaths ztx (:doc data))))
+    (collect-keypaths ztx (:doc data))
+    (zen/pub ztx 'zd/on-resource (assoc (:resource data) :zd/name resource-symbol))))
 
 (defn invalid-refs->db [ztx invalid-idx]
   (doseq [[resource refs] invalid-idx]

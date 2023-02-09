@@ -11,6 +11,19 @@
   :zen/state-key :zendoc
   :type zen/map}
 
+ datalog-engine
+ {:zen/tags #{zen/schema zen/engine}
+  :zen/desc "Datalog engine"
+  :zen/state-key :datalog
+  :type zen/map}
+
+ on-resource
+ {:zen/tags #{zen/event zen/schema}
+  :zen/desc "Event on resource load or reload"
+  :type zen/map
+  :keys {:resource {:type zen/map
+                    :values {:type zen/any}}}}
+
  config
  {:zen/tags #{zen/tag zen/schema}
   :type zen/map
@@ -21,6 +34,18 @@
          :engine {:type zen/symbol}
          :layout {:type zen/symbol
                   :tags #{view}}}}
+
+ datalog-sync
+ {:zen/tags #{zen/sub}
+  :events #{on-resource}}
+
+ query
+ {:zen/tags #{zen/op}
+  :zen/desc "datalog query"}
+
+ submit
+ {:zen/tags #{zen/op}
+  :zen/desc "datalog submit"}
 
  sidebar
  {:zen/tags #{view}
