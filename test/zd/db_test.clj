@@ -20,7 +20,9 @@
   (def zendoc
     "^badge\n:tags #{person}\n:name \"Vlad Ganshin\"\n:birth-date \"1994-09-26\"\n:goals:short-term / ")
 
-  (is (coll? (db/load-content! ztx {:resource-path "team/vlad.zd" :content zendoc})))
+  (db/load-content! ztx {:resource-path "team/vlad.zd" :content zendoc})
+
+  (is (empty? (zen/errors ztx)))
 
   (matcho/match (db/get-page ztx 'team.vlad)
     {:doc
