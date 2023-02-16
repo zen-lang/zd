@@ -26,7 +26,6 @@
   [nm params]
   {:collapse (or params {})})
 
-
 (defmethod annotation :default
   [nm params]
   (assoc {:content (keyword nm)} (keyword nm) params))
@@ -377,19 +376,52 @@
 
 (defmethod render-content :datalog
   [ztx {ann :annotations data :data path :path :as block}]
-  (try 
-    (let [res (zd.datalog/query ztx data)]
-      [:table (->> res
-                   (mapv (fn [x]
-                           (->> x
-                                (mapv (fn [v]
-                                        [:td {:class (c :border [:px 2] [:py 1])}
-                                         (cond (string? v) v :else (pr-str v))]))
-                                (into [:tr]))))
-                   (into [:tbody]))])
+  (try
+    (let [result (zd.datalog/query ztx data)
+          keyset (set (mapcat (comp keys first) result))]
+
+      ;; TODO discuss dispatch and add multimethod
+      (cond (= keyset #{:tags :needs :xt/id})
+            (let [headers [:xt/id :tags :needs]
+                  rows (sort-by #(str (:title %)) (map first result))]
+              [:table {:class (c :shadow-sm :rounded)
+                       :style {:display "block"
+                               :overflow-x "overlay"}}
+               [:thead
+                (->> headers
+                     (map-indexed (fn [i k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])
+                                                  :style (when (= i 0) {:width "200px" :word-wrap "break-word"})}
+                                             (capitalize (name k))]))
+                     (into [:tr]))]
+               (->> rows
+                    (mapv (fn [{:keys [xt/id needs tags]}]
+                            [:tr
+                             [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})
+                                   :style "white-space: break-word;"}
+                              (symbol-link ztx id)]
+
+                             [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
+                              (when (not-empty tags)
+                                [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}
+                                 [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
+                                  (for [t tags]
+                                    [:span {:class (c {:padding-left ".2rem"})} (symbol-link ztx t)])]])]
+
+                             [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
+                              (render-content ztx {:data needs :path [:customer-needs]})]]))
+                    (into [:tbody]))])
+
+            :else
+            [:table (->> result
+                         (mapv (fn [x]
+                                 (->> x
+                                      (mapv (fn [v]
+                                              [:td {:class (c :border [:px 2] [:py 1])}
+                                               (cond (string? v) v :else (pr-str v))]))
+                                      (into [:tr]))))
+                         (into [:tbody]))]))
     (catch Exception e
-      [:div (pr-str data) [:br] (pr-str e)]
-      )))
+      [:div (pr-str data) [:br] (pr-str e)])))
 
 (defmethod render-content :edn
   [ztx {ann :annotations data :data path :path :as block}]
