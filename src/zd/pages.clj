@@ -24,28 +24,31 @@
 (defn breadcrumb [ztx name page]
   (let [parts (str/split (str name) #"\.")
         layout
-        (->> (range (count parts))
+        (->> (range 1 (+ 1 (count parts)))
              (mapcat (fn [x]
-                       (let [pth (into [] (take (inc x) parts))
+                       (let [pth (into [] (take x parts))
                              nm  (str/join "." pth)]
-                         [[:a {:href (str "/" nm)
+                         [[:a {:data-dir nm
+                               :href (str "/" nm)
+                               :class (c #_[:pr 4] :cursor-pointer [:text :orange-500] [:hover [:text :orange-600]])}
+                           (if (= x (count parts))
+                             [:span.fa-regular.fa-file]
+                             [:span.fa-solid.fa-folder])]
+                          [:a {:href (str "/" nm)
                                :class (c [:text :blue-500] [:px 2])}
                            (last pth)]
-                          [:a {:data-dir nm
-                               :href (str "/" nm)
-                               :class (c [:px 2] [:pr 4] :cursor-pointer [:text :orange-500]
-                                         {:border-right "1px solid #ddd"}
-                                         [:hover [:text :orange-600]])}
-                           [:i.fa-solid.fa-folder]]])))
+                          (when-not (= x (count parts))
+                            [:span {:class (c [:text :gray-700] [:mr 3] {:font-size "18px"})}
+                             "/"])])))
              (into [:div {:class (c :flex :flex-1 :items-center)}]))
 
         edit-btn
-        [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
+        [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :green-600]])
              :href (str name "/" "edit" "?" (get-in page [:request :query-string]))}
          [:i.fas.fa-edit]]
 
         create-btn
-        [:a {:class (c [:mx 4] [:text :green-600] [:hover [:text :green-700]])
+        [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :green-600]])
              :href (cond->> (str "_draft/edit?" (get-in page [:request :query-string]))
                      (not= name 'index) (str name "."))}
          [:i.fas.fa-plus]]
@@ -57,25 +60,24 @@
          [:span "Template"]]
 
         del-script
-        (format "fetch('/%s', {method: 'DELETE'}).then((resp)=> {
-                  resp.text().then((docid) => {window.location.href = docid})})"
+        (format "if (confirm(\"delete document?\") == true){
+                  fetch('/%s', {method: 'DELETE'}).then((resp)=> {
+                  resp.text().then((docid) => {window.location.href = docid})})}"
                 name)
 
         del-btn
         (when-not (= name 'index)
-          [:a {:class (c [:mx 4] [:text :red-600] [:hover [:text :red-700]]
+          [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :red-600]]
                          {:font-size "1.1rem"})
                :href ""
                :onclick del-script}
            [:i.fas.fa-xmark]])]
 
-    (conj layout edit-btn create-btn templ-btn del-btn)))
-
-(def page-cls (c [:mr 12] :flex-1 {:min-width "30em"} [:p 6]))
-(def full-page-cls (c :flex-1 [:mr 12] [:p 4]))
+    (conj layout [:div {:class (c :flex :items-center {:margin-left "auto"})}
+                  edit-btn create-btn templ-btn del-btn])))
 
 (defn page-content [ztx {doc :doc req :request res :resource :as page}]
-  [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
+  [:div {:class (c [:pt 4])}
    (for [block doc]
      (let [block (assoc block :page page)]
        (or (zd.methods/render-key ztx block)
@@ -87,7 +89,7 @@
         [attrs inferred] (->> doc
                               (partition-by #(contains? infset (:path %))))]
     [:div {:class (c :flex :flex-1)}
-     [:div {:class (if (= :full (:page/width res)) full-page-cls page-cls)}
+     [:div {:class (c [:mr 12] :flex-1 {:min-width "30em"} [:pl 10] [:pt 6] [:pb 6])}
       (breadcrumb ztx (:zd/name page) page)
       [:div {:class (c [:bg :white] {:color "#3b454e"})}
        (page-content ztx (assoc page :doc attrs))]]

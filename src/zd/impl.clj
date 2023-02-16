@@ -402,10 +402,9 @@
 
                              [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
                               (when (not-empty tags)
-                                [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}
-                                 [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
-                                  (for [t tags]
-                                    [:span {:class (c {:padding-left ".2rem"})} (symbol-link ztx t)])]])]
+                                [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
+                                 (for [t tags]
+                                   [:span {:class (c {:padding-left ".2rem"})} (symbol-link ztx t)])])]
 
                              [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
                               (render-content ztx {:data needs :path [:customer-needs]})]]))
