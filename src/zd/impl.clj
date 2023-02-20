@@ -12,7 +12,8 @@
    [cheshire.core]
    [zd.datalog]
    [zd.methods
-    :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]])
+    :refer [annotation inline-method inline-function render-block render-content render-key process-block key-data]]
+   [zd.db :as db])
   (:import (java.time.format DateTimeFormatter)
            (java.time LocalDate)))
 
@@ -94,7 +95,8 @@
 
 (defmethod annotation :datalog
   [nm params]
-  {:content :datalog})
+  {:content :datalog
+   :table-headers params})
 
 (defn get-parent [ztx res]
   (when-let [nm (:zd/name res)]
@@ -374,51 +376,63 @@
               :right     "20px"}}]
     [:code {:style {:word-wrap "break-word"} :class (str "language-yaml hljs")} (if (string? data) data (clj-yaml.core/generate-string data))]]])
 
+(defmulti render-cell (fn [ztx key data] key))
+
+(defmethod render-cell :xt/id
+  [ztx key {:keys [xt/id]}]
+  (let [res (zd.db/get-resource ztx (symbol id))]
+    [:a {:href (str "/" id) :class (c :inline-flex [:px 2] [:py 1] :items-center [:text :blue-600] [:hover [:underline]])}
+     (icon ztx res)
+     (:title res)]))
+
+(defmethod render-cell :tags
+  [ztx key {:keys [tags]}]
+  (when (not-empty tags)
+    [:div {:class (c [:px 2] [:py 0.5] :text-sm)}
+     (for [t tags]
+       [:span {:class (c [:py 1] :block)} (symbol-link ztx t)])]))
+
+(defmethod render-cell :needs
+  [ztx key {:keys [needs]}]
+  [:span {:class (c [:px 2] [:py 0.5])}
+   (render-content ztx {:data needs :path [:customer-needs]})])
+
+(defmethod render-cell :rel
+  [ztx key row]
+  [:div
+   (for [r (:rel row)]
+     [:span {:class (c :block [:py 1])}
+      (when (string? r)
+        (symbol-link ztx (symbol r)))])])
+
+(defmethod render-cell :default
+  [ztx key row]
+  (pr-str row))
+
 (defmethod render-content :datalog
-  [ztx {ann :annotations data :data path :path :as block}]
+  [ztx {{headers :table-headers :as ann} :annotations data :data path :path :as block}]
   (try
-    (let [result (zd.datalog/query ztx data)
-          keyset (set (mapcat (comp keys first) result))]
+    (let [result (map first (zd.datalog/query ztx data))
+          headers* (or headers (seq (set (mapcat keys result))))]
 
-      ;; TODO discuss dispatch and add multimethod
-      (cond (= keyset #{:tags :needs :xt/id})
-            (let [headers [:xt/id :tags :needs]
-                  rows (sort-by #(str (:title %)) (map first result))]
-              [:table {:class (c :shadow-sm :rounded)
-                       :style {:display "block"
-                               :overflow-x "overlay"}}
-               [:thead
-                (->> headers
-                     (map-indexed (fn [i k] [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])
-                                                  :style (when (= i 0) {:width "200px" :word-wrap "break-word"})}
-                                             (capitalize (name k))]))
-                     (into [:tr]))]
-               (->> rows
-                    (mapv (fn [{:keys [xt/id needs tags]}]
-                            [:tr
-                             [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})
-                                   :style "white-space: break-word;"}
-                              (symbol-link ztx id)]
-
-                             [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
-                              (when (not-empty tags)
-                                [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
-                                 (for [t tags]
-                                   [:span {:class (c {:padding-left ".2rem"})} (symbol-link ztx t)])])]
-
-                             [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
-                              (render-content ztx {:data needs :path [:customer-needs]})]]))
-                    (into [:tbody]))])
-
-            :else
-            [:table (->> result
-                         (mapv (fn [x]
-                                 (->> x
-                                      (mapv (fn [v]
-                                              [:td {:class (c :border [:px 2] [:py 1])}
-                                               (cond (string? v) v :else (pr-str v))]))
-                                      (into [:tr]))))
-                         (into [:tbody]))]))
+      [:table {:class (c :shadow-sm :rounded)
+               :style {:display "block"
+                       :overflow-x "overlay"}}
+       [:thead
+        (->> headers*
+             (map (fn [k]
+                    [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
+                     (str/lower-case (name k))]))
+             (into [:tr]))]
+       (->> (if (seq headers)
+              (sort-by #(get % (first headers)) result)
+              result)
+            (mapv (fn [row]
+                    [:tr
+                     (for [h headers*]
+                       [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
+                        (render-cell ztx h row)])]))
+            (into [:tbody]))])
     (catch Exception e
       [:div (pr-str data) [:br] (pr-str e)])))
 

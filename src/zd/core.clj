@@ -110,7 +110,6 @@
        (str/join "\n")))
 
 (defn inferred-block? [block]
-  ;; TODO add :zd/schema
   (and (seq? block) (= (first block) ":zd/docname")))
 
 (defmethod zen/op 'zd/delete-zendoc
@@ -129,6 +128,7 @@
           (str "/" (str/join "." parent))
           "/index")]
     (try (io/delete-file filepath)
+         ;; TODO emit error event via zen pub sub
          (catch Exception e
            (clojure.pprint/pprint (.getMessage e))))
     ;; TODO load single document into db
@@ -151,6 +151,7 @@
 
     (cond (or (empty? docname)
               (str/ends-with? docname "."))
+          ;; TODO add errors view
           {:status 422 :body "Add not empty :zd/docname"}
 
           (str/ends-with? docname "_draft")
@@ -165,6 +166,13 @@
                      (str (first pths) "/"))
 
                 filename (str (first pths) "/" (str/replace docname "." "/") ".zd")]
+
+            #_(when-not (= id docname)
+              (let [orig-filename (str (first pths) "/" (str/replace id "." "/") ".zd")]
+                (try (io/delete-file orig-filename)
+                   ;; TODO emit error event via zen pub sub
+                     (catch Exception e
+                       (clojure.pprint/pprint (.getMessage e))))))
 
             (.mkdirs (io/file dirname))
             (spit filename content*)

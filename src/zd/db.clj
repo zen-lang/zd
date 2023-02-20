@@ -94,26 +94,6 @@
 (defn get-refs [ztx symbol]
   (get-in @ztx [:zrefs symbol]))
 
-(defn group-refs-by-attr [ztx symbol]
-  (let [refs (get-refs ztx symbol)
-        distinct-attrs (->> refs
-                            vals
-                            (apply concat)
-                            distinct)]
-    (reduce
-     (fn [acc attr]
-       (assoc acc
-              attr
-              (reduce-kv
-               (fn [acc res attrs]
-                 (if (contains? attrs attr)
-                   (conj acc res)
-                   acc))
-               []
-               refs)))
-     {} distinct-attrs)))
-
-
 (defn index-refs [ztx]
   (reduce-kv
    (fn [acc res-name {zd-name :zd/name {title :title summary :summary} :resource}]
@@ -144,7 +124,8 @@
     (symbol? node)
     (update-in acc [node resource-name] (fn [x] (conj (or x #{}) path)))
 
-    (map? node)
+    ;; TODO filter out datalog queries by content type
+    (and (map? node) (not (contains? node :where)))
     (->> node
          (reduce (fn [acc [k v]]
                    (*collect-refs acc resource-name (conj path k) v))
@@ -159,7 +140,6 @@
     :else acc))
 
 (defn collect-refs [resource-name resource]
-  ;; {target {source #{[:path] [:path]}}}
   (*collect-refs {} resource-name [] resource))
 
 (defn gather-parent-tags [ztx resource-name]
