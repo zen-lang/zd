@@ -1,53 +1,55 @@
 (ns zd.parser-test
   (:require
-   [zd.parser :as sut]
+   [matcho.core :as matcho]
+   [zen.core :as zen]
+   [clojure.java.io :as io]
+   [zd.parser :as parser]
    [clojure.test :refer :all]))
-
-(def example
-"
-^badge {:param 100}
-:title \"value\"
-:logo \"logo\"
-:text /
-
-Multiline text
-
-:edn-value
-{:where []
- :limit 100}
-
-&nested
-:part_of .
-:title \"Sub\"
-
-")
-
-(def result
-  {:zd/name 'resource
-   :zd/order [:title :logo :text :edn-value 'nested]
-   :zd/keys {:title {:value "original value"
-                     :annotations {:badge {:param 100 :text "..."}}}}
-   :zd/contained {'sub-resource {:zd/name 'resource.sub-resource}}
-   :title "title"
-   :value "value"
-   :text "\nMultiline text\n"})
-
-(def ztx (atom {}))
-
-;; (defn print-zd [ztx res]
-;;   (let [all-keys  (into #{} (concat (->> (keys res) (remove #(= (namespace %) "zd"))) (keys :zd/contained)))
-;;         ordered-keys (:zd/order res)
-;;         extra-keys (clojure.set/difference (into #{} ordered-keys) all-keys)
-;;         keys-to-print (into ordered-keys (->> extra-keys (sort-by str)))]))
-
-;; (defn update-key [res key val & [opts]])
-
 
 (deftest test-parser
 
-  (is (= 1 1))
-  (sut/parse ztx {} ":title \"value\"")
+  (def ztx (zen/new-context {}))
+
+  (def sts (slurp (io/resource "zd/parser.zd")))
+
+  (def result (parser/parse ztx {} sts))
+
+  (testing "inline keypaths are parsed with annotations"
+    (matcho/assert
+     {:title "my title"
+      :desc "my desc"
+      :map-inline map?
+      :query list?
+      :zd/meta {:ann {:desc {:badge map?}
+                      :query {:table [:name :age]}}}}
+     result))
+
+  (defn strings? [coll]
+    (every? string? coll))
+
+  (testing "multiline keypaths are parsed with annotations"
+    ;; TODO think about adding (read) multimethod for each content type
+    (matcho/assert
+     {:query-map strings?
+      :text strings?
+      :customers strings?
+      :zd/meta {:ann
+                {:query-map {:zd/content-type :edn}
+                 :customers {:zd/content-type :datalog
+                             :table [:zt/id :rel]}
+                 :text {:zd/content-type :zentext}}}}
+
+     result))
+
+  (testing "sub documents are parsed recursively"
+    (matcho/assert
+     {:zd/meta
+      {:doc [:title :desc :map-inline :query :query-map :text :customers :nested :nested-2]}
+      :zd/subdocs
+      {:nested
+       {:zd/meta {:doc [:mykey :another-key :mykey :path]}
+        :zd/subdocs {:path {:zd/meta {:doc [:some-edn :mykey]}}}}
+       :nested-2 {:zd/meta {:doc [:super-key]}}}}
+     result)))
 
 
-
-  )

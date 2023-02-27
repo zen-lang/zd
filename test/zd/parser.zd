@@ -1,0 +1,56 @@
+;; just a string block
+:title "my title"
+
+;; a string block with annotation
+^badge
+:desc "my desc"
+
+;; a block with inline edn
+:map-inline {:mykey {:myval 1}}
+
+;; a macro block with annotation and vector param
+^table [:name :age]
+:query (load "file.json")
+
+;; edn value multiline
+:query-map edn/
+{:where []
+ :limit 100}
+
+;; a zentext block
+:text /
+
+It is truly multiline
+
+* and
+** has
+*** lists
+
+;; a datalog query
+^table [:zt/id :rel]
+:customers datalog/
+
+{:find [(pull e [:xt/id :rel :needs :tags])]
+ :where [[e :parent "organizations"]
+         [e :rel "rel.lead"]
+         [e :title et]]
+ :sort-by [[et :desc]]}
+
+;; a sub document
+&nested
+:mykey "myvalue"
+:another-key "another value"
+
+;; fish content type
+:mykey fish/
+
+;; another sub document
+&.nested-2
+:super-key "value"
+
+;; sub document with compound path
+&.nested.path
+:some-edn edn/
+{:a 1
+ :b [1 2 3]}
+:mykey "mysupervalue"
