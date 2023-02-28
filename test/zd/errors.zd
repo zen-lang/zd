@@ -1,0 +1,16 @@
+:ti tle "my title"
+
+^ badge babadge
+:desc "my desc"
+
+_^_table [:name ] :age]
+
+:query-map MAP edn///
+
+{:where []
+ :limit 100}
+
+;; ;; ;; invalid edn
+:map-inline {:mykey {:myval 1}
+
+just a string block

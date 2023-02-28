@@ -52,4 +52,16 @@
        :nested-2 {:zd/meta {:doc [:super-key]}}}}
      result)))
 
+(deftest parsing-errors
+
+  (def ztx (zen/new-context {}))
+
+  (def sts (slurp (io/resource "zd/errors.zd")))
+
+  (parser/parse ztx {} "just a string")
+
+  (def result (parser/parse ztx {} sts))
+
+  (is (map? result)))
+
 

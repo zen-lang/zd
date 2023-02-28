@@ -35,7 +35,7 @@
 
 (defn parse* [ztx ctx text]
   (loop [ctx {:zd/meta {:doc [] :ann {} :text-values {}}}
-         [l & ls] text]
+         [l & ls :as lines] text]
     (cond (nil? l) ctx
           (str/blank? l) (recur ctx ls)
             ;; TODO :zd/unparse add comment to resource as block
@@ -44,7 +44,7 @@
           (is-block? l) (let [[acc ls] (collect! ztx ctx l ls)]
                           (recur (parse! ztx ctx l acc) ls))
 
-          :else (update ctx :errors conj {:type :unknown-line :value l}))))
+          :else (update ctx :zd/errors conj {:type :unknown-line :value l}))))
 
 (defn parse [ztx ctx text]
   (parse* ztx ctx (get-lines text)))
