@@ -56,8 +56,6 @@
                             (.update (.getBytes input "UTF-8")))]
     (hex-str (.sign private-signature))))
 
-(get-sa)
-
 "Tranlation of https://github.com/GoogleCloudPlatform/python-docs-samples/blob/9e5c2fb563f1cd5de76a72c4d8ae57ce884f66bd/storage/signed_urls/generate_signed_urls.py"
 (defn generate-signed-url
   [{service-account :account
