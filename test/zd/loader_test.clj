@@ -10,22 +10,19 @@
    [zd.core]
    [zen-web.core :as web]))
 
-(ns-unmap *ns* 'ztx)
-
-(defonce ztx (zen/new-context {}))
+(def ztx (zen/new-context {}))
 
 (defn load! [ztx]
   ;; TODO add trailing slash validation in system config
   (loader/load-docs! ztx ["test/zd/tdocs"]))
 
-(load! ztx)
-
 (deftest document-tree-loaded
+  (load! ztx)
 
   (matcho/assert
    {:zd/meta map?
     :title string?
-    :desc #(every? string? %)}
+    :desc string?}
    (loader/get-doc ztx 'customers))
 
   (matcho/assert
@@ -34,10 +31,20 @@
    (loader/get-doc ztx 'customers.flame)))
 
 (deftest referenced-parsed
-  (matcho/assert
-   '{rdfs.class {customers #{[:meta :tags :#]}}
-     people.john
-     {customers #{[:best-customer]}
-      customers.flame #{[:ceo] [:founder]}}
-     tags.dev-team {customers.flame #{[:tags :#]}}}
-   (:zrefs @ztx)))
+  (load! ztx)
+
+  (testing "edn links loaded"
+    (matcho/assert
+     '{rdfs.class {customers #{[:meta :tags :#]}}
+       people.john
+       {customers #{[:best-customer] [:desc]}
+        customers.flame #{[:ceo] [:founder]}}
+       tags.dev-team {customers.flame #{[:tags :#]}}}
+     (:zrefs @ztx)))
+
+  (testing "zentext links and mentions loaded"
+    (matcho/assert
+     '{people.todd {customers #{[:desc]}}
+       customers.flame {customers #{[:desc]}}
+       people.john {customers #{[:best-customer] [:desc]}}}
+     (:zrefs @ztx))))

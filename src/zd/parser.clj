@@ -127,10 +127,14 @@
                  (update-in [:zd/meta :doc] conj key)
                  (assoc-in [:zd/meta :ann key :zd/content-type] cnt-type))]
 
-    (if (= :edn cnt-type)
-      (assoc ctx* key
-             (saferead (if multiline?
-                         (apply str ls)
-                         (apply str val))))
+    (cond (= :edn cnt-type)
+          (assoc ctx* key
+                 (saferead (if multiline?
+                             (apply str ls)
+                             (apply str val))))
 
-      (assoc ctx* key ls))))
+          (= :zentext cnt-type)
+          (assoc ctx* key (str/join "\n" ls))
+
+          :else
+          (assoc ctx* key ls))))

@@ -45,11 +45,34 @@
 (defn edn-links [acc docname path cnt]
   (*edn-links acc docname path cnt))
 
-(defn collect-links [ztx {:keys [zd/meta] :as doc}]
+(defn find-symbols [ch cnt]
+  (loop [acc (seq cnt)
+         syms #{}]
+    (if (nil? acc)
+      syms
+      (let [[_ r] (parser/split #(= % ch) acc)
+            [l tail] (parser/split #(or (= % \space)
+                                        (= % \newline))
+                                   r)
+            sym (->> (rest l) (apply str) symbol)]
+        (if (nil? r)
+          syms
+          (recur tail (conj syms sym)))))))
+
+(defn zentext-links [acc docname path cnt]
+  (let [links (find-symbols \# cnt)
+        mentions (find-symbols \@ cnt)]
+    (->> (into links mentions)
+         (reduce (fn [acc* to]
+                   (update-in acc* [to docname] (fnil conj #{}) path))
+                 acc))))
+
+(defn collect-links [ztx {{:keys [docname ann]} :zd/meta :as doc}]
   (->> (get-blocks ztx doc)
        (reduce (fn [acc [k cnt]]
-                 (let [cnt-type (get-in meta [:ann k :zd/content-type])]
-                   (cond (= cnt-type :edn) (edn-links acc (:docname meta) [k] cnt)
+                 (let [cnt-type (get-in ann [k :zd/content-type])]
+                   (cond (= cnt-type :edn) (edn-links acc docname [k] cnt)
+                         (= cnt-type :zentext) (zentext-links acc docname [k] cnt)
                          :else acc)))
                {})))
 

@@ -31,7 +31,7 @@
     ;; TODO think about adding (read) multimethod for each content type
     (matcho/assert
      {:query-map map?
-      :text strings?
+      :text string?
       :customers strings?
       :zd/meta {:ann
                 {:query-map {:zd/content-type :edn}
