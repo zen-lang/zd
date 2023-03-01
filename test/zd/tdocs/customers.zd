@@ -1,0 +1,10 @@
+:title "customers list"
+
+:meta edn/
+{:tags #{rdfs.class}}
+
+:desc /
+
+a description that refers to #people.john
+
+:best-customer people.john

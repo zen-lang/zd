@@ -30,7 +30,7 @@
   (testing "multiline keypaths are parsed with annotations"
     ;; TODO think about adding (read) multimethod for each content type
     (matcho/assert
-     {:query-map strings?
+     {:query-map map?
       :text strings?
       :customers strings?
       :zd/meta {:ann
@@ -63,5 +63,3 @@
   (def result (parser/parse ztx {} sts))
 
   (is (map? result)))
-
-

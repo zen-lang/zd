@@ -115,14 +115,22 @@
 (defmethod parse! :key
   [ztx ctx _ [l & ls]]
   (let [[k val] (split #(= % \space) l)
-        cnt? (= \/ (last val))
-        ann (when cnt? (str/trim (apply str (butlast val))))
+        multiline? (= \/ (last val))
         key (keyword (apply str (rest k)))
-        ann-name (if (str/blank? ann) :zentext (keyword ann))
-        ctx* (update-in ctx [:zd/meta :doc] conj key)]
-    (if cnt?
-      (-> ctx*
-          (assoc key ls)
-          (assoc-in [:zd/meta :ann key :zd/content-type] ann-name))
-      (let [val* (apply str val)]
-        (assoc ctx* key (saferead val*))))))
+        cnt-type (if multiline?
+                   (let [ann (str/trim (apply str (butlast val)))]
+                     (if (str/blank? ann)
+                       :zentext
+                       (keyword ann)))
+                   :edn)
+        ctx* (-> ctx
+                 (update-in [:zd/meta :doc] conj key)
+                 (assoc-in [:zd/meta :ann key :zd/content-type] cnt-type))]
+
+    (if (= :edn cnt-type)
+      (assoc ctx* key
+             (saferead (if multiline?
+                         (apply str ls)
+                         (apply str val))))
+
+      (assoc ctx* key ls))))
