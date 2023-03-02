@@ -113,3 +113,35 @@
               (load-document! ztx {:path path
                                    :resource-path resource-path
                                    :content content}))))))))
+
+(defn unwrap-links
+  "{to {from #{paths..}}} -> {from [[path to]..]}"
+  [to links invalid]
+  (->> links
+       (mapcat (fn [[from paths]]
+                 (for [p paths]
+                   {:to to :path p :doc from})))
+       (reduce (fn [acc {:keys [doc] :as link}]
+                 (update acc doc conj link))
+               invalid)))
+
+(defn load-links!
+  "add links, invalid links to docs"
+  [ztx]
+  (loop [[[docname links] & oth] (:zrefs @ztx)
+         invalid {}]
+    (cond
+      (nil? docname)
+      (doseq [[from inv] invalid]
+        (swap! ztx assoc-in [:zdb from :zd/invalid-links] inv))
+
+      (nil? (get-in @ztx [:zdb docname]))
+      (recur oth (unwrap-links docname links invalid))
+
+      :else (do (swap! ztx assoc-in [:zdb docname :zd/backlinks] links)
+                (recur oth invalid)))))
+
+(defn load-dirs! [ztx dirs]
+  (load-docs! ztx dirs)
+  (load-links! ztx)
+  #_(eval-macros! ztx))

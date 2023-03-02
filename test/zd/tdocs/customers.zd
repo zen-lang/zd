@@ -5,7 +5,7 @@
 
 :desc /
 
-a description that refers to #people.john and mentiones @people.todd
+a description that refers to #people.john and mentions @people.todd
 
 it also refers to #customers.flame and even mentions #people.john twice!
 
