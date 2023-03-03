@@ -1,5 +1,7 @@
 (ns zd.loader
   (:require
+   [zd.methods :as methods]
+   [zd.macros]
    [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
    [zd.parser :as parser]
@@ -88,24 +90,26 @@
                      from)
              oth))))
 
-(defn *collect-macros [acc path docname node]
+(defn *collect-macros [acc path node]
   (cond
     (and (list? node) (symbol? (first node)))
-    (update acc docname assoc path node)
+    (assoc acc path node)
 
     (map? node)
     (reduce (fn [acc [k v]]
-              (*collect-macros acc (conj path k) docname v))
+              (*collect-macros acc (conj path k) v))
             acc
             node)
 
+    ;; TODO add vector/seq traversal?
+
     :else acc))
 
-(defn collect-macros [ztx {{:keys [docname] :as meta} :zd/meta :as doc}]
+(defn collect-macros [ztx {meta :zd/meta :as doc}]
   (->> doc
        (remove (fn [[k _]] (namespace k)))
        (filter (fn [[k _]] (= :edn (get-in meta [:ann k :zd/content-type]))))
-       (reduce (fn [acc [k v]] (*collect-macros acc [k] docname v))
+       (reduce (fn [acc [k v]] (*collect-macros acc [k] v))
                {})))
 
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
@@ -122,6 +126,7 @@
     (swap! ztx assoc-in [:zdb docname] doc)
     (swap! ztx update :zrefs patch-links links)
     (swap! ztx update :zd/keys (fnil into #{}) (keys doc))
+    (swap! ztx assoc-in [:zd/macros docname] macros)
     (zen/pub ztx 'zd/on-doc-create doc)))
 
 (defn load-docs! [ztx dirs]
@@ -166,7 +171,24 @@
       :else (do (swap! ztx assoc-in [:zdb docname :zd/backlinks] links)
                 (recur oth invalid)))))
 
+(defn eval-macros! [ztx]
+  (let [eval-macro
+        (fn [[sym macros]]
+          (let [doc (get-in @ztx [:zdb sym])]
+            (map (fn [[docpath macro]]
+                   [sym docpath macro (methods/eval-macro! ztx doc docpath macro)])
+                 macros)))]
+    (->> (get @ztx :zd/macros)
+         (mapcat eval-macro)
+         (map (fn [[sym path macro result]]
+                (swap! ztx update-in [:zdb sym]
+                       (fn [doc]
+                         (-> doc
+                             (assoc-in [:zd/meta :ann (first path) :zd/macro] macro)
+                             (assoc (first path) result))))))
+         doall)))
+
 (defn load-dirs! [ztx dirs]
   (load-docs! ztx dirs)
   (load-links! ztx)
-  #_(eval-macros! ztx))
+  (eval-macros! ztx))

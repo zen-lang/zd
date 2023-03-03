@@ -24,3 +24,11 @@
   [ztx wgt page & [opts]]
   [:div {:class (c [:text :red-500])}
    "Widget - " (pr-str wgt) " is not implemented"])
+
+(defmulti eval-macro! (fn [ztx doc docpath [expr & args]] expr))
+
+(defmethod eval-macro! :default
+  [ztx doc docpath macro]
+  {:error {:message (str (pr-str macro) " implementation not found")
+           :type "macro-notfound"
+           :docpath docpath}})

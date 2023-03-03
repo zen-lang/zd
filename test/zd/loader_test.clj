@@ -30,7 +30,31 @@
     :title string?}
    (loader/get-doc ztx 'customers.flame)))
 
-(deftest referenced-parsed
+(deftest macros-loaded
+  (load! ztx)
+
+  (matcho/assert
+   {:macro-notfound
+    {:error
+     {:message string?
+      :type "macro-notfound"}}
+    :yaml-example {:key "myvalue", :another-key "another-value"}
+    :string-file "just a string\n"
+    :not-found
+    {:error {:message string?
+             :type "macro-eval"}}
+    :office-locations map?
+    :zd/meta
+    {:ann
+     {:macro-notfound {:zd/macro list?}
+      :yaml-example {:zd/macro list?}
+      :string-file {:zd/macro list?}
+      :not-found {:zd/macro list?}
+      :office-locations {:zd/macro list?}}}}
+
+   (loader/get-doc ztx 'customers)))
+
+(deftest referenced-loaded
   (load! ztx)
 
   (testing "edn links loaded"
