@@ -1,0 +1,12 @@
+{
+    "meta": {
+        "name": "office-location.json"
+    },
+    "locations": [
+        {
+        "Bangkok, Thailand": [
+            "street"
+        ]
+    }
+    ]
+}

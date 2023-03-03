@@ -10,3 +10,9 @@ a description that refers to #people.john and mentions @people.todd
 it also refers to #customers.flame and even mentions #people.john twice!
 
 :best-customer people.john
+
+:office-locations (load "office-locations.json" :json)
+:yaml-example (load "sample.yaml" :yaml)
+:not-found (load "not-found.json")
+:string-file (load "file.txt")
+:macro-notfound (unload "nofile.txt")

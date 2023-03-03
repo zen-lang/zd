@@ -1,5 +1,6 @@
 (ns zd.loader
   (:require
+   [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
    [zd.parser :as parser]
    [clojure.java.io :as io]
@@ -87,7 +88,28 @@
                      from)
              oth))))
 
+(defn *collect-macros [acc path docname node]
+  (cond
+    (and (list? node) (symbol? (first node)))
+    (update acc docname assoc path node)
+
+    (map? node)
+    (reduce (fn [acc [k v]]
+              (*collect-macros acc (conj path k) docname v))
+            acc
+            node)
+
+    :else acc))
+
+(defn collect-macros [ztx {{:keys [docname] :as meta} :zd/meta :as doc}]
+  (->> doc
+       (remove (fn [[k _]] (namespace k)))
+       (filter (fn [[k _]] (= :edn (get-in meta [:ann k :zd/content-type]))))
+       (reduce (fn [acc [k v]] (*collect-macros acc [k] docname v))
+               {})))
+
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
+  ;; TODO add validation, annotations with zen.schema
   (let [docname (symbol (str/replace (str/replace resource-path #"\.zd$" "")
                                      file-separator-regex
                                      "."))
@@ -95,9 +117,12 @@
                         {:zd/meta {:docname docname
                                    :file resource-path
                                    :path path}})
-        links (collect-links ztx doc)]
+        links (collect-links ztx doc)
+        macros (collect-macros ztx doc)]
     (swap! ztx assoc-in [:zdb docname] doc)
-    (swap! ztx update :zrefs patch-links links)))
+    (swap! ztx update :zrefs patch-links links)
+    (swap! ztx update :zd/keys (fnil into #{}) (keys doc))
+    (zen/pub ztx 'zd/on-doc-create doc)))
 
 (defn load-docs! [ztx dirs]
   (doseq [dir dirs]
