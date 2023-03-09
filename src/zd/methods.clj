@@ -1,5 +1,6 @@
 (ns zd.methods
   (:require
+   [clojure.string :as str]
    [zen.core :as zen]
    [stylo.core :refer [c]]))
 
@@ -12,6 +13,20 @@
 (defmulti inline-method   (fn [ztx m arg ctx] (keyword m)))
 (defmulti inline-function (fn [ztx m arg ctx] (keyword m)))
 (defmulti process-block   (fn [ztx tp args cnt] tp))
+
+(defmulti rendercontent (fn [ztx ctx block]
+                          (get-in block [:ann :zd/content-type])))
+
+(defmulti renderkey (fn [ztx ctx block] (or (get-in block [:zd/meta :ann :block])
+                                            (:key block))))
+
+(defmethod renderkey :default [ztx ctx {kp :key :as block}]
+  [:div.zd-block
+   [:h2 {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
+    [:div {:class (c :flex :flex-1)}
+     ;; TODO add collapse annotation for default view?
+     [:a {:id kp :href (str "#" kp)} (str/capitalize (name kp))]]]
+   [:div.zd-content (rendercontent ztx ctx block)]])
 
 (defmulti layout
   (fn [ztx zd-config hiccup doc] (zen/engine-or-name zd-config)))

@@ -1,6 +1,51 @@
 :title "Flame industries"
 
+:site "flame.com"
+
+:icon [:fa-solid :fa-cart-shopping]
+
+:fhir-users 23
+
+:num-employees 2000
+
+:funding funding.e
+
+:country #{countries.br}
+
+:tags #{tags.data-platfrom tags.telemed}
+
+:techs #{tech-postgres tech.js}
+
+:rel #{rel.presale}
+
+:parent-doc customers
+
 :tags #{tags.dev-team}
 
 :founder people.john
+
 :ceo people.john
+
+:customer-since "22-05-2022"
+
+;; &goals
+
+;; :short-term-goals /
+
+;; * close best deal ever
+
+;; :long-term-goals /
+
+;; * make a lot of money
+
+;; &perks
+
+;; ^attribute
+;; :potential :high
+;; :sales-cycle :slow
+;; :proactive.feedback :medium
+;; :organized.payments :low
+;; :easy-to-work :no
+;; :challenging :yes
+;; :techstack-match :yes
+

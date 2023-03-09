@@ -8,6 +8,16 @@
    [clojure.java.io :as io]
    [clojure.string :as str]))
 
+(def blocks-meta
+  ;; TODO use turtle/json ld
+  {:country {:block :badge}
+   :tags {:block :badge}
+   :rel {:block :badge}
+   :site {:block :badge}
+   :num-employees {:block :badge}
+   :funding {:block :badge}
+   :fhir-users {:block :badge}})
+
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
 
@@ -102,7 +112,6 @@
             node)
 
     ;; TODO add vector/seq traversal?
-
     :else acc))
 
 (defn collect-macros [ztx {meta :zd/meta :as doc}]
@@ -112,15 +121,27 @@
        (reduce (fn [acc [k v]] (*collect-macros acc [k] v))
                {})))
 
+(defn append-meta [ztx doc]
+  (->> doc
+       (remove (fn [[k _]]
+                 (namespace k)))
+       (reduce (fn [*doc [k _]]
+                 (update-in *doc [:zd/meta :ann k]
+                            (fn [anns] (merge anns (get blocks-meta k)))))
+               doc)))
+
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
   ;; TODO add validation, annotations with zen.schema
   (let [docname (symbol (str/replace (str/replace resource-path #"\.zd$" "")
                                      file-separator-regex
                                      "."))
-        doc (deep-merge (parser/parse ztx {} content)
-                        {:zd/meta {:docname docname
-                                   :file resource-path
-                                   :path path}})
+        headers {:zd/meta {:docname docname
+                           :file resource-path
+                           :path path}}
+        doc (->> content
+                 (parser/parse ztx {})
+                 (deep-merge headers)
+                 (append-meta ztx))
         links (collect-links ztx doc)
         macros (collect-macros ztx doc)]
     (swap! ztx assoc-in [:zdb docname] doc)
@@ -146,14 +167,15 @@
 
 (defn unwrap-links
   "{to {from #{paths..}}} -> {from [[path to]..]}"
-  [to links invalid]
+  [to links acc]
   (->> links
        (mapcat (fn [[from paths]]
                  (for [p paths]
+                   ;; TODO rename :doc to :from
                    {:to to :path p :doc from})))
        (reduce (fn [acc {:keys [doc] :as link}]
                  (update acc doc conj link))
-               invalid)))
+               acc)))
 
 (defn load-links!
   "add links, invalid links to docs"
@@ -168,8 +190,14 @@
       (nil? (get-in @ztx [:zdb docname]))
       (recur oth (unwrap-links docname links invalid))
 
-      :else (do (swap! ztx assoc-in [:zdb docname :zd/backlinks] links)
-                (recur oth invalid)))))
+      :else
+      (let [links* (mapcat (fn [[from paths]]
+                             (for [p paths]
+                               ;; TODO rename :doc to :from
+                               {:to docname :path p :doc from}))
+                           links)]
+        (swap! ztx assoc-in [:zdb docname :zd/backlinks] links*)
+        (recur oth invalid)))))
 
 (defn eval-macros! [ztx]
   (let [eval-macro
@@ -191,4 +219,11 @@
 (defn load-dirs! [ztx dirs]
   (load-docs! ztx dirs)
   (load-links! ztx)
-  (eval-macros! ztx))
+  (eval-macros! ztx)
+  'ok)
+
+(defn hard-reload! [ztx dirs]
+  (swap! ztx dissoc :zdb)
+  (swap! ztx assoc :zrefs {})
+  (zen/pub ztx 'zd/hard-reload {:dirs dirs})
+  (load-dirs! ztx dirs))

@@ -236,8 +236,3 @@
   [ztx config & opts]
   ;; TODO dissoc zendoc state from memory
   )
-
-;; TODO add to zen-web
-#_(op ztx match (update req :params merge (:params match)))
-
-

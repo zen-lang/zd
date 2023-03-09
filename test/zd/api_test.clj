@@ -28,8 +28,8 @@
   (matcho/assert
    {:status 200 :body string?}
    (web/handle ztx 'zd.test-system/api {:uri "/index/edit"
-                                     :request-method :put
-                                     :body (req-body ":zd/docname index\n:desc /")}))
+                                        :request-method :put
+                                        :body (req-body ":zd/docname index\n:desc /")}))
 
   (is (io/resource "zd/tdocs/index.zd"))
 
