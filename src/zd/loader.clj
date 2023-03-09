@@ -13,6 +13,7 @@
   {:country {:block :badge}
    :tags {:block :badge}
    :rel {:block :badge}
+   :icon {:block :none}
    :site {:block :badge}
    :num-employees {:block :badge}
    :funding {:block :badge}

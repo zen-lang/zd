@@ -87,8 +87,8 @@
 (defn render-blocks [ztx ctx doc]
   [:div {:class (c [:pt 4])}
    (for [key (get-in doc [:zd/meta :doc])]
-     (let [block (get-block ztx doc key)]
-       (methods/renderkey ztx ctx block)))])
+     (when (get doc key)
+       (methods/renderkey ztx ctx (get-block ztx doc key))))])
 
 (defn render-doc [ztx ctx doc]
   [:div {:class (c :flex :flex-1)}

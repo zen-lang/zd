@@ -1,8 +1,10 @@
 :title "Flame industries"
 
-:site "flame.com"
-
 :icon [:fa-solid :fa-cart-shopping]
+
+:rel #{rel.presale}
+
+:site "flame.com"
 
 :fhir-users 23
 
@@ -16,11 +18,7 @@
 
 :techs #{tech-postgres tech.js}
 
-:rel #{rel.presale}
-
 :parent-doc customers
-
-:tags #{tags.dev-team}
 
 :founder people.john
 
@@ -28,24 +26,24 @@
 
 :customer-since "22-05-2022"
 
-;; &goals
+&goals
 
-;; :short-term-goals /
+:short-term-goals /
 
-;; * close best deal ever
+* close best deal ever
 
-;; :long-term-goals /
+:long-term-goals /
 
-;; * make a lot of money
+* make a lot of money
 
-;; &perks
+&perks
 
-;; ^attribute
-;; :potential :high
-;; :sales-cycle :slow
-;; :proactive.feedback :medium
-;; :organized.payments :low
-;; :easy-to-work :no
-;; :challenging :yes
-;; :techstack-match :yes
+^attribute
+:potential :high
+:sales-cycle :slow
+:proactive.feedback :medium
+:organized.payments :low
+:easy-to-work :no
+:challenging :yes
+:techstack-match :yes
 

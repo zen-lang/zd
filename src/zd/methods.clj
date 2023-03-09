@@ -17,8 +17,13 @@
 (defmulti rendercontent (fn [ztx ctx block]
                           (get-in block [:ann :zd/content-type])))
 
-(defmulti renderkey (fn [ztx ctx block] (or (get-in block [:zd/meta :ann :block])
-                                            (:key block))))
+(defmethod rendercontent :default
+  [ztx ctx block]
+  [:pre (pr-str block)])
+
+(defmulti renderkey (fn [ztx ctx block]
+                      (or (get-in block [:ann :block])
+                          (:key block))))
 
 (defmethod renderkey :default [ztx ctx {kp :key :as block}]
   [:div.zd-block
