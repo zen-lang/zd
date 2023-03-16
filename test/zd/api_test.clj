@@ -1,10 +1,10 @@
 (ns zd.api-test
   (:require
+   [zd.api]
    [matcho.core :as matcho]
    [clojure.java.io :as io]
    [clojure.test :refer [deftest is testing]]
    [zen.core :as zen]
-   [zd.core]
    [zen-web.core :as web]))
 
 (defonce ztx (zen/new-context {}))
@@ -26,6 +26,11 @@
     (matcho/assert
      {:status 301 :headers {"Location" "/index/edit?"}}
      (web/handle ztx 'zd.v2-test/api {:uri "/index"})))
+
+  (testing "editor config is rendered"
+    (matcho/assert
+     {:status 200}
+     (web/handle ztx 'zd.v2-test/api {:uri "/index/edit"})))
 
   (testing "saving document"
     (matcho/assert

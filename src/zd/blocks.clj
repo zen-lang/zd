@@ -13,6 +13,15 @@
        (clojure.string/join ".")
        (str ".")))
 
+(defmethod methods/renderkey :zd/docname
+  [ztx ctx {data :data :as block}]
+  [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}
+   [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700]
+                    {:font-weight "400" :padding-top ".3rem"})}
+    [:i.fas.fa-file]]
+   [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
+    data]])
+
 (defmethod methods/renderkey :link-badge
   [ztx ctx {data :data k :key}]
   [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}

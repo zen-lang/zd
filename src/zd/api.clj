@@ -1,13 +1,15 @@
 (ns zd.api
-  (:require [zd.loader :as loader]
-            [zd.parser :as parser]
-            [clojure.java.io :as io]
-            [clojure.string :as str]
-            [zen.core :as zen]
-            [zd.methods :as methods]
-            [zd.render :as render]
-            [zd.layout]
-            [zen-web.core :as web])
+  (:require
+   [hiccup.core :as hiccup]
+   [zd.loader :as loader]
+   [zd.parser :as parser]
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [zen.core :as zen]
+   [zd.methods :as methods]
+   [zd.render :as render]
+   [zd.layout]
+   [zen-web.core :as web])
   (:import [java.io StringReader]))
 
 (defmethod web/middleware-in 'zd.v2/append-config
@@ -43,6 +45,14 @@
   (when (and (not (string? bdy)) (= 200 (:status resp)))
     {:headers {"Content-Type" "text/html"}
      :body (methods/layout ztx (zen/get-symbol ztx lay-sym) bdy page)}))
+
+(defmethod zen/op 'zd.v2/render-widget
+  [ztx _cfg {{id :id wgt :widget-id} :route-params :keys [doc]} & opts]
+  (if-not (nil? doc)
+    {:status 200
+     :body (methods/widget ztx wgt doc)}
+    {:status 200
+     :body [:div "Error: " id " is not found"]}))
 
 (defmethod zen/op 'zd.v2/save-doc
   [ztx _cfg {pths :zd/paths {id :id} :route-params :as req} & opts]
@@ -119,6 +129,19 @@
     ;; TODO load single document into db
     (loader/hard-reload! ztx pths)
     {:status 200 :body redirect}))
+
+(defmethod zen/op 'zd.v2/render-editor
+  [ztx _cfg {{id :id} :route-params :as req} & opts]
+  (let [doc (or (:doc req) {:zd/meta {:docname (symbol id)}})]
+    {:status 200
+     :body (render/editor ztx {:request req :doc doc} doc)}))
+
+(defmethod zen/op 'zd.v2/render-preview
+  [ztx _ {{id :id} :route-params :as req} & opts]
+  {:headers {"Content-Type" "text/html"}
+   :body (-> (render/preview ztx {:request req} (slurp (:body req)))
+             (hiccup/html))
+   :status 200})
 
 (defmethod zen/start 'zd.v2/db
   [ztx config & opts]

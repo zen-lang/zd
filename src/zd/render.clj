@@ -1,5 +1,10 @@
 (ns zd.render
   (:require
+   [zd.parser :as parser]
+   [cheshire.core :as json]
+   [hiccup.core :as hiccup]
+   [clojure.java.io :as io]
+   [zd.icons :as icons]
    [clojure.string :as str]
    [zd.blocks]
    [zd.methods :as methods]
@@ -119,3 +124,45 @@
   (if (get-in ctx [:request :headers "x-body"])
     (render-doc ztx ctx doc)
     (*doc-view ztx ctx doc)))
+
+(def default-tpl ":title \"\"\n:tags #{}")
+
+(defn find-template [ztx nm]
+  (when nm
+    (let [parts (str/split (str nm) #"\.")]
+      (loop [parts parts]
+        (when (seq parts)
+          (let [f (str "docs/" (str/join "/" (butlast parts)) "/_template.zd")]
+            (if (.exists (io/file f))
+              (slurp f)
+              (recur (butlast parts)))))))))
+
+(defn preview [ztx ctx text]
+  (->> (parser/parse ztx ctx text)
+       (render-blocks ztx ctx)))
+
+(defn editor [ztx ctx {m :zd/meta :as doc}]
+  (let [header (str ":zd/docname " (:docname m) "\n")
+        text (str header
+                  (if-let [pt (:path m)]
+                    (slurp pt)
+                    (or (find-template ztx (:docname m))
+                        default-tpl)))
+        symbols (->> (:zdb @ztx)
+                     (mapv (fn [[k {ico :icon logo :logo tit :title}]]
+                             {:title tit
+                              :name k
+                              :logo logo
+                              :icon ico})))
+        keypaths (->> (:zd/keys @ztx)
+                      (mapv (fn [x] {:name x})))
+
+        zendoc {:text text
+                :symbols symbols
+                :keys keypaths
+                :icons  icons/icons
+                ;; TODO add completion from blocks meta
+                :annotations []
+                :preview (-> (preview ztx ctx text) (hiccup/html))
+                :doc (:docname m)}]
+    [:script "var zendoc=" (json/generate-string zendoc)]))

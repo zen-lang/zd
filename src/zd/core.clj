@@ -72,7 +72,6 @@
     {:status 200
      :body (zd.pages/editor ztx page)}))
 
-;; TODO check if its used
 (defmethod zen/op 'zd/update-zendoc
   [ztx _cfg {{id :id} :route-params :as req} & opts]
   (let [content (slurp (:body req))

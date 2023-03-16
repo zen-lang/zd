@@ -81,6 +81,12 @@
  render-editor
  {:zen/tags #{zen-web/op zen/op}}
 
+ render-widget
+ {:zen/tags #{zen-web/op zen/op}}
+
+ render-preview
+ {:zen/tags #{zen-web/op zen/op}}
+
  api
  {:zen/tags #{zen-web/api}
   :engine zen-web/routemap
@@ -89,7 +95,11 @@
   :mw [zen-web/defaults]
   [:id] {:mw [append-config dev-reload append-doc layout]
          :DELETE delete-doc
+         :POST save-doc
          :GET render-doc
+         "preview" {:POST render-preview}
+         "widgets" {[:widget-id]
+                    {:GET render-widget}}
          "edit" {:PUT save-doc
                  :GET render-editor}}
   "static" {:* {:GET serve-static}}}}
