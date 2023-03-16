@@ -62,7 +62,11 @@
             [l tail] (parser/split #(or (= % \space)
                                         (= % \newline))
                                    r)
-            sym (->> (rest l) (apply str) symbol)]
+            sym (->> (if (= (last l) \.)
+                       (butlast (rest l))
+                       (rest l))
+                     (apply str)
+                     symbol)]
         (if (nil? r)
           syms
           (recur tail (conj syms sym)))))))

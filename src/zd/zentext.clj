@@ -213,7 +213,6 @@
                   (:result new-ctx))))]
     res))
 
-
 (defn parse-block [ztx s block]
   (let [lines (get-lines s)
         res (into [:div] (parse-block* ztx lines block))]

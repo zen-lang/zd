@@ -45,6 +45,9 @@
  render-doc
  {:zen/tags #{zen/op zen-web/op}}
 
+ delete-doc
+ {:zen/tags #{zen-web/op zen/op}}
+
  middleware
  {:zen/tags #{zen/schema zen/tag}
   :type zen/map
@@ -72,6 +75,12 @@
   :zen/desc "wrap response in standard zd layout"
   :dir #{:out}}
 
+ save-doc
+ {:zen/tags #{zen-web/op zen/op}}
+
+ render-editor
+ {:zen/tags #{zen-web/op zen/op}}
+
  api
  {:zen/tags #{zen-web/api}
   :engine zen-web/routemap
@@ -79,5 +88,8 @@
   ;; TODO move zen web defaults to zen web core
   :mw [zen-web/defaults]
   [:id] {:mw [append-config dev-reload append-doc layout]
-         :GET render-doc}
+         :DELETE delete-doc
+         :GET render-doc
+         "edit" {:PUT save-doc
+                 :GET render-editor}}
   "static" {:* {:GET serve-static}}}}

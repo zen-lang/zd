@@ -9,49 +9,66 @@
 
 (defonce ztx (zen/new-context {}))
 
-(defn prepare! []
-  (zen/read-ns ztx 'zd.test-system))
-
 (defn req-body [s]
   (io/input-stream (.getBytes s)))
 
 (deftest doc-creation-test
 
-  (prepare!)
+  (zen/stop-system ztx)
 
-  (zen/start-system ztx 'zd.test-system/system)
+  (zen/read-ns ztx 'zd.v2)
 
-  (matcho/assert
-   {:status 301 :headers {"Location" "/index/edit?"}}
-   (web/handle ztx 'zd.test-system/api {:uri "/index"}))
+  (zen/read-ns ztx 'zd.v2-test)
 
-  (matcho/assert
-   {:status 200 :body string?}
-   (web/handle ztx 'zd.test-system/api {:uri "/index/edit"
-                                        :request-method :put
-                                        :body (req-body ":zd/docname index\n:desc /")}))
+  (zen/start-system ztx 'zd.v2-test/system)
 
-  (is (io/resource "zd/tdocs/index.zd"))
+  (testing "when document not found redirects to editor"
+    (matcho/assert
+     {:status 301 :headers {"Location" "/index/edit?"}}
+     (web/handle ztx 'zd.v2-test/api {:uri "/index"})))
 
-  (is (= (slurp (io/resource "zd/tdocs/index.zd")) ":desc /"))
+  (testing "saving document"
+    (matcho/assert
+     {:status 422 :body string?}
+     (web/handle ztx 'zd.v2-test/api
+                 {:uri "/index/edit"
+                  :request-method :put
+                  :body (req-body ":zd/docname index._draft\n:desc /\n no docname present")}))
+
+    (matcho/assert
+     {:status 422 :body string?}
+     (web/handle ztx 'zd.v2-test/api
+                 {:uri "/index/edit"
+                  :request-method :put
+                  :body (req-body ":desc /\n no docname present")}))
+
+    (matcho/assert
+     {:status 200 :body string?}
+     (web/handle ztx 'zd.v2-test/api
+                 {:uri "/index/edit"
+                  :request-method :put
+                  :body (req-body ":zd/docname index\n:desc /")}))
+
+    (is (io/resource "zd/tdocs/index.zd"))
+
+    (is (= (slurp (io/resource "zd/tdocs/index.zd")) ":desc /")))
 
   #_(testing "rename with zd/docname"
-    (web/handle ztx 'zd.hsm-test/api {:uri "/index/edit"
-                                      :request-method :put
-                                      :body (req-body ":zd/docname readme.index\n:title \"mytitle\"\n:desc /")})
+      (web/handle ztx 'zd.hsm-test/api {:uri "/index/edit"
+                                        :request-method :put
+                                        :body (req-body ":zd/docname readme.index\n:title \"mytitle\"\n:desc /")})
 
-    (is (nil? (io/resource "zd/tdocs/index.zd")))
-    (is (io/resource "zd/tdocs/readme/index.zd"))
+      (is (nil? (io/resource "zd/tdocs/index.zd")))
+      (is (io/resource "zd/tdocs/readme/index.zd"))
 
-    (is (= (slurp (io/resource "zd/tdocs/readme/index.zd"))
-           ":title \"mytitle\"\n:desc /")))
+      (is (= (slurp (io/resource "zd/tdocs/readme/index.zd"))
+             ":title \"mytitle\"\n:desc /")))
 
-  ;; TODO upd backrefs
+  (testing "delete document"
+    (matcho/assert
+     {:status 200 :body "/index"}
+     (web/handle ztx 'zd.v2-test/api {:uri "/index" :request-method :delete}))
 
-  (matcho/assert
-   {:status 200 :body "/index"}
-   (web/handle ztx 'zd.test-system/api {:uri "/index" :request-method :delete}))
-
-  (is (nil? (io/resource "zd/tdocs/index.zd")))
+    (is (nil? (io/resource "zd/tdocs/index.zd"))))
 
   (zen/stop-system ztx))
