@@ -62,4 +62,6 @@
 
   (def result (parser/parse ztx {} sts))
 
-  (is (map? result)))
+  (is (map? result))
+
+  (matcho/assert {:zd/errors [{:type :block-err}]} result))

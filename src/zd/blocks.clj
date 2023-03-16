@@ -13,6 +13,15 @@
        (clojure.string/join ".")
        (str ".")))
 
+(defmethod methods/renderkey :link-badge
+  [ztx ctx {data :data k :key}]
+  [:div {:class (c :border [:m 1]  :inline-flex :rounded [:p 0])}
+   [:a {:href data
+        :target "_blank"
+        :class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :blue-600] {:font-weight "400"}
+                  [:hover [:bg :gray-200]])}
+    k]])
+
 (defmethod methods/renderkey :zd/invalid-links
   [ztx ctx {:keys [data] :as block}]
   [:div {:class (c  [:py 2] [:px 0])}
@@ -57,6 +66,7 @@
   (cond
     (or (string? data) (number? data)) (zd.zentext/parse-block ztx (str data) block)
     (symbol? data) (zd.impl/symbol-link ztx data)
+    (keyword? data) (zd.zentext/parse-block ztx (str data) block)
     (set? data)
     (->> data
          (mapv (fn [x] (methods/rendercontent ztx ctx (assoc block :data x))))
@@ -87,6 +97,14 @@
    [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
     key]
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
+    (methods/rendercontent ztx ctx block)]])
+
+(defmethod methods/renderkey :attribute
+  [ztx ctx {k :key :as block}]
+  [:div {:title "attribute" :class (c [:py 0.5] :flex :items-center [:space-x 4])}
+   [:div {:class (c  [:text :gray-600] {:font-weight "500"})}
+    k]
+   [:div {:class (c)}
     (methods/rendercontent ztx ctx block)]])
 
 (defmethod methods/renderkey :none

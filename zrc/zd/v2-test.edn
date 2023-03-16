@@ -1,0 +1,30 @@
+{:ns zd.v2-test
+ :import #{zen-web zd.v2}
+
+ zendoc
+ {:zen/bind zd.v2/config-binding
+  :zen/tags #{zen/start zd.v2/config}
+  :engine zd.v2/db
+  :paths ["test/zd/tdocs"]
+  :layout zd.v2/sidebar}
+
+ to-customers
+ {:zen/tags #{zen/op zen-web/op}
+  :engine zen-web.engines/redirect
+  :to "/customers"}
+
+ api
+ {:zen/tags #{zen-web/api}
+  :engine zen-web/routemap
+  :GET to-customers
+  :apis [zd.v2/api]}
+
+ http
+ {:zen/tags #{zen/start zen-web/http}
+  :engine zen-web/httpkit
+  :port 4444
+  :api zd.v2/api}
+
+ system
+ {:zen/tags #{zen/system}
+  :start [zendoc http]}}

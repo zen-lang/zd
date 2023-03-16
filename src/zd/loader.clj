@@ -6,18 +6,12 @@
    [zen-web.utils :refer [deep-merge]]
    [zd.parser :as parser]
    [clojure.java.io :as io]
-   [clojure.string :as str]))
+   [clojure.string :as str])
+  (:import [java.util Timer TimerTask]))
 
-(def blocks-meta
   ;; TODO use turtle/json ld
-  {:country {:block :badge}
-   :tags {:block :badge}
-   :rel {:block :badge}
-   :icon {:block :none}
-   :site {:block :badge}
-   :num-employees {:block :badge}
-   :funding {:block :badge}
-   :fhir-users {:block :badge}})
+(def blocks-meta
+  (read-string (slurp (io/resource "zd/blocks-meta.edn"))))
 
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
@@ -228,3 +222,90 @@
   (swap! ztx assoc :zrefs {})
   (zen/pub ztx 'zd/hard-reload {:dirs dirs})
   (load-dirs! ztx dirs))
+
+(defn debounce
+  ([f] (debounce f 300))
+  ([f timeout]
+   (let [timer (Timer.)
+         task (atom nil)]
+     (with-meta
+       (fn [& args]
+         (when-let [t ^TimerTask @task]
+           (.cancel t))
+         (let [new-task (proxy [TimerTask] []
+                          (run []
+                            (apply f args)
+                            (reset! task nil)
+                            (.purge timer)))]
+           (reset! task new-task)
+           (.schedule timer new-task timeout)))
+       {:task-atom task}))))
+
+(defn reload [ztx config]
+  ;; TODO emit zen event
+  (println :request-reload)
+  (debounce #(hard-reload! ztx (:paths config)))
+  :ok)
+
+(comment
+  (def ztx (zen/new-context {}))
+
+  (count (set (mapcat keys (vals (:zdb @ztx)))))
+
+  (first (vals (:zdb @ztx)))
+
+  (->> (:zdb @ztx)
+       (mapcat (fn [[d c]]
+                 (->> (filter (fn [[k v]] (= :tags k))
+                          c)
+                      (map (fn [[k v]] [k v (get-in c [:zd/meta :ann k])]))
+                      )))
+       first)
+
+  (->> (vals (:zdb @ztx))
+       (mapcat (fn [doc]
+                 (->> doc
+                      (remove (fn [[k v]]
+                                (or (= k :zd/meta)
+                                    (= k :zd/invalid-links)
+                                    (= k :zd/backlinks)
+                                    (= :title k)
+                                    (get blocks-meta k)
+                                    (and (= :edn (get-in doc [:zd/meta :ann k :zd/content-type]))
+                                         (or #_(= {} v) #_(string? v) #_(number? v) #_(symbol? v) (set? v)))
+                                    (= :zentext (get-in doc [:zd/meta :ann k :zd/content-type])))))
+                      #_(filter (fn [[k v]]
+                                  (and
+                                   (set? v)
+                                   (= :edn (get-in doc [:zd/meta :ann k :zd/content-type])))))
+                      (sort-by (fn [[k v]] k))
+                      (map (fn [[k v]] #_(dissoc (get-in doc [:zd/meta :ann k])
+                                                 :zd/content-type)
+                             #_k
+                             [k (get-in doc [:zd/meta :ann k]) v])))))
+       set
+       #_count
+       #_(map (fn [k] [k {:block :attribute}]))
+       #_(into {}))
+
+  (get-in @ztx [:zdb 'organizations.innovaccer])
+
+  (def e
+    (->> (:zdb @ztx)
+         (mapcat (fn [[d c]]
+                   (->> c
+                        (filter (fn [[k v]]
+                                  (let [m (get-in c [:zd/meta :ann k])]
+                                    (and (nil? (:badge m)) (= :badge (:block m))))))
+                        (map (fn [[k v]] k)))))
+         set))
+
+  (def c (count (keys (read-string (slurp (io/resource "zd/blocks-meta.edn"))))))
+
+  (->> (read-string (slurp (io/resource "zd/blocks-meta.edn")))
+       (remove (fn [[k v]] (contains? e k)))
+       (into {}))
+
+  (file-seq (io/file "../../docs"))
+
+  (hard-reload! ztx ["../../docs"]))

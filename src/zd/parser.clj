@@ -26,9 +26,9 @@
     (is-key? l) :key
     (is-doc? l) :doc))
 
-(defmulti parse! (fn [ztx ctx l acc] (btype l)))
+(defmulti parse! (fn [ztx ctx l acc] (btype (or l ""))))
 
-(defmulti collect! (fn [ztx ctx l acc] (btype l)))
+(defmulti collect! (fn [ztx ctx l acc] (btype (or l ""))))
 
 (defn get-lines [s]
   (line-seq (io/reader (StringReader. s))))
@@ -138,3 +138,10 @@
 
           :else
           (assoc ctx* key ls))))
+
+(defmethod parse! :default
+  [ztx ctx _ lines]
+  (update ctx :zd/errors conj
+          {:type :block-err
+           :message "can not parse block"
+           :lines lines}))

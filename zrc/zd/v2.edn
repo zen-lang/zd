@@ -1,0 +1,83 @@
+{:ns zd.v2
+ :import #{zen-web}
+
+ view
+ {:zen/tags {zen/tag zen/schema}
+  :zen/desc "opclass that renders hiccup by keypath"
+  :type zen/map}
+
+ sidebar
+ {:zen/tags #{view}
+  :zen/desc "left-sided sidebar"
+  :styles :common}
+
+ db
+ {:zen/tags #{zen/schema zen/engine}
+  :zen/state-key :zendoc-v2
+  :type zen/map}
+
+ config
+ {:zen/tags #{zen/tag zen/schema}
+  :type zen/map
+  :require #{:engine :paths}
+  :schema-key {:key :engine}
+  :keys {:zen/bind {:type zen/symbol
+                    :tags #{zen/binding}}
+         :paths {:type zen/vector
+                 :every {:type zen/string}}
+         :engine {:type zen/symbol}
+         :layout {:type zen/symbol
+                  :tags #{view}}}}
+
+ config-binding
+ {:zen/tags #{zen/tag zen/binding}}
+
+ serve-static
+ {:zen/tags #{zen/op zen-web/op}
+  :engine zen-web.engines/serve-static
+  :serve ["src"]}
+
+ to-index
+ {:zen/tags #{zen/op zen-web/op}
+  :engine zen-web.engines/redirect
+  :to "/index"}
+
+ render-doc
+ {:zen/tags #{zen/op zen-web/op}}
+
+ middleware
+ {:zen/tags #{zen/schema zen/tag}
+  :type zen/map
+  :keys {:zendoc-config {:type zen/symbol
+                         :tags #{zen/binding}}}}
+
+ append-doc
+ {:zen/tags #{zen-web/middleware zen/op zen-web/op middleware}
+  :zen/desc "resolve page from route-params to zen document"
+  :dir #{:in}}
+
+ append-config
+ {:zen/tags #{zen-web/middleware zen/op zen-web/op middleware}
+  :zen/desc "mount zendoc config from ztx"
+  :dir #{:in}
+  ;; TODO use zen binding
+  :zendoc-config config-binding}
+
+ dev-reload
+ {:zen/tags #{zen-web/middleware zen/op zen-web/op middleware}
+  :dir #{:in}}
+
+ layout
+ {:zen/tags #{zen-web/op zen/op zen-web/middleware middleware}
+  :zen/desc "wrap response in standard zd layout"
+  :dir #{:out}}
+
+ api
+ {:zen/tags #{zen-web/api}
+  :engine zen-web/routemap
+  :GET to-index
+  ;; TODO move zen web defaults to zen web core
+  :mw [zen-web/defaults]
+  [:id] {:mw [append-config dev-reload append-doc layout]
+         :GET render-doc}
+  "static" {:* {:GET serve-static}}}}

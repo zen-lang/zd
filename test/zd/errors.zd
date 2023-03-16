@@ -10,7 +10,11 @@ _^_table [:name ] :age]
 {:where []
  :limit 100}
 
+~:errorpath
+
 ;; ;; ;; invalid edn
 :map-inline {:mykey {:myval 1}
 
 just a string block
+
+^badge

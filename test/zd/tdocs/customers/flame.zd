@@ -4,7 +4,9 @@
 
 :rel #{rel.presale}
 
-:site "flame.com"
+:site "https://flame.com"
+
+:linkedin "https://www.linkedin.com/company/health-samurai"
 
 :fhir-users 23
 

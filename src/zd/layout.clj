@@ -122,8 +122,7 @@
                  (mapv (fn [[k v]] (:name v)))
                  (into ['index]))}))
 
-(defmethod methods/layout 'zd/sidebar
-  [ztx config content page]
+(defn sidebar-layout [ztx content]
   [:html
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
@@ -133,14 +132,14 @@
  #aside {display: none;}
  #topbar {display: none;}} "]
     [:meta {:charset "UTF-8"}]
-    (when-let [title (->> (:doc page)
-                          (filter #(= [:title] (:path %)))
-                          (first)
-                          (:data))]
-      [:title title])
+    ;; TODO fix title
+    #_(when-let [title (->> (:doc page)
+                            (filter #(= [:title] (:path %)))
+                            (first)
+                            (:data))]
+        [:title title])
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:link {:href "/static/js/fa/css/all.min.css", :rel "stylesheet"}]
-    ;; [:link  {:href "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"  :rel "stylesheet"}]
     [:link  {:href "/static/js/spinner.css"  :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
@@ -161,3 +160,13 @@
     [:script "hljs.highlightAll()"]
     [:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
     [:script "mermaid.initialize({startOnLoad:true});"]]])
+
+(defmethod methods/layout 'zd/sidebar
+  [ztx config content page]
+  ;; TODO emit zen event
+  (sidebar-layout ztx content))
+
+(defmethod methods/layout 'zd.v2/sidebar
+  [ztx config content page]
+  ;; TODO emit zen event
+  (sidebar-layout ztx content))
