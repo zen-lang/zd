@@ -47,7 +47,7 @@
      :body (methods/layout ztx (zen/get-symbol ztx lay-sym) bdy page)}))
 
 (defmethod zen/op 'zd.v2/render-widget
-  [ztx _cfg {{id :id wgt :widget-id} :route-params :keys [doc]} & opts]
+  [ztx _cfg {{id :id wgt :widget-id} :route-params :keys [doc] :as req} & opts]
   (if-not (nil? doc)
     {:status 200
      :body (methods/widget ztx wgt doc)}

@@ -13,6 +13,20 @@
        (clojure.string/join ".")
        (str ".")))
 
+(defmethod methods/renderkey :linkedin
+  [ztx {{m :zd/meta} :doc} {data :data :as block}]
+  (let [id (if (and data (not (str/blank? data)))
+             data
+             (last (str/split (str (:docname m)) #"\.")))]
+    [:a {:class (str "badge " (name (c :border [:m 1]  :inline-flex :rounded
+                                       [:py 1]
+                                       :text-sm [:text :blue-500] [:px 2])))
+         :href
+         (if (str/starts-with? (str (:docname m)) "organizations.")
+           (str "https://www.linkedin.com/company/" id "/")
+           (str "https://www.linkedin.com/in/" id "/"))}
+     [:i.fa-brands.fa-linkedin]]))
+
 (defmethod methods/renderkey :zd/docname
   [ztx ctx {data :data :as block}]
   [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}

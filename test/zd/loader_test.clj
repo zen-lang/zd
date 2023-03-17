@@ -14,7 +14,7 @@
 
 (defn load! [ztx]
   ;; TODO add trailing slash validation in system config
-  (loader/load-dirs! ztx ["test/zd/tdocs"]))
+  (loader/hard-reload! ztx ["test/zd/tdocs"]))
 
 (deftest document-tree-loaded
   (load! ztx)
@@ -90,6 +90,12 @@
   (testing "invalid links are collected"
     (matcho/assert {:zd/invalid-links [{:to 'rdfs.class
                                         :path [:meta :tags :#]
+                                        :doc 'customers}
+                                       {:to 'countries.ru,
+                                        :path [:country :#],
+                                        :doc 'customers}
+                                       {:to 'tags.telemed,
+                                        :path [:tags :#],
                                         :doc 'customers}]}
                    (loader/get-doc ztx 'customers))
 

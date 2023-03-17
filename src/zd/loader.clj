@@ -5,13 +5,16 @@
    [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
    [zd.parser :as parser]
+
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import [java.util Timer TimerTask]))
 
+(declare blocks-meta)
+
   ;; TODO use turtle/json ld
-(def blocks-meta
-  (read-string (slurp (io/resource "zd/blocks-meta.edn"))))
+(defn read-meta! [ztx]
+  (def blocks-meta (read-string (slurp (io/resource "zd/blocks-meta.edn")))))
 
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
@@ -58,18 +61,20 @@
          syms #{}]
     (if (nil? acc)
       syms
-      (let [[_ r] (parser/split #(= % ch) acc)
-            [l tail] (parser/split #(or (= % \space)
-                                        (= % \newline))
-                                   r)
-            sym (->> (if (= (last l) \.)
-                       (butlast (rest l))
-                       (rest l))
-                     (apply str)
-                     symbol)]
-        (if (nil? r)
-          syms
-          (recur tail (conj syms sym)))))))
+      (let [[l r] (parser/split #(= % ch) acc)
+            [le tail] (parser/split #(or (= % \space)
+                                         (= % \newline))
+                                    r)]
+        (cond
+          (nil? r) syms
+          (not= (last l) \space) (recur tail syms)
+          :else
+          (let [sym (->> (if (= (last le) \.)
+                           (butlast (rest le))
+                           (rest le))
+                         (apply str)
+                         symbol)]
+            (recur tail (conj syms sym))))))))
 
 (defn zentext-links [acc docname path cnt]
   (let [links (find-symbols \# cnt)
@@ -224,6 +229,7 @@
 (defn hard-reload! [ztx dirs]
   (swap! ztx dissoc :zdb)
   (swap! ztx assoc :zrefs {})
+  (read-meta! ztx)
   (zen/pub ztx 'zd/hard-reload {:dirs dirs})
   (load-dirs! ztx dirs))
 
