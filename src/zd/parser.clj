@@ -76,7 +76,8 @@
   (try (or (reader/parse-string v) {})
        (catch Exception e
          ;; TODO emit event
-         (do (prn ":parsing error " e) v))))
+         (do (prn ":saferead parsing warning")
+             v))))
 
 (defmethod parse! :doc
   [ztx ctx _ [doc & ls]]

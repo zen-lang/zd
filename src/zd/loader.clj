@@ -5,7 +5,6 @@
    [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
    [zd.parser :as parser]
-
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import [java.util Timer TimerTask]))
@@ -56,6 +55,8 @@
 (defn edn-links [acc docname path cnt]
   (*edn-links acc docname path cnt))
 
+(def exclude #{\? \. \! \; \,})
+
 (defn find-symbols [ch cnt]
   (loop [acc (seq cnt)
          syms #{}]
@@ -69,9 +70,10 @@
           (nil? r) syms
           (not= (last l) \space) (recur tail syms)
           :else
-          (let [sym (->> (if (= (last le) \.)
-                           (butlast (rest le))
-                           (rest le))
+          (let [sym (->> (rest le)
+                         (reverse)
+                         (drop-while #(contains? exclude %))
+                         (reverse)
                          (apply str)
                          symbol)]
             (recur tail (conj syms sym))))))))
@@ -152,7 +154,7 @@
     (swap! ztx update :zrefs patch-links links)
     (swap! ztx update :zd/keys (fnil into #{}) (keys doc))
     (swap! ztx assoc-in [:zd/macros docname] macros)
-    (zen/pub ztx 'zd/on-doc-create doc)))
+    (zen/pub ztx 'zd.v2/on-doc-create doc)))
 
 (defn load-docs! [ztx dirs]
   (doseq [dir dirs]

@@ -16,6 +16,32 @@
   :zen/state-key :zendoc-v2
   :type zen/map}
 
+ on-doc-create
+ {:zen/tags #{zen/event zen/schema}
+  :zen/desc "Event on resource load or reload"
+  :type zen/map
+  :keys {:zd/meta {:type zen/map}}}
+
+ datalog-sync
+ {:zen/tags #{zen/sub}
+  :events #{on-doc-create}}
+
+ query
+ {:zen/tags #{zen/op}
+  :zen/desc "datalog query"}
+
+ submit
+ {:zen/tags #{zen/op}
+  :zen/desc "datalog submit"}
+
+ datalog
+ {:zen/tags #{zen/schema zen/engine zen/tag}
+  :zen/desc "Datalog engine"
+  :zen/state-key :datalog
+  :keys {:engine {:type zen/symbol
+                  :tags #{zen/engine}}}
+  :type zen/map}
+
  config
  {:zen/tags #{zen/tag zen/schema}
   :type zen/map

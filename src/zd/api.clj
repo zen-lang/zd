@@ -1,5 +1,7 @@
 (ns zd.api
   (:require
+   [clojure.walk :as walk]
+   [xtdb.api :as xt]
    [hiccup.core :as hiccup]
    [zd.loader :as loader]
    [zd.parser :as parser]
@@ -143,13 +145,60 @@
              (hiccup/html))
    :status 200})
 
+(defn get-node [ztx]
+  (get-in @ztx [:zen/state :datalog :state]))
+
+(defn submit [ztx data]
+  (if-let [node (get-node ztx)]
+    (xt/submit-tx node [[::xt/put data]])
+    :no/xtdb))
+
+(defn query [ztx query]
+  (if-let [node (get-node ztx)]
+    (xt/q (xt/db node) query)
+    :no/xtdb))
+
+(defn stringify [m]
+  (walk/postwalk (fn [x] (if (symbol? x) (str x) x)) m))
+
+(defmethod zen/op 'zd.v2/query
+  [ztx config params & [session]]
+  (query ztx params))
+
+(defmethod zen/op 'zd.v2/submit
+  [ztx _config params & [_session]]
+  (submit ztx params))
+
+(defmethod zen/op 'zd.v2/datalog-sync
+  [ztx _config {_ev :ev doc :params} & [_session]]
+  (println 'on-doc-create)
+  (let [id (get-in doc [:zd/meta :docname])]
+    (submit ztx
+            (assoc (stringify (dissoc doc :zd/back-links :zd/invalid-links))
+                   :xt/id (str id)
+                   :parent (str/join "." (butlast (str/split (str id) #"\.")))))))
+
 (defmethod zen/start 'zd.v2/db
   [ztx config & opts]
+  ;; TODO emit zen event
+  (println 'starting-zen-db)
   (loader/hard-reload! ztx (:paths config))
   config)
 
 (defmethod zen/stop 'zd.v2/db
   [ztx config & opts]
+  ;; TODO emit zen event
+  (println 'stopping-zen-db)
   ;; TODO dissoc zendoc state from memory
   )
+
+(defmethod zen/start 'zd.v2/datalog
+  [ztx config & opts]
+  (println 'starting-datalog)
+  (xt/start-node {}))
+
+(defmethod zen/stop 'zd.v2/datalog
+  [ztx config state]
+  (println 'stopping-datalog)
+  (.close state))
 

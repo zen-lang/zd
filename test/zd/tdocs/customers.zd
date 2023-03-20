@@ -7,7 +7,9 @@
 
 a description that refers to #people.john and mentions @people.todd.
 
-it also refers to #customers.flame and even mentions #people.john twice!
+have you seen it @people.todd?
+
+it also refers to #customers.flame and even mentions #people.john!
 
 there is also a link that uses hash - [[a https://docs.google.com/spreadsheets/d/1BbaAQLo2RaktkKJQxyDN2cqTNbit4mnA/edit#gid=1568783766]]
 

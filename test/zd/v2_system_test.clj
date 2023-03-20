@@ -25,8 +25,6 @@
 
   (is (= :zen/loaded (zen/read-ns ztx 'zd.v2-test)))
 
-  (zen/get-symbol ztx 'zd.v2/api)
-
   (zen/start-system ztx 'zd.v2-test/system)
 
   (is :system-started)

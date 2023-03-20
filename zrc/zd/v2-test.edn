@@ -1,6 +1,10 @@
 {:ns zd.v2-test
  :import #{zen-web zd.v2}
 
+ datalog
+ {:zen/tags #{zen/start zd.v2/datalog}
+  :engine zd.v2/datalog}
+
  zendoc
  {:zen/bind zd.v2/config-binding
   :zen/tags #{zen/start zd.v2/config}
@@ -27,4 +31,4 @@
 
  system
  {:zen/tags #{zen/system}
-  :start [zendoc http]}}
+  :start [datalog zendoc http]}}
