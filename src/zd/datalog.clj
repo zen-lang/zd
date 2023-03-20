@@ -6,6 +6,7 @@
 
 (defmethod zen/start 'zd.v2/datalog
   [ztx config & opts]
+  ;; TODO add zen pub sub event
   (println 'starting-datalog)
   (xt/start-node {}))
 
@@ -43,6 +44,14 @@
   [ztx _config params & [_session]]
   (submit ztx params))
 
+(defmethod zen/op 'zd/query
+  [ztx config params & [session]]
+  (query ztx params))
+
+(defmethod zen/op 'zd/submit
+  [ztx _config params & [_session]]
+  (submit ztx params))
+
 (defn stringify [m]
   (walk/postwalk (fn [x] (if (symbol? x) (str x) x)) m))
 
@@ -57,17 +66,6 @@
                        :parent (str/join "." (butlast (str/split (str id) #"\.")))))]
     ;; TODO where does result go in pub/sub?
     result))
-
-(defmethod zen/op 'zd/query
-  [ztx config params & [session]]
-  (query ztx params))
-
-(defmethod zen/op 'zd/submit
-  [ztx _config params & [_session]]
-  (submit ztx params))
-
-(defn stringify [m]
-  (clojure.walk/postwalk (fn [x] (if (symbol? x) (str x) x)) m))
 
 (defmethod zen/op 'zd/datalog-sync
   [ztx _config {_ev :ev res :params} & [_session]]

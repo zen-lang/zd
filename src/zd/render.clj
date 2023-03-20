@@ -91,9 +91,16 @@
 
 (defn render-blocks [ztx ctx doc]
   [:div {:class (c [:pt 4])}
-   (for [key (get-in doc [:zd/meta :doc])]
-     (when (get doc key)
-       (methods/renderkey ztx ctx (get-block ztx doc key))))])
+   (doall
+    (for [k (get-in doc [:zd/meta :doc])]
+      (when (get doc k)
+        (try (methods/renderkey ztx ctx (get-block ztx doc k))
+             (catch Exception e
+               (let [err {:message (str "render " k " - " (.getMessage e))
+                          :type :zd/renderkey-error}]
+                 ;; TODO add zen pub/sub event
+                 (println 'error-rendering-key k)
+                 (methods/renderkey ztx ctx {:data [err] :key :zd/errors})))))))])
 
 (defn render-doc [ztx ctx doc]
   [:div {:class (c :flex :flex-1)}

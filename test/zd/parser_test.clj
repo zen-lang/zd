@@ -18,9 +18,10 @@
     (matcho/assert
      {:title "my title"
       :desc "my desc"
+      :myemptykey nil?
       :map-inline map?
       :query list?
-      :zd/meta {:ann {:desc {:badge map?}
+      :zd/meta {:ann {:desc {:badge nil?}
                       :query {:table [:name :age]}}}}
      result))
 
@@ -41,7 +42,7 @@
   (testing "sub documents are parsed recursively"
     (matcho/assert
      {:zd/meta
-      {:doc [:title :desc :map-inline :query :query-map :text :customers :nested :nested-2]}
+      {:doc [:title :myemptykey :desc :map-inline :query :query-map :text :customers :nested :nested-2]}
       :zd/subdocs
       {:nested
        {:zd/meta {:doc [:mykey :another-key :mykey :path]}

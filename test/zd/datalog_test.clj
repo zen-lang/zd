@@ -21,8 +21,8 @@
   (zen/start-system ztx 'zd.v2-test/system)
 
   (matcho/assert
-   #{[{:xt/id "customers.flame"}]}
-   (datalog/query ztx '{:find [(pull e [:xt/id])]
+   #{["customers.flame"]}
+   (datalog/query ztx '{:find [e]
                         :where [[e :parent "customers"]]}))
 
   (matcho/assert

@@ -73,7 +73,7 @@
     [(conj cnt l) tail]))
 
 (defn saferead [v]
-  (try (or (reader/parse-string v) {})
+  (try (reader/parse-string v)
        (catch Exception e
          ;; TODO emit event
          (do (prn ":saferead parsing warning")

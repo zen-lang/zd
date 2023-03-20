@@ -60,6 +60,6 @@
 (defmethod render-cell :default
   [ztx ctx key row]
   (when-let [v (get row key)]
-    (with-out-str (pprint/pprint v))))
+    [:span (with-out-str (pprint/pprint v))]))
 
 

@@ -1,6 +1,8 @@
 ;; just a string block
 :title "my title"
 
+:myemptykey
+
 ;; a string block with annotation
 ^badge
 :desc "my desc"
