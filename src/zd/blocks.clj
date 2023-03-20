@@ -1,5 +1,7 @@
 (ns zd.blocks
   (:require
+   [zd.datalog :as d]
+   [zd.loader :as loader]
    [zd.link :as link]
    [zd.zentext :as zentext]
    [clojure.pprint :as pprint]
@@ -218,3 +220,59 @@
                         (into [:tr]
                               (->> x (mapv (fn [v] [:td {:class (c [:px 4] [:py 2] :border)} v]))))))))]))
 
+(defmethod methods/render-cell :xt/id
+  [ztx ctx key {:keys [xt/id]}]
+  (let [res (loader/get-doc ztx (symbol id))]
+    [:a {:href (str "/" id) :class (c :inline-flex [:px 2] [:py 1] :items-center [:text :blue-600] [:hover [:underline]])}
+     (link/icon ztx res)
+     (:title res)]))
+
+(defmethod methods/render-cell :tags
+  [ztx ctx key {:keys [tags]}]
+  (when (not-empty tags)
+    [:div {:class (c [:px 2] [:py 0.5] :text-sm)}
+     (for [t tags]
+       [:span {:class (c [:py 1] :block)} (link/symbol-link ztx t)])]))
+
+(defmethod methods/render-cell :needs
+  [ztx ctx key {:keys [needs]}]
+  (let [arg {:data (if (string? needs) needs "")
+             :ann {:zd/content-type :zentext}
+             :key :customer-needs}]
+    [:span {:class (c [:px 2] [:py 0.5])}
+     (methods/rendercontent ztx ctx arg)]))
+
+(defmethod methods/render-cell :rel
+  [ztx ctx key row]
+  [:div
+   (for [r (:rel row)]
+     [:span {:class (c :block [:py 1])}
+      (when (string? r)
+        (link/symbol-link ztx (symbol r)))])])
+
+(defmethod methods/rendercontent :datalog
+  [ztx ctx {{headers :table-of} :ann data :data :as block}]
+  (try
+    (let [result (map first (d/query ztx data))
+          headers* (or headers (seq (set (mapcat keys result))))]
+
+      [:table {:class (c :shadow-sm :rounded)
+               :style {:display "block"
+                       :overflow-x "overlay"}}
+       [:thead
+        (->> headers*
+             (map (fn [k]
+                    [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
+                     (str/lower-case (name k))]))
+             (into [:tr]))]
+       (->> (if (seq headers)
+              (sort-by #(get % (first headers)) result)
+              result)
+            (mapv (fn [row]
+                    [:tr
+                     (for [h headers*]
+                       [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
+                        (methods/render-cell ztx ctx h row)])]))
+            (into [:tbody]))])
+    (catch Exception e
+      [:div (pr-str data) [:br] (pr-str e)])))

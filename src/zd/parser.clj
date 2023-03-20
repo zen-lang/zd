@@ -137,6 +137,9 @@
           (= :zentext cnt-type)
           (assoc ctx* key (str/join "\n" ls))
 
+          (= :datalog cnt-type)
+          (assoc ctx* key (saferead (str/join "\n" ls)))
+
           :else
           (assoc ctx* key ls))))
 

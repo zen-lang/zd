@@ -89,13 +89,13 @@
 
   (testing "invalid links are collected"
     (matcho/assert {:zd/invalid-links [{:to 'rdfs.class
-                                        :path [:meta :tags :#]
+                                        :path [:meta :tags]
                                         :doc 'customers}
                                        {:to 'countries.ru,
-                                        :path [:country :#],
+                                        :path [:country],
                                         :doc 'customers}
                                        {:to 'tags.telemed,
-                                        :path [:tags :#],
+                                        :path [:tags],
                                         :doc 'customers}]}
                    (loader/get-doc ztx 'customers))
 

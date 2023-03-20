@@ -1,5 +1,6 @@
 (ns zd.methods
   (:require
+   [clojure.pprint :as pprint]
    [clojure.string :as str]
    [zen.core :as zen]
    [stylo.core :refer [c]]))
@@ -18,8 +19,8 @@
                           (get-in block [:ann :zd/content-type])))
 
 (defmethod rendercontent :default
-  [ztx ctx block]
-  [:pre (pr-str block)])
+  [ztx ctx {:keys [data]}]
+  [:pre (with-out-str (pprint/pprint data))])
 
 (defmulti renderkey (fn [ztx ctx block]
                       (or (get-in block [:ann :block])
@@ -53,3 +54,12 @@
   {:error {:message (str (pr-str macro) " implementation not found")
            :type "macro-notfound"
            :docpath docpath}})
+
+(defmulti render-cell (fn [ztx ctx key data] key))
+
+(defmethod render-cell :default
+  [ztx ctx key row]
+  (when-let [v (get row key)]
+    (with-out-str (pprint/pprint v))))
+
+

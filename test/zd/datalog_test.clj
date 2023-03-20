@@ -1,8 +1,10 @@
 (ns zd.datalog-test
-  (:require [zd.api :as api]
-            [clojure.test :refer [deftest is testing]]
-            [zen.core :as zen]
-            [matcho.core :as matcho]))
+  (:require
+   [zd.api]
+   [zd.datalog :as datalog]
+   [clojure.test :refer [deftest is testing]]
+   [zen.core :as zen]
+   [matcho.core :as matcho]))
 
 (defonce ztx (zen/new-context {}))
 
@@ -20,13 +22,13 @@
 
   (matcho/assert
    #{[{:xt/id "customers.flame"}]}
-   (api/query ztx '{:find [(pull e [:xt/id])]
-                    :where [[e :parent "customers"]]}))
+   (datalog/query ztx '{:find [(pull e [:xt/id])]
+                        :where [[e :parent "customers"]]}))
 
   (matcho/assert
    #{[{:xt/id "people.john" :name "John"}]}
-   (api/query ztx '{:find [(pull e [:xt/id :name])]
-                    :where [[e :role "ceo"]]}))
+   (datalog/query ztx '{:find [(pull e [:xt/id :name])]
+                        :where [[e :role "ceo"]]}))
 
   (zen/stop-system ztx))
 

@@ -40,7 +40,7 @@
             node)
 
     (set? node)
-    (reduce #(*edn-links %1 docname (conj path :#) %2)
+    (reduce #(*edn-links %1 docname path %2)
             acc
             node)
 

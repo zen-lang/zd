@@ -32,11 +32,8 @@
     (matcho/assert
      {:query-map map?
       :text string?
-      :customers strings?
       :zd/meta {:ann
                 {:query-map {:zd/content-type :edn}
-                 :customers {:zd/content-type :datalog
-                             :table [:zt/id :rel]}
                  :text {:zd/content-type :zentext}}}}
 
      result))
@@ -65,3 +62,14 @@
   (is (map? result))
 
   (matcho/assert {:zd/errors [{:type :block-err}]} result))
+
+(deftest datalog-query
+  (def ztx (zen/new-context {}))
+
+  (def sts (slurp (io/resource "zd/parser.zd")))
+
+  (matcho/assert
+   {:customers map?
+    :zd/meta {:ann {:customers {:zd/content-type :datalog
+                                :table-of vector?}}}}
+   (parser/parse ztx {} sts)))

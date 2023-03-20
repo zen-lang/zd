@@ -27,7 +27,7 @@ It is truly multiline
 *** lists
 
 ;; a datalog query
-^table [:zt/id :rel]
+^table-of [:xd/id :rel]
 :customers datalog/
 
 {:find [(pull e [:xt/id :rel :needs :tags])]
