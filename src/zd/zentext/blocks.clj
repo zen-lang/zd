@@ -26,6 +26,43 @@
   [ztx m s ctx]
   (link/symbol-link ztx s))
 
+(defmethod methods/inline-method :mention
+  [ztx m s ctx]
+  (link/symbol-link ztx (symbol (str "people." s))))
+
+(defmethod methods/inline-method :bold
+  [ztx m s ctx]
+  [:b s])
+
+(defmethod methods/inline-method :italic
+  [ztx m s ctx]
+  [:i s])
+
+(defmethod methods/inline-method :x
+  [ztx m s ctx]
+  [:i.fa-solid.fa-square-check {:class (name (c [:text :green-600]))}])
+
+(defmethod methods/inline-method :fa
+  [ztx m s ctx]
+  (let [cls (->>
+             (str/split s #"\s")
+             (mapv str/trim)
+             (remove str/blank?)
+             (mapv (fn [x] (if (str/starts-with? x ":") (subs x 1) x)))
+             (str/join " "))]
+    [:i {:class cls}]))
+
+(defmethod methods/inline-method :md/link
+  [ztx m s ctx]
+  (let [[txt href] (str/split s #"\]\(" 2)]
+    [:a {:href href :class (c [:text :blue-600] [:hover [:underline]])} txt]))
+
+(defmethod methods/inline-method :md/img
+  [ztx m s ctx]
+  (let [[txt href] (str/split s #"\]\(" 2)]
+    [:img {:src href :alt txt}]))
+
+
 (defmethod methods/inline-method :code
   [ztx m s ctx]
   [:code {:class (c [:px 1.5] [:py 1] [:bg :gray-200]

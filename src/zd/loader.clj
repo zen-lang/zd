@@ -269,9 +269,8 @@
   (->> (:zdb @ztx)
        (mapcat (fn [[d c]]
                  (->> (filter (fn [[k v]] (= :tags k))
-                          c)
-                      (map (fn [[k v]] [k v (get-in c [:zd/meta :ann k])]))
-                      )))
+                              c)
+                      (map (fn [[k v]] [k v (get-in c [:zd/meta :ann k])])))))
        first)
 
   (->> (vals (:zdb @ztx))
@@ -315,7 +314,10 @@
   (def c (count (keys (read-string (slurp (io/resource "zd/blocks-meta.edn"))))))
 
   (->> (read-string (slurp (io/resource "zd/blocks-meta.edn")))
-       (remove (fn [[k v]] (contains? e k)))
+       (map (fn [[k v]]
+              [k
+               (into {} (map (fn [[_ v]] [v {}])
+                             v))]))
        (into {}))
 
   (file-seq (io/file "../../docs"))

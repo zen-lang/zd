@@ -15,7 +15,7 @@ there is also a link that uses hash - [[a https://docs.google.com/spreadsheets/d
 
 :country #{countries.ru}
 
-:tags #{tags.telemed}
+:tags [tags.telemed]
 
 :best-customer people.john
 

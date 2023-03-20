@@ -108,9 +108,9 @@
 
   (matcho/assert
    {:zd/meta
-    {:ann {:rel {:block :badge}
-           :tags {:block :badge}
-           :icon {:block :none}
-           :country {:block :badge}}}}
+    {:ann {:rel {:zd/content-type :edn, :badge {}},
+           :tags {:zd/content-type :edn, :badge {}},
+           :icon {:zd/content-type :edn, :none {}},
+           :country {:zd/content-type :edn, :badge {}}}}}
    (loader/get-doc ztx 'customers.flame)))
 

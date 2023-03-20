@@ -23,15 +23,23 @@
   [:pre (with-out-str (pprint/pprint data))])
 
 (defmulti renderkey (fn [ztx ctx block]
-                      (or (get-in block [:ann :block])
-                          (:key block))))
+                      (if-let [[block-key cfg]
+                               (->> (:ann block)
+                                    (remove (fn [[k _]]
+                                              (= "zd" (namespace k))))
+                                    (first))]
+                        block-key
+                        (:key block))))
 
 (defmethod renderkey :default [ztx ctx {kp :key :as block}]
   [:div.zd-block
    [:h2 {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
     [:div {:class (c :flex :flex-1)}
      ;; TODO add collapse annotation for default view?
-     [:a {:id kp :href (str "#" kp)} (str/capitalize (name kp))]]]
+     [:a {:id kp :href (str "#" kp)}
+      (-> (name kp)
+          (str/replace "-" " ")
+          (str/capitalize))]]]
    [:div.zd-content (rendercontent ztx ctx block)]])
 
 (defmulti layout

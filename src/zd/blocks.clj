@@ -12,7 +12,10 @@
 
 (defn keystr [key]
   (->> key
-       (map name)
+       (map (fn [k]
+              (if (keyword? k)
+                (name k)
+                (str k))))
        (clojure.string/join ".")
        (str ".")))
 
@@ -94,7 +97,8 @@
     (or (string? data) (number? data)) (zd.zentext/parse-block ztx (str data) block)
     (symbol? data) (link/symbol-link ztx data)
     (keyword? data) (zd.zentext/parse-block ztx (str data) block)
-    (set? data)
+    (or (set? data) (and (vector? data)
+                         (every? symbol? data)))
     (->> data
          (mapv (fn [x] (methods/rendercontent ztx ctx (assoc block :data x))))
          (into [:div {:class (c :flex [:space-x 3] {:flex-wrap "wrap"})}
@@ -142,7 +146,7 @@
   (let [res (loader/get-doc ztx (symbol id))]
     [:a {:href (str "/" id) :class (c :inline-flex [:px 2] [:py 1] :items-center [:text :blue-600] [:hover [:underline]])}
      (link/icon ztx res)
-     (:title res)]))
+     (or (:title res) (symbol id))]))
 
 (defmethod methods/render-cell :tags
   [ztx ctx key {:keys [tags]}]
@@ -167,29 +171,32 @@
       (when (string? r)
         (link/symbol-link ztx (symbol r)))])])
 
+(defn table [ztx ctx headers data]
+  [:table {:class (c :shadow-sm :rounded)
+           :style {:display "block"
+                   :overflow-x "overlay"}}
+   [:thead
+    (->> headers
+         (map (fn [k]
+                [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
+                 (str/lower-case (name k))]))
+         (into [:tr]))]
+   (->> (if (seq headers)
+          (sort-by #(get % (first headers)) data)
+          data)
+        (mapv (fn [row]
+                [:tr
+                 (doall
+                  (for [h headers]
+                    [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
+                     (methods/render-cell ztx ctx h row)]))]))
+        (into [:tbody]))])
+
 (defmethod methods/rendercontent :datalog
   [ztx ctx {{headers :table-of} :ann data :data :as block}]
   (let [result (map first (d/query ztx data))
         headers* (or headers (seq (set (mapcat keys result))))]
-    [:table {:class (c :shadow-sm :rounded)
-             :style {:display "block"
-                     :overflow-x "overlay"}}
-     [:thead
-      (->> headers*
-           (map (fn [k]
-                  [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
-                   (str/lower-case (name k))]))
-           (into [:tr]))]
-     (->> (if (seq headers)
-            (sort-by #(get % (first headers)) result)
-            result)
-          (mapv (fn [row]
-                  [:tr
-                   (doall
-                    (for [h headers*]
-                      [:td {:class (c [:px 4] [:py 2] :border {:vertical-align "top"})}
-                       (methods/render-cell ztx ctx h row)]))]))
-          (into [:tbody]))]))
+    (table ztx ctx headers* result)))
 
 (defmethod methods/renderkey :zd/errors
   [ztx ctx {errors :data k :key :as block}]
@@ -200,3 +207,9 @@
        [:li {:class (c [:mb 1] :flex [:space-x 3])}
         [:span {:class (c [:text :green-600])} (str (:path err))]
         [:span {:class (c)} (:message err)]])]))
+
+(defmethod methods/renderkey :table
+  [ztx ctx {{headers :table} :annotations data :data}]
+  (if (and (sequential? data) (every? map? data))
+    (table ztx ctx (or headers (keys (first data))) data)
+    [:pre (pr-str data)]))
