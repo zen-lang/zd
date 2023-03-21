@@ -93,30 +93,34 @@
                               :transition "all 0.26s"}]]]])
 
 (defn build-navigation [ztx]
+  ;; TODO think about caching navigation tree
   (let [resources
         (reduce (fn [acc [k v]]
-                  (assoc acc k (select-keys v [:title :tags :icon :logo :desc :menu-order])))
+                  (assoc acc k (select-keys v [:title :tags :icon :logo :desc])))
                 {}
                 (:zdb @ztx))
 
         tree
-        (reduce (fn [acc [k v]]
-                  (let [path (str/split (name k) #"\.")]
-                    (assoc-in acc path {:name k})))
-                {}
-                resources)
+        (->> resources
+             (sort-by (fn [[k _]] (name k)))
+             (reduce (fn [acc [k _]]
+                       (let [path (str/split (name k) #"\.")]
+                         ;; TODO add menu order from metadata to tree
+                         (assoc-in acc path {:name k})))
+                     {}))
 
         resources
-        (reduce (fn [acc [k v]]
-                  (let [path (str/split (name k) #"\.")
-                        items (dissoc (get-in tree path) :name)]
-                    (assoc acc k
-                           (cond-> (assoc v :name k)
-                             (seq items) (assoc :items
-                                                (mapv (fn [[kk v]] (or (:name v) (str k "." kk)))
-                                                      items))))))
-                {}
-                resources)]
+        (->> resources
+             (reduce (fn [acc [k v]]
+                       (let [path (str/split (name k) #"\.")
+                             items (dissoc (get-in tree path) :menu-order :name)]
+                         (assoc acc k
+                                (cond-> (assoc v :name k)
+                                  (seq items) (assoc :items
+                                                     (->> items
+                                                          (sort-by (fn [[k v]] [(or (:menu-order v) 100000) k]))
+                                                          (mapv (fn [[kk v]] (or (:name v) (str k "." kk))))))))))
+                     {}))]
     {:resources resources
      :tree tree
      :items (->> (dissoc tree 'index)
@@ -162,7 +166,7 @@
     #_[:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
     #_[:script "mermaid.initialize({startOnLoad:true});"]]])
 
-(defmethod methods/layout 'zd/sidebar
+#_(defmethod methods/layout 'zd/sidebar
   [ztx config content page]
   ;; TODO emit zen event
   (sidebar-layout ztx content))
