@@ -194,9 +194,20 @@
 
 (defmethod methods/rendercontent :datalog
   [ztx ctx {{headers :table-of} :ann data :data :as block}]
-  (let [result (map first (d/query ztx data))
-        headers* (or headers (seq (set (mapcat keys result))))]
-    (table ztx ctx headers* result)))
+  (let [result (d/query ztx data)]
+    (cond
+      (not-empty headers) (table ztx ctx headers (map first result))
+      ;; TODO think about this table predicate
+      (and (set? result)
+           (every? vector? result))
+      (let [headers* (->> (map first result)
+                          (mapcat keys)
+                          (set))]
+        (table ztx ctx headers* (map first result)))
+      :else
+      (methods/rendercontent ztx ctx {:data result
+                                      :k (:key block)
+                                      :ann {:zd/content-type :edn}}))))
 
 (defmethod methods/renderkey :zd/errors
   [ztx ctx {errors :data k :key :as block}]

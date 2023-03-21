@@ -93,14 +93,13 @@
   [:div {:class (c [:pt 4])}
    (doall
     (for [k (get-in doc [:zd/meta :doc])]
-      (when (get doc k)
-        (try (methods/renderkey ztx ctx (get-block ztx doc k))
-             (catch Exception e
-               (let [err {:message (str "render " k " - " (.getMessage e))
-                          :type :zd/renderkey-error}]
+      (try (methods/renderkey ztx ctx (get-block ztx doc k))
+           (catch Exception e
+             (let [err {:message (str "render " k " - " (.getMessage e))
+                        :type :zd/renderkey-error}]
                  ;; TODO add zen pub/sub event
-                 (println 'error-rendering-key k)
-                 (methods/renderkey ztx ctx {:data [err] :key :zd/errors})))))))])
+               (println 'error-rendering-key k)
+               (methods/renderkey ztx ctx {:data [err] :key :zd/errors}))))))])
 
 (defn render-doc [ztx ctx doc]
   [:div {:class (c :flex :flex-1)}

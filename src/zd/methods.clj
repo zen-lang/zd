@@ -66,8 +66,8 @@
 (defmulti render-cell (fn [ztx ctx key data] key))
 
 (defmethod render-cell :default
-  [ztx ctx key row]
-  (when-let [v (get row key)]
-    [:span (with-out-str (pprint/pprint v))]))
+  [ztx ctx k row]
+  (when-let [v (get row k)]
+    (rendercontent ztx ctx {:data v :key k :ann {:zd/content-type :edn}})))
 
 
