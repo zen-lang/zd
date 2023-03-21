@@ -97,6 +97,7 @@
            (catch Exception e
              (let [err {:message (str "render " k " - " (.getMessage e))
                         :type :zd/renderkey-error}]
+               #_(clojure.pprint/pprint e)
                  ;; TODO add zen pub/sub event
                (println 'error-rendering-key k)
                (methods/renderkey ztx ctx {:data [err] :key :zd/errors}))))))])

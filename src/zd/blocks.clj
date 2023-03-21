@@ -141,6 +141,9 @@
 (defmethod methods/renderkey :none
   [ztx ctx block])
 
+(defmethod methods/renderkey :hide
+  [ztx ctx block])
+
 (defmethod methods/render-cell :xt/id
   [ztx ctx key {:keys [xt/id]}]
   (let [res (loader/get-doc ztx (symbol id))]
@@ -181,9 +184,12 @@
                 [:th {:class (c [:px 4] [:py 2] :border [:bg :gray-100])}
                  (str/lower-case (name k))]))
          (into [:tr]))]
-   (->> (if (seq headers)
-          (sort-by #(get % (first headers)) data)
-          data)
+   (->> data
+        (sort-by (fn [r]
+                   (if-let [v (get r (first headers))]
+                     (if (string? v)
+                       v
+                       (pr-str v)))))
         (mapv (fn [row]
                 [:tr
                  (doall
@@ -196,13 +202,14 @@
   [ztx ctx {{headers :table-of} :ann data :data :as block}]
   (let [result (d/query ztx data)]
     (cond
-      (not-empty headers) (table ztx ctx headers (map first result))
+      (seq headers) (table ztx ctx headers (map first result))
       ;; TODO think about this table predicate
       (and (set? result)
            (every? vector? result))
       (let [headers* (->> (map first result)
                           (mapcat keys)
-                          (set))]
+                          (set)
+                          (sort-by name))]
         (table ztx ctx headers* (map first result)))
       :else
       (methods/rendercontent ztx ctx {:data result

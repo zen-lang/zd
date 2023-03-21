@@ -93,32 +93,33 @@
                               :transition "all 0.26s"}]]]])
 
 (defn build-navigation [ztx]
-  (let [resources (->> (:zdb @ztx)
-                       (sort-by first)
-                       (reduce (fn [acc [k v]]
-                                 (assoc acc k (select-keys (:resource v) [:title :tags :icon :logo :desc :menu-order]))) {}))
-        tree (->> resources
-                  (sort-by first)
-                  (reduce (fn [acc [k v]]
-                            (let [path (str/split (name k) #"\.")]
-                              (assoc-in acc path (-> (if-let [mo (:menu-order v)] {:menu-order mo} {})
-                                                     (assoc :name k)))))
-                          {}))
-        resources (->> resources
-                       (reduce (fn [acc [k v]]
-                                 (let [path (str/split (name k) #"\.")
-                                       items (dissoc (get-in tree path) :menu-order :name)]
-                                   (assoc acc k
-                                          (cond-> (assoc v :name k)
-                                            (seq items) (assoc :items
-                                                               (->> items
-                                                                    (sort-by (fn [[k v]] [(or (:menu-order v) 100000) k]))
-                                                                    (mapv (fn [[kk v]] (or (:name v) (str k "." kk))))))))))
-                               {}))]
+  (let [resources
+        (reduce (fn [acc [k v]]
+                  (assoc acc k (select-keys v [:title :tags :icon :logo :desc :menu-order])))
+                {}
+                (:zdb @ztx))
+
+        tree
+        (reduce (fn [acc [k v]]
+                  (let [path (str/split (name k) #"\.")]
+                    (assoc-in acc path {:name k})))
+                {}
+                resources)
+
+        resources
+        (reduce (fn [acc [k v]]
+                  (let [path (str/split (name k) #"\.")
+                        items (dissoc (get-in tree path) :name)]
+                    (assoc acc k
+                           (cond-> (assoc v :name k)
+                             (seq items) (assoc :items
+                                                (mapv (fn [[kk v]] (or (:name v) (str k "." kk)))
+                                                      items))))))
+                {}
+                resources)]
     {:resources resources
      :tree tree
      :items (->> (dissoc tree 'index)
-                 (sort-by (fn [[k v]] [(get v :menu-order 1000000) k]))
                  (mapv (fn [[k v]] (:name v)))
                  (into ['index]))}))
 
@@ -158,8 +159,8 @@
     [:script "var zd={};"]
     [:script "zd.nav=" (json/generate-string (build-navigation ztx))]
     [:script "hljs.highlightAll()"]
-    [:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
-    [:script "mermaid.initialize({startOnLoad:true});"]]])
+    #_[:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
+    #_[:script "mermaid.initialize({startOnLoad:true});"]]])
 
 (defmethod methods/layout 'zd/sidebar
   [ztx config content page]

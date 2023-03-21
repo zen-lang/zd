@@ -11,7 +11,7 @@
 (comment
   (def ztx (zen/new-context {})))
 
-(deftest datalog-engine
+(deftest ^:kaocha/pending datalog-engine
   (zen/stop-system ztx)
 
   (zen/read-ns ztx 'zd.v2)

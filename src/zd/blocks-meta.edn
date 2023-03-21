@@ -26,7 +26,7 @@
  :talk-with {:badge {}},
  :other-companies {:badge {}},
  :funding/num {:badge {}},
- :logo {:none {}},
+ :logo {:hide {}},
  :potential {:attribute {}},
  :org-stack {:badge {}},
  :participants {:badge {}},
