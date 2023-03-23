@@ -28,3 +28,14 @@ there is also a link that includes hash char - [[a https://docs.google.com/sprea
 :customers datalog/
 {:find [(pull e [:xt/id])]
  :where [[e :parent "customers"]]}
+
+&nested
+
+;; annotation provided explicitly
+
+^badge
+:countries #{countries.ru}
+
+;; or in metadata
+
+:tags #{tags.vendor}

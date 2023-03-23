@@ -1,5 +1,6 @@
 {:role {:badge {}},
  :rel {:badge {}},
+ :status {:badge {}}
  :started {:badge {}},
  :features {:badge {}},
  :healthdev {:badge {}},

@@ -85,23 +85,35 @@
    [:aside#aside
     {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm {})}]])
 
-(defn get-block [ztx doc key]
-  {:data (get doc key)
-   :key key
-   :ann (get-in doc [:zd/meta :ann key])})
-
-(defn render-blocks [ztx ctx doc]
-  [:div {:class (c [:pt 4])}
-   (doall
-    (for [k (get-in doc [:zd/meta :doc])]
-      (try (methods/renderkey ztx ctx (get-block ztx doc k))
-           (catch Exception e
-             (let [err {:message (str "render " k " - " (.getMessage e))
-                        :type :zd/renderkey-error}]
-               #_(clojure.pprint/pprint e)
-                 ;; TODO add zen pub/sub event
-               (println 'error-rendering-key k)
-               (methods/renderkey ztx ctx {:data [err] :key :zd/errors}))))))])
+(defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc}]
+  (let [[doc-keys subdocs]
+        (partition-by #(empty? (get subs %)) (:doc m))]
+    [:div {:class (c [:pt 4])}
+     ;; TODO display zd/errors from document
+     (for [k doc-keys]
+       (let [block {:data (get doc k)
+                    :key k
+                    :ann (get-in doc [:zd/meta :ann k])}]
+         (try (methods/renderkey ztx ctx block)
+              (catch Exception e
+                (let [err {:message (str "render " k " - " (.getMessage e))
+                           :type :zd/renderkey-error}
+                      err-block {:data [err] :key :zd/errors}]
+                    ;; TODO add zen pub/sub event
+                  (println 'error-rendering-key k)
+                  (methods/renderkey ztx ctx err-block))))))
+     (when (seq subdocs)
+       [:div.zd-block
+        [:h2 {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
+         "Subdocs"]
+        (doall
+         (for [sub-key subdocs]
+           [:div {:class (c :border [:my 8] [:mr 2] :rounded)}
+            [:div {:class (c [:bg :gray-100] [:px 4] [:py 2] :text-l [:text :gray-700]
+                             {:font-weight "400"})}
+             (name sub-key)]
+            [:div {:class (c [:px 4])}
+             (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]))]]))])]))
 
 (defn render-doc [ztx ctx doc]
   [:div {:class (c :flex :flex-1)}
@@ -114,7 +126,7 @@
                       {:height "100vh"
                        :overflow-y "auto"
                        :min-width "15em"
-                       :max-width "35em"})}
+                       :max-width "20em"})}
       (methods/renderkey ztx ctx {:data links :key :zd/backlinks})])])
 
 (defn *doc-view [ztx ctx doc]

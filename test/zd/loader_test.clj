@@ -94,3 +94,21 @@
            :country {:zd/content-type :edn, :badge {}}}}}
    (loader/get-doc ztx 'customers.flame)))
 
+(deftest subdocuments-loaded
+
+  (load! ztx)
+
+  (def doc (loader/get-doc ztx 'customers))
+
+  (matcho/assert
+   {:zd/subdocs
+    {:nested
+     {:tags set?
+      :countries set?}}}
+   doc)
+
+  (def subdoc-ann
+    (get-in doc [:zd/subdocs :nested :zd/meta :ann]))
+
+  (is (contains? (:tags subdoc-ann) :badge))
+  (is (contains? (:countries subdoc-ann) :badge)))

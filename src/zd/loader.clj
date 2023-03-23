@@ -131,13 +131,18 @@
                {})))
 
 (defn append-meta [ztx doc]
-  (->> doc
-       (remove (fn [[k _]]
-                 (namespace k)))
-       (reduce (fn [*doc [k _]]
-                 (update-in *doc [:zd/meta :ann k]
-                            (fn [anns] (merge anns (get blocks-meta k)))))
-               doc)))
+  (let [subdocs*
+        (->> (:zd/subdocs doc)
+             (map (fn [[subname cnt]]
+                    [subname (append-meta ztx cnt)]))
+             (into {}))]
+    (->> doc
+         (remove (fn [[k _]]
+                   (namespace k)))
+         (reduce (fn [*doc [k _]]
+                   (update-in *doc [:zd/meta :ann k]
+                              (fn [anns] (merge anns (get blocks-meta k)))))
+                 (assoc doc :zd/subdocs subdocs*)))))
 
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
   ;; TODO add validation, annotations with zen.schema
@@ -258,4 +263,3 @@
   (println :request-reload)
   (debounce #(hard-reload! ztx (:paths config)))
   :ok)
-
