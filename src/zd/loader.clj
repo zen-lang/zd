@@ -80,7 +80,10 @@
 
 (defn zentext-links [acc docname path cnt]
   (let [links (find-symbols \# cnt)
-        mentions (find-symbols \@ cnt)]
+        ;; zentext mention @ appends people.prefix
+        mentions (map (fn [m] (symbol (str "people." m)))
+                      (find-symbols \@ cnt))]
+
     (->> (into links mentions)
          (reduce (fn [acc* to]
                    (update-in acc* [to docname] (fnil conj #{}) path))
@@ -186,15 +189,12 @@
 (defn load-links!
   "add links, invalid links to docs"
   [ztx]
-  (loop [[[docname links] & oth] (:zrefs @ztx)
-         invalid {}]
+  (loop [[[docname links] & oth] (:zrefs @ztx)]
     (cond
-      (nil? docname)
-      (doseq [[from inv] invalid]
-        (swap! ztx assoc-in [:zdb from :zd/invalid-links] inv))
+      (nil? docname) 'ok
 
       (nil? (get-in @ztx [:zdb docname]))
-      (recur oth (unwrap-links docname links invalid))
+      (recur oth)
 
       :else
       (let [links* (mapcat (fn [[from paths]]
@@ -202,8 +202,8 @@
                                ;; TODO rename :doc to :from
                                {:to docname :path p :doc from}))
                            links)]
-        (swap! ztx assoc-in [:zdb docname :zd/backlinks] links*)
-        (recur oth invalid)))))
+        (swap! ztx assoc-in [:zdb docname :zd/meta :backlinks] links*)
+        (recur oth)))))
 
 (defn eval-macros! [ztx]
   (let [eval-macro

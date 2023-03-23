@@ -5,13 +5,13 @@
 
 :desc /
 
-a description that refers to #people.john and mentions @people.todd.
+a description that refers to #people.john and mentions @todd.
 
-have you seen it @people.todd?
+have you seen it @todd?
 
 it also refers to #customers.flame and even mentions #people.john!
 
-there is also a link that uses hash - [[a https://docs.google.com/spreadsheets/d/1BbaAQLo2RaktkKJQxyDN2cqTNbit4mnA/edit#gid=1568783766]]
+there is also a link that includes hash char - [[a https://docs.google.com/spreadsheets/d/1BbaAQLo2RaktkKJQxyDN2cqTNbit4mnA/edit#gid=1568783766]]
 
 :country #{countries.ru}
 

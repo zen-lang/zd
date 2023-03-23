@@ -51,19 +51,6 @@
                   [:hover [:bg :gray-200]])}
     k]])
 
-(defmethod methods/renderkey :zd/invalid-links
-  [ztx ctx {:keys [data] :as block}]
-  [:div {:class (c  [:py 2] [:px 0])}
-   [:span {:class (c [:text :gray-600] {:font-weight 400})}
-    "Broken links"]
-   (for [[path links] (group-by :path data)]
-     [:div {:class (c [:py 2] :text-sm)}
-      [:div {:class (c [:text :gray-600] :border-b {:font-weight "400"})}
-       (keystr path)]
-      (for [{doc-symbol :to} links]
-        [:div {:class (c [:py 0.5] {:margin-right "0.5rem"})}
-         (link/symbol-link ztx doc-symbol)])])])
-
 (defmethod methods/renderkey :title
   [ztx {doc :doc} {title :data :as block}]
   [:h1 {:class (c :flex :items-center)}
@@ -77,19 +64,36 @@
    title])
 
 (defmethod methods/renderkey :zd/backlinks
-  [ztx ctx block]
-  [:div {:class (c [:text :gray-600])}
-   [:div {:class (c  [:py 2] [:px 0])}
-    [:span {:class (c [:text :gray-600] {:font-weight 400})}
-     "Linked to"]
-    (doall
-     (for [[path links] (group-by :path (:data block))]
-       [:div {:class (c [:py 2] :text-sm)}
-        [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "400"})}
-         (keystr path)]
-        [:div
-         (for [{doc-symbol :doc} links]
-           [:div {:class (c [:py 0.5])} (link/symbol-link ztx doc-symbol)])]]))]])
+  [ztx ctx {:keys [data] :as block}]
+  (let [links
+        (->> data
+             (map (fn [{d :doc p :path t :to}]
+                    (let [parts (str/split (str d) #"\.")
+                          prefix (if (= (count parts) 1)
+                                   (first parts)
+                                   (str/join "." (butlast parts)))
+                          p* (->> p
+                                  (map (fn [v]
+                                         (if (keyword? v) (name v) (str v))))
+                                  (str/join "."))]
+                      {:to t
+                       :prefix prefix
+                       :doc d
+                       :path (str prefix "/" p*)})))
+             (sort-by :prefix)
+             (group-by :path))]
+    [:div {:class (c [:text :gray-600])}
+     [:div {:class (c  [:py 2] [:px 0])}
+      [:span {:class (c [:text :gray-600] {:font-weight 400})}
+       "Backlinks"]
+      (doall
+       (for [[path links] links]
+         [:div {:class (c [:py 2] :text-sm)}
+          [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "400"})}
+           path]
+          [:div
+           (for [{doc-symbol :doc} links]
+             [:div {:class (c [:py 0.5])} (link/symbol-link ztx doc-symbol)])]]))]]))
 
 (defmethod methods/rendercontent :edn
   [ztx ctx {:keys [data] :as block}]

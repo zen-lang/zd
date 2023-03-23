@@ -19,16 +19,12 @@
 (deftest document-tree-loaded
   (load! ztx)
 
-  (matcho/assert
-   {:zd/meta map?
-    :title string?
-    :desc string?}
-   (loader/get-doc ztx 'customers))
-
-  (matcho/assert
-   {:zd/meta map?
-    :title string?}
-   (loader/get-doc ztx 'customers.flame)))
+  (->> ['customers 'customers.flame 'people.john 'people.todd]
+       (map #(loader/get-doc ztx %))
+       (every? (fn [{m :zd/meta :as doc}]
+                 (is (map? m))
+                 (is (not-empty m))
+                 (is (seq (dissoc doc :zd/meta)))))))
 
 (deftest macros-loaded
   (load! ztx)
@@ -75,33 +71,17 @@
 
   ;; TODO make links formats same?
   (testing "backlinks are collected"
-    (matcho/assert {:zd/backlinks [{:to 'customers.flame :path [:desc] :doc 'customers}]}
+    (matcho/assert {:zd/meta {:backlinks [{:to 'customers.flame :path [:desc] :doc 'customers}]}}
                    (loader/get-doc ztx 'customers.flame))
 
-    (matcho/assert {:zd/backlinks [{:to 'people.john :path [:desc] :doc 'customers}
-                                   {:to 'people.john :path [:best-customer] :doc 'customers}
-                                   {:to 'people.john :path [:ceo] :doc 'customers.flame}
-                                   {:to 'people.john :path [:founder] :doc 'customers.flame}]}
+    (matcho/assert {:zd/meta {:backlinks [{:to 'people.john :path [:desc] :doc 'customers}
+                                          {:to 'people.john :path [:best-customer] :doc 'customers}
+                                          {:to 'people.john :path [:ceo] :doc 'customers.flame}
+                                          {:to 'people.john :path [:founder] :doc 'customers.flame}]}}
                    (loader/get-doc ztx 'people.john))
 
-    (matcho/assert {:zd/backlinks [{:to 'people.todd :doc 'customers :path [:desc]}]}
-                   (loader/get-doc ztx 'people.todd)))
-
-  (testing "invalid links are collected"
-    (matcho/assert {:zd/invalid-links [{:to 'rdfs.class
-                                        :path [:meta :tags]
-                                        :doc 'customers}
-                                       {:to 'countries.ru,
-                                        :path [:country],
-                                        :doc 'customers}
-                                       {:to 'tags.telemed,
-                                        :path [:tags],
-                                        :doc 'customers}]}
-                   (loader/get-doc ztx 'customers))
-
-    (let [links (:zd/invalid-links (loader/get-doc ztx 'customers.flame))]
-      (is (seq links))
-      (is (every? map? links)))))
+    (matcho/assert {:zd/meta {:backlinks [{:to 'people.todd :doc 'customers :path [:desc]}]}}
+                   (loader/get-doc ztx 'people.todd))))
 
 (deftest block-meta-added
   (load! ztx)

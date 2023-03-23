@@ -8,7 +8,8 @@
    [clojure.string :as str]
    [zd.blocks]
    [zd.methods :as methods]
-   [stylo.core :refer [c]]))
+   [stylo.core :refer [c]]
+   [zd.loader :as loader]))
 
 (defn breadcrumbs [ztx {{qs :query-string} :req} {{:keys [docname]} :zd/meta :as doc}]
   (let [parts (str/split (str docname) #"\.")
@@ -108,17 +109,13 @@
     (breadcrumbs ztx ctx doc)
     [:div {:class (c [:bg :white] {:color "#3b454e"})}
      (render-blocks ztx ctx doc)]]
-   (if-let [links (->> [:zd/backlinks :zd/invalid-links]
-                       (select-keys doc)
-                       (map (fn [[k v]] [k v]))
-                       (not-empty))]
+   (when-let [links (seq (get-in doc [:zd/meta :backlinks]))]
      [:div {:class (c [:bg :gray-100] [:p 6] :border-l
                       {:height "100vh"
                        :overflow-y "auto"
                        :min-width "15em"
                        :max-width "35em"})}
-      (for [[key _] links]
-        (methods/renderkey ztx ctx (get-block ztx doc key)))])])
+      (methods/renderkey ztx ctx {:data links :key :zd/backlinks})])])
 
 (defn *doc-view [ztx ctx doc]
   [:div {:class (c :flex :items-top :w-full)}
@@ -146,6 +143,7 @@
 
 (defn preview [ztx ctx text]
   (->> (parser/parse ztx ctx text)
+       (loader/append-meta ztx)
        (render-blocks ztx ctx)))
 
 (defn editor [ztx ctx {m :zd/meta :as doc}]
