@@ -4,7 +4,7 @@
    [zd.macros]
    [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
-   [zd.parser :as parser]
+   [zd.reader :as reader]
    [clojure.java.io :as io]
    [clojure.string :as str])
   (:import [java.util Timer TimerTask]))
@@ -62,8 +62,8 @@
          syms #{}]
     (if (nil? acc)
       syms
-      (let [[l r] (parser/split #(= % ch) acc)
-            [le tail] (parser/split #(or (= % \space)
+      (let [[l r] (reader/split #(= % ch) acc)
+            [le tail] (reader/split #(or (= % \space)
                                          (= % \newline))
                                     r)]
         (cond
@@ -153,7 +153,7 @@
                            :file resource-path
                            :path path}}
         doc (->> content
-                 (parser/parse ztx {})
+                 (reader/parse ztx {})
                  (deep-merge headers)
                  (append-meta ztx))
         links (collect-links ztx doc)

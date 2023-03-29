@@ -1,10 +1,15 @@
 ;; just a string block
 :title "my title"
 
+;; namespaced key
+:myservice/api-endpoint "id=128"
+
+;; empty key
 :myemptykey
 
 ;; a string block with annotation
-^badge
+^badge {:text-size :large}
+;; a comment between !!
 :desc "my desc"
 
 ;; a block with inline edn
@@ -14,10 +19,21 @@
 ^table [:name :age]
 :query (load "file.json")
 
+;; empty edn value multiline
+:empty-edn edn/
+
+;; edn nil value :)
+:nil-edn edn/
+nil
+
 ;; edn value multiline
 :query-map edn/
 {:where []
- :limit 100}
+:limit 100}
+
+;; another edn value multiline
+:another-query edn/
+{:one-line :edn}
 
 ;; a zentext block
 :text /
@@ -33,10 +49,13 @@ It is truly multiline
 :customers datalog/
 
 {:find [(pull e [:xt/id :rel :needs :tags])]
- :where [[e :parent "organizations"]
+:where [[e :parent "organizations"]
          [e :rel "rel.lead"]
          [e :title et]]
  :sort-by [[et :desc]]}
+
+;; an empty datalog query
+:clients datalog/
 
 ;; a sub document
 &nested
@@ -44,7 +63,7 @@ It is truly multiline
 :another-key "another value"
 
 ;; fish content type
-:mykey fish/
+:fish-key fish/
 
 ;; another sub document
 &.nested-2

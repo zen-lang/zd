@@ -17,4 +17,19 @@ _^_table [:name ] :age]
 
 just a string block
 
-^badge
+^lonely-badge
+
+:wrong-multiline {:a "value"
+:b "another value"}
+
+:no-edn edn/
+ just some
+ random words
+        with strange offsets
+
+:invalid-edn #{'invalid-set
+
+:invalid-multiline edn/
+{:key "value"
+
+^hanging-ann

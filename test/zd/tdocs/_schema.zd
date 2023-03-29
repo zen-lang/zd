@@ -1,0 +1,25 @@
+:required #{:title :rel}
+
+&title
+:type :dockey
+:group :zd/summary
+:desc "document title"
+:schema {:type zen/string}
+
+&rel
+:type :dockey
+:group :zd/summary
+:schema {:type zen/set :every {:type zen/symbol}}
+:ann {:badge {}}
+:desc "relationship to an org"
+
+&site
+:type :dockey
+:group :zd/summary
+:schema {:type zen/string}
+:ann {:link-badge {}}
+:desc "relationship to an org"
+
+&mydoc
+:type :subdoc
+:schema {:require #{:rel :title}}

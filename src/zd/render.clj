@@ -1,6 +1,7 @@
 (ns zd.render
   (:require
-   [zd.parser :as parser]
+   [zd.schema :as schema]
+   [zd.reader :as reader]
    [cheshire.core :as json]
    [hiccup.core :as hiccup]
    [clojure.java.io :as io]
@@ -61,7 +62,7 @@
                          {:font-size "1.1rem"})
                :href ""
                :onclick del-script}
-           [:i.fas.fa-xmark]])]
+           [:i.fas.fa-trash-xmark]])]
 
     (conj layout [:div {:class (c :flex :items-center {:margin-left "auto"})}
                   edit-btn create-btn templ-btn del-btn])))
@@ -89,17 +90,20 @@
   (let [[doc-keys subdocs]
         (partition-by #(empty? (get subs %)) (:doc m))]
     [:div {:class (c [:pt 4])}
-     ;; TODO display zd/errors from document
+     (when-let [errs (:errors m)]
+       (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
      (for [k doc-keys]
        (let [block {:data (get doc k)
                     :key k
                     :ann (get-in doc [:zd/meta :ann k])}]
          (try (methods/renderkey ztx ctx block)
               (catch Exception e
-                (let [err {:message (str "render " k " - " (.getMessage e))
+                (let [err {:message (str "error rendering " (.getMessage e))
+                           :path [k]
                            :type :zd/renderkey-error}
                       err-block {:data [err] :key :zd/errors}]
                     ;; TODO add zen pub/sub event
+                  #_(clojure.pprint/pprint e)
                   (println 'error-rendering-key k)
                   (methods/renderkey ztx ctx err-block))))))
      (when (seq subdocs)
@@ -108,11 +112,11 @@
          "Subdocs"]
         (doall
          (for [sub-key subdocs]
-           [:div {:class (c :border [:my 8] [:mr 2] :rounded)}
-            [:div {:class (c [:bg :gray-100] [:px 4] [:py 2] :text-l [:text :gray-700]
+           [:div {:class (c :border [:my 4] [:mr 2] :rounded)}
+            [:div {:class (c [:bg :gray-100] [:px 8] [:py 2] :text-l [:text :gray-700]
                              {:font-weight "400"})}
              (name sub-key)]
-            [:div {:class (c [:px 4])}
+            [:div {:class (c [:px 8] [:py 2])}
              (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]))]]))])]))
 
 (defn render-doc [ztx ctx doc]
@@ -154,9 +158,11 @@
               (recur (butlast parts)))))))))
 
 (defn preview [ztx ctx text]
-  (->> (parser/parse ztx ctx text)
-       (loader/append-meta ztx)
-       (render-blocks ztx ctx)))
+  (let [parsed (reader/parse ztx ctx text)]
+    (->> parsed
+         (loader/append-meta ztx)
+         (schema/validate-doc ztx)
+         (render-blocks ztx ctx))))
 
 (defn editor [ztx ctx {m :zd/meta :as doc}]
   (let [header (str ":zd/docname " (:docname m) "\n")

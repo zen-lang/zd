@@ -1,8 +1,10 @@
 (ns zd.api
-  (:require [zd.datalog]
+  (:require
+   [zd.schema :as schema]
+   [zd.datalog]
    [hiccup.core :as hiccup]
    [zd.loader :as loader]
-   [zd.parser :as parser]
+   [zd.reader :as reader]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [zen.core :as zen]
@@ -57,55 +59,45 @@
 (defmethod zen/op 'zd.v2/save-doc
   [ztx _cfg {pths :zd/paths {id :id} :route-params :as req} & opts]
   (println :save id)
-  (let [lines (->> (slurp (:body req))
-                   (StringReader.)
-                   (io/reader)
-                   (line-seq)
-                   (map str/trim))
-
-        docname
-        (->> lines
-             (drop-while #(not (str/starts-with? % ":zd/docname")))
-             first
-             (parser/split #(= % \space))
-             second
-             (rest)
-             (apply str))
-
+  (let [lines (slurp (:body req))
         content (->> lines
+                     (StringReader.)
+                     (io/reader)
+                     (line-seq)
+                     (map str/trim)
                      (remove #(str/starts-with? % ":zd/docname"))
-                     (str/join "\n"))]
+                     (str/join "\n"))
 
-    (cond (or (empty? docname)
-              (str/ends-with? docname "."))
-          ;; TODO add errors view
-          {:status 422 :body "Add not empty :zd/docname"}
+        doc (->> (reader/parse ztx {:req req} lines)
+                 (loader/append-meta ztx)
+                 (schema/validate-doc ztx))
+        docname (str (:zd/docname doc))]
+    ;; TODO emit zen pub sub event?
+    (if-let [errs (seq (get-in doc [:zd/meta :errors]))]
+      {:status 422 :body {:message "document validation failed"
+                          :docname docname
+                          :errors errs}}
+    ;; TODO prefix with :zd/paths from ztx
+      (let [dirname
+            (->> (str/split docname #"\.")
+                 butlast
+                 (str/join "/")
+                 (str (first pths) "/"))
 
-          (str/ends-with? docname "_draft")
-          {:status 422 :body "Change :zd/docname from _draft"}
+            filename (str (first pths) "/" (str/replace docname "." "/") ".zd")]
 
-          :else
-          ;; TODO prefix with :zd/paths from ztx
-          (let [dirname
-                (->> (str/split docname #"\.")
-                     butlast
-                     (str/join "/")
-                     (str (first pths) "/"))
-
-                filename (str (first pths) "/" (str/replace docname "." "/") ".zd")]
-
-            #_(when-not (= id docname)
-                (let [orig-filename (str (first pths) "/" (str/replace id "." "/") ".zd")]
-                  (try (io/delete-file orig-filename)
+        #_(when-not (= id docname)
+            (let [orig-filename (str (first pths) "/" (str/replace id "." "/") ".zd")]
+              (try (io/delete-file orig-filename)
                    ;; TODO emit error event via zen pub sub
-                       (catch Exception e
-                         (clojure.pprint/pprint (.getMessage e))))))
+                   (catch Exception e
+                     (clojure.pprint/pprint (.getMessage e))))))
 
-            (.mkdirs (io/file dirname))
-            (spit filename content)
+        (.mkdirs (io/file dirname))
+        (spit filename content)
             ;; TODO load single document into db
-            (loader/hard-reload! ztx pths)
-            {:status 200 :body (str "/" docname)}))))
+        (loader/hard-reload! ztx pths)
+        {:status 200 :body (str "/" docname)}))))
 
 (defmethod zen/op 'zd.v2/delete-doc
   [ztx _cfg {pths :zd/paths {:keys [id]} :route-params :as req} & opts]
