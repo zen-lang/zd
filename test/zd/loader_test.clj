@@ -1,13 +1,11 @@
 (ns zd.loader-test
   (:require
-   [zd.db :as db]
    [matcho.core :as matcho]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [zd.loader :as loader]
    [zen.core :as zen]
-   [zd.core]
    [zen-web.core :as web]))
 
 (def ztx (zen/new-context {}))

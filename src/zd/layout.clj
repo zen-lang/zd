@@ -162,16 +162,9 @@
     content
     [:script "var zd={};"]
     [:script "zd.nav=" (json/generate-string (build-navigation ztx))]
-    [:script "hljs.highlightAll()"]
-    #_[:script {:src "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"}]
-    #_[:script "mermaid.initialize({startOnLoad:true});"]]])
+    [:script "hljs.highlightAll()"]]])
 
-#_(defmethod methods/layout 'zd/sidebar
-  [ztx config content page]
-  ;; TODO emit zen event
-  (sidebar-layout ztx content))
-
-(defmethod methods/layout 'zd.v2/sidebar
+(defmethod methods/layout 'zd/sidebar
   [ztx config content page]
   ;; TODO emit zen event
   (sidebar-layout ztx content))

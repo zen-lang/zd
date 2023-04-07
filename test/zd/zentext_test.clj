@@ -1,7 +1,6 @@
 (ns zd.zentext-test
   (:require
    [zd.zentext :as zentext]
-   [zd.db]
    [zen.core :as zen]
    [matcho.core :as matcho]
    [clojure.test :as t]))

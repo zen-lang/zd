@@ -162,7 +162,7 @@
     (swap! ztx update :zrefs patch-links links)
     (swap! ztx update :zd/keys (fnil into #{}) (keys doc))
     (swap! ztx assoc-in [:zd/macros docname] macros)
-    (zen/pub ztx 'zd.v2/on-doc-create doc)))
+    (zen/pub ztx 'zd/on-doc-create doc)))
 
 (defn load-docs! [ztx dirs]
   (doseq [dir dirs]

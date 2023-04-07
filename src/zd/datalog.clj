@@ -4,13 +4,13 @@
             [clojure.string :as str]
             [clojure.walk :as walk]))
 
-(defmethod zen/start 'zd.v2/datalog
+(defmethod zen/start 'zd/datalog
   [ztx config & opts]
   ;; TODO add zen pub sub event
   (println 'starting-datalog)
   (xt/start-node {}))
 
-(defmethod zen/stop 'zd.v2/datalog
+(defmethod zen/stop 'zd/datalog
   [ztx config state]
   (println 'stopping-datalog)
   (.close state))
@@ -36,11 +36,11 @@
     (xt/q (xt/db node) query)
     :no/xtdb))
 
-(defmethod zen/op 'zd.v2/query
+(defmethod zen/op 'zd/query
   [ztx config params & [session]]
   (query ztx params))
 
-(defmethod zen/op 'zd.v2/submit
+(defmethod zen/op 'zd/submit
   [ztx _config params & [_session]]
   (submit ztx params))
 
@@ -55,22 +55,16 @@
 (defn stringify [m]
   (walk/postwalk (fn [x] (if (symbol? x) (str x) x)) m))
 
-(defmethod zen/op 'zd.v2/datalog-sync
+(defmethod zen/op 'zd/datalog-sync
   [ztx _config {_ev :ev doc :params} & [_session]]
+  ;; TODO emit zen event
   #_(println 'on-doc-create)
   (let [id (get-in doc [:zd/meta :docname])
         result
         (submit ztx
-                (assoc (stringify (dissoc doc :zd/back-links :zd/invalid-links))
+                ;; TODO think about how to store metadata and zd props in xtdb
+                (assoc (stringify (dissoc doc :zd/backlinks :zd/subdocs :zd/invalid-links))
                        :xt/id (str id)
                        :parent (str/join "." (butlast (str/split (str id) #"\.")))))]
-    ;; TODO where does result go in pub/sub?
+    ;; TODO und where does result go in pub/sub
     result))
-
-(defmethod zen/op 'zd/datalog-sync
-  [ztx _config {_ev :ev res :params} & [_session]]
-  (let [id (:zd/name res)]
-    (submit ztx
-            (assoc (stringify (dissoc res :zd/back-links))
-                   :xt/id (str id)
-                   :parent (str/join "." (butlast (str/split (str id) #"\.")))))))

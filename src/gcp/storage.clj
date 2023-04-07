@@ -2,7 +2,6 @@
   (:require
    [cheshire.core]
    [clojure.string :as str])
-
   (:import (java.security Signature
                           KeyFactory
                           MessageDigest)
@@ -16,7 +15,6 @@
 
 (def ^:private timestamp-fmt (DateTimeFormatter/ofPattern "yyyyMMdd'T'HHmmss'Z'"))
 (def ^:private datestamp-fmt (DateTimeFormatter/ofPattern "yyyyMMdd"))
-
 
 (defn get-sa []
   (cheshire.core/parse-string (slurp "gcp.json") keyword))

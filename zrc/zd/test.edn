@@ -1,16 +1,16 @@
-{:ns zd.v2-test
- :import #{zen-web zd.v2}
+{:ns zd.test
+ :import #{zen-web zd}
 
  datalog
- {:zen/tags #{zen/start zd.v2/datalog}
-  :engine zd.v2/datalog}
+ {:zen/tags #{zen/start zd/datalog}
+  :engine zd/datalog}
 
  zendoc
- {:zen/bind zd.v2/config-binding
-  :zen/tags #{zen/start zd.v2/config}
-  :engine zd.v2/db
+ {:zen/bind zd/config-binding
+  :zen/tags #{zen/start zd/config}
+  :engine zd/db
   :paths ["test/zd/tdocs"]
-  :layout zd.v2/sidebar}
+  :layout zd/sidebar}
 
  to-customers
  {:zen/tags #{zen/op zen-web/op}
@@ -21,13 +21,13 @@
  {:zen/tags #{zen-web/api}
   :engine zen-web/routemap
   :GET to-customers
-  :apis [zd.v2/api]}
+  :apis [zd/api]}
 
  http
  {:zen/tags #{zen/start zen-web/http}
   :engine zen-web/httpkit
   :port 4444
-  :api zd.v2/api}
+  :api zd/api}
 
  system
  {:zen/tags #{zen/system}

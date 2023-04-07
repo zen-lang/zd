@@ -14,11 +14,11 @@
 (deftest ^:kaocha/pending datalog-engine
   (zen/stop-system ztx)
 
-  (zen/read-ns ztx 'zd.v2)
+  (zen/read-ns ztx 'zd)
 
-  (zen/read-ns ztx 'zd.v2-test)
+  (zen/read-ns ztx 'zd.test)
 
-  (zen/start-system ztx 'zd.v2-test/system)
+  (zen/start-system ztx 'zd.test/system)
 
   (matcho/assert
    #{["customers.flame"]}
