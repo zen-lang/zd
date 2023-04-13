@@ -26,9 +26,6 @@
   (let [;; TODO sync all untracked docs at gitsync start?
         {:keys [untracked modified] :as status} (git/git-status repo)
         git-config (git/git-config-load repo)]
-    (when (seq untracked)
-      ;; TODO event zen event
-      (prn :gitsync/untracked untracked))
     (doseq [m (into untracked modified)]
       (when (str/includes? p m)
         (let [uname (.getString git-config "user" nil "name")
@@ -70,6 +67,8 @@
     (when branch
       (git/git-checkout repo branch))
     (git/git-pull repo)
+    (git/git-submodule-init repo)
+    (git/git-submodule-update repo :strategy :recursive)
     repo))
 
 (defn get-repo [ztx]
@@ -80,7 +79,7 @@
   [ztx config {p :docpath :as params} & args]
   (when-let [repo (get-repo ztx)]
     (println :gitsync-doc p)
-    (let [sf (utils/safecall commit-doc {:type :gitsync/put-doc})]
+    (let [sf (utils/safecall commit-doc {:type :gitsync/put-doc-error})]
       (send-off ag sf ztx config repo params)
       (await ag))))
 
@@ -88,7 +87,7 @@
   [ztx config {p :docpath :as params} & args]
   (when-let [repo (get-repo ztx)]
     (println :gitsync-remove-doc p)
-    (let [sf (utils/safecall delete-doc {:type :gitsync/delete-doc})]
+    (let [sf (utils/safecall delete-doc {:type :gitsync/delete-doc-error})]
       (send-off ag sf ztx config repo params)
       (await ag))))
 
@@ -98,7 +97,7 @@
   (println 'starting-gitsync)
   ;; TODO make it work with remotes seq
   (let [sf (utils/safecall init-remote {:type :gitsync/remote-init-error})
-        repo (sf ztx config remote)]
+        repo (:result (sf ztx config remote))]
     (if (instance? org.eclipse.jgit.api.Git repo)
       (let [task (proxy [TimerTask] []
                    (run []
@@ -116,8 +115,8 @@
 
 (defmethod zen/stop 'zd/gitsync
   [ztx config {r :remote :as state} & opts]
+  ;; TODO emit zen.event
+  (println 'stopping-gitsync)
   (when (some? (:repo r))
     (.cancel (:task state))
-    (.purge (:ti state))
-    ;; TODO emit zen.event
-    (println 'stopping-gitsync)))
+    (.purge (:ti state))))

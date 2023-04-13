@@ -230,6 +230,8 @@ var save = (ctx)=>{
           resp.text().then((docid)=> {
              window.location.href = docid;
           });
+        } else {
+            ctx.container.els.save.style.visibility = "visible";
         }
     });
 }
@@ -341,7 +343,10 @@ var editor = (zendoc) => {
                                               'z-index': "10000",
                                               bottom: 10, left: in_chrome ? 'calc(100vw - 50px)' : 'calc(40vw - 50px)',
                                               'font-size': 40, color: 'white'},
-                                     on: {click: (ev)=> { save(ctx); }}}}
+                                     on: {click: (ev)=> {
+                                         ev.target.style.visibility = "hidden";
+                                         save(ctx);
+                                     }}}}
                        });
 
     var keypress = (ev)=>  {

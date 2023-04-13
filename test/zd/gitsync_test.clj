@@ -13,6 +13,8 @@
 (defn req-body [s]
   (io/input-stream (.getBytes s)))
 
+;; to run this test setup remote repository
+;; and add it to zd/gitsync.remote
 (deftest ^:kaocha/pending gitsync
 
   (zen/stop-system ztx)
