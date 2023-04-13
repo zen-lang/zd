@@ -1,6 +1,5 @@
 (ns zd.api
   (:require
-   [zd.web-ui]
    [zd.gitsync]
    [zd.schema :as schema]
    [zd.datalog]
