@@ -15,14 +15,6 @@
   (println 'stopping-datalog)
   (.close state))
 
-(defmethod zen/start 'zd/datalog-engine
-  [ztx config & opts]
-  (xt/start-node {}))
-
-(defmethod zen/stop 'zd/datalog-engine
-  [ztx config state]
-  (.close state))
-
 (defn get-node [ztx]
   (get-in @ztx [:zen/state :datalog :state]))
 
@@ -62,7 +54,7 @@
   (let [id (get-in doc [:zd/meta :docname])
         result
         (submit ztx
-                ;; TODO think about how to store metadata and zd props in xtdb
+                ;; TODO maybe dont dissoc?
                 (assoc (stringify (dissoc doc :zd/backlinks :zd/subdocs :zd/invalid-links))
                        :xt/id (str id)
                        :parent (str/join "." (butlast (str/split (str id) #"\.")))))]

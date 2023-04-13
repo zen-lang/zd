@@ -11,7 +11,7 @@
 (comment
   (def ztx (zen/new-context {})))
 
-(deftest ^:kaocha/pending datalog-engine
+(deftest datalog-engine
   (zen/stop-system ztx)
 
   (zen/read-ns ztx 'zd)
@@ -19,6 +19,9 @@
   (zen/read-ns ztx 'zd.test)
 
   (zen/start-system ztx 'zd.test/system)
+
+  ;; TODO how to check tx status in xtdb?
+  (Thread/sleep 2000)
 
   (matcho/assert
    #{["customers.flame"]}
