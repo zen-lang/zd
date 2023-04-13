@@ -12,6 +12,12 @@
 (defn req-body [s]
   (io/input-stream (.getBytes s)))
 
+(defn read-doc [s]
+  (let [{:keys [paths]} (zen/get-symbol ztx (first (zen/get-tag ztx 'zd/config)))
+        f (io/file (str (first paths) "/" s))]
+    (when (.exists f)
+      (slurp f))))
+
 (deftest doc-creation-test
 
   (zen/stop-system ztx)
@@ -54,9 +60,7 @@
                   :request-method :put
                   :body (req-body ":zd/docname index\n:desc /")}))
 
-    (is (io/resource "zd/tdocs/index.zd"))
-
-    (is (= (slurp (io/resource "zd/tdocs/index.zd")) ":desc /")))
+    (is (= (read-doc "index.zd") ":desc /")))
 
   #_(testing "rename with zd/docname"
       (web/handle ztx 'zd.hsm-test/api {:uri "/index/edit"
@@ -74,7 +78,7 @@
      {:status 200 :body "/index"}
      (web/handle ztx 'zd/api {:uri "/index" :request-method :delete}))
 
-    (is (nil? (io/resource "zd/tdocs/index.zd"))))
+    (is (nil? (read-doc "index.zd"))))
 
   (zen/stop-system ztx))
 
@@ -122,10 +126,10 @@
                   :request-method :put
                   :body (req-body doc)}))
 
-    (is (string? (slurp (io/resource "zd/tdocs/customers/zero.zd"))))
+    (is (read-doc "customers/zero.zd"))
 
     (is (= 200 (:status (web/handle ztx 'zd/api {:uri "/customers.zero"
-                                                         :request-method :delete})))))
+                                                 :request-method :delete})))))
 
   (testing "subdocuments are validated"
 
@@ -150,7 +154,7 @@
                   :request-method :put
                   :body (req-body doc)}))
 
-    (is (string? (slurp (io/resource "zd/tdocs/customers/uno.zd"))))
+    (is (read-doc "customers/uno.zd"))
 
     (def doc ":zd/docname customers.uno\n&mydoc\n:rel #{tags.client}")
 
@@ -182,7 +186,7 @@
   (matcho/assert
    {:status 200 :body "/customers"}
    (web/handle ztx 'zd/api {:uri "/customers.uno"
-                                    :request-method :delete}))
+                            :request-method :delete}))
 
   (is (nil? (io/resource "zd/tdocs/customers/uno.zd"))))
 

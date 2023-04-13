@@ -8,21 +8,28 @@
    [zen.core :as zen]
    [zen-web.core :as web]))
 
-(def ztx (zen/new-context {}))
+(defonce ztx (zen/new-context {}))
 
 (defn load! [ztx]
   ;; TODO add trailing slash validation in system config
-  (loader/hard-reload! ztx ["test/zd/tdocs"]))
+  (zen/read-ns ztx 'zd.test)
+  (loader/reload-sync! ztx))
 
 (deftest document-tree-loaded
   (load! ztx)
 
-  (->> ['customers 'customers.flame 'people.john 'people.todd]
-       (map #(loader/get-doc ztx %))
-       (every? (fn [{m :zd/meta :as doc}]
-                 (is (map? m))
-                 (is (not-empty m))
-                 (is (seq (dissoc doc :zd/meta)))))))
+  (testing "loading is complete"
+    (is (= 'ok @loader/ag)))
+
+  (def docs ['customers 'customers.flame 'people.john 'people.todd])
+
+  (testing "documents are loaded"
+    (->> docs
+         (map #(loader/get-doc ztx %))
+         (every? (fn [{m :zd/meta :as doc}]
+                   (is (map? m))
+                   (is (not-empty m))
+                   (is (seq (dissoc doc :zd/meta))))))))
 
 (deftest macros-loaded
   (load! ztx)
