@@ -8,6 +8,9 @@
 (defonce ztx (zen/new-context {}))
 
 (comment
+  (:zen/state @ztx)
+  (zen/errors ztx)
+
   (def ztx (zen/new-context {})))
 
 (deftest system-config

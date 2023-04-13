@@ -1,5 +1,7 @@
 (ns zd.api
   (:require
+   [zd.web-ui]
+   [zd.gitsync]
    [zd.schema :as schema]
    [zd.datalog]
    [hiccup.core :as hiccup]
@@ -38,10 +40,6 @@
     {:status 200
      :body (render/doc-view ztx {:request req :doc doc} config doc)}))
 
-(defmethod web/middleware-in 'zd/dev-reload
-  [ztx cfg {config :zd/config} & args]
-  (loader/reload ztx config))
-
 (defmethod web/middleware-out 'zd/layout
   [ztx _cfg {page :page {lay-sym :layout} :zd/config :as req} {bdy :body :as resp} & args]
   (when (and (not (string? bdy)) (= 200 (:status resp)))
@@ -57,7 +55,10 @@
      :body [:div "Error: " id " is not found"]}))
 
 (defmethod zen/op 'zd/save-doc
-  [ztx _cfg {pths :zd/paths {id :id} :route-params :as req} & opts]
+  [ztx _cfg {config :zd/config
+             pths :zd/paths
+             {id :id} :route-params :as req} & opts]
+  ;; TODO emit zen event
   (println :save id)
   (let [lines (slurp (:body req))
         content (->> lines
@@ -71,13 +72,12 @@
         doc (->> (reader/parse ztx {:req req} lines)
                  (loader/append-meta ztx)
                  (schema/validate-doc ztx))
+
         docname (str (:zd/docname doc))]
-    ;; TODO emit zen pub sub event?
     (if-let [errs (seq (get-in doc [:zd/meta :errors]))]
       {:status 422 :body {:message "document validation failed"
                           :docname docname
                           :errors errs}}
-    ;; TODO prefix with :zd/paths from ztx
       (let [dirname
             (->> (str/split docname #"\.")
                  butlast
@@ -95,12 +95,16 @@
 
         (.mkdirs (io/file dirname))
         (spit filename content)
-            ;; TODO load single document into db
-        (loader/hard-reload! ztx pths)
+        ;; TODO emit zen event saved succesfully
+        ;; TODO load single document into db
+        (loader/reload-sync! ztx)
+        (zen/op-call ztx 'zd/gitsync-doc {:docpath filename :docname docname})
         {:status 200 :body (str "/" docname)}))))
 
 (defmethod zen/op 'zd/delete-doc
-  [ztx _cfg {pths :zd/paths {:keys [id]} :route-params :as req} & opts]
+  [ztx _cfg {config :zd/config
+             pths :zd/paths
+             {:keys [id]} :route-params :as req} & opts]
   (println :delete id)
   (let [parts (str/split id #"\.")
         filepath
@@ -118,8 +122,9 @@
          ;; TODO emit error event via zen pub sub
          (catch Exception e
            (clojure.pprint/pprint (.getMessage e))))
+    (zen/op-call ztx 'zd/gitsync-delete-doc {:docpath filepath :docname id})
     ;; TODO load single document into db
-    (loader/hard-reload! ztx pths)
+    (loader/reload-sync! ztx)
     {:status 200 :body redirect}))
 
 (defmethod zen/op 'zd/render-editor
@@ -139,7 +144,8 @@
   [ztx config & opts]
   ;; TODO emit zen event
   (println 'starting-zen-db)
-  (loader/hard-reload! ztx (:paths config))
+  ;; TODO process error and shutdown gracefully
+  (loader/reload-sync! ztx)
   config)
 
 (defmethod zen/stop 'zd/db

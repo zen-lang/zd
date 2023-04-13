@@ -1,6 +1,7 @@
 (ns zd.loader
   (:require
    [zd.methods :as methods]
+   [zd.utils :as utils]
    [zd.macros]
    [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
@@ -179,25 +180,14 @@
                                    :resource-path resource-path
                                    :content content}))))))))
 
-(defn unwrap-links
-  "{to {from #{paths..}}} -> {from [[path to]..]}"
-  [to links acc]
-  (->> links
-       (mapcat (fn [[from paths]]
-                 (for [p paths]
-                   ;; TODO rename :doc to :from
-                   {:to to :path p :doc from})))
-       (reduce (fn [acc {:keys [doc] :as link}]
-                 (update acc doc conj link))
-               acc)))
-
 (defn load-links!
-  "add links, invalid links to docs"
+  "add backlinks to docs"
   [ztx]
-  (loop [[[docname links] & oth] (:zrefs @ztx)]
+  (loop [[[docname links :as i] & oth] (:zrefs @ztx)]
     (cond
-      (nil? docname) 'ok
+      (nil? i) 'ok
 
+      ;; hanging link is found
       (nil? (get-in @ztx [:zdb docname]))
       (recur oth)
 
@@ -233,33 +223,30 @@
   (eval-macros! ztx)
   'ok)
 
-(defn hard-reload! [ztx dirs]
+;; first arg is an agent state. pass ni
+(defn hard-reload! [_ ztx {dirs :paths :as config}]
+  ;; TODO emit zen event
+  (prn :hard-reload)
   (swap! ztx dissoc :zdb)
   (swap! ztx assoc :zrefs {})
   (read-meta! ztx)
   (zen/pub ztx 'zd/hard-reload {:dirs dirs})
   (load-dirs! ztx dirs))
 
-(defn debounce
-  ([f] (debounce f 300))
-  ([f timeout]
-   (let [timer (Timer.)
-         task (atom nil)]
-     (with-meta
-       (fn [& args]
-         (when-let [t ^TimerTask @task]
-           (.cancel t))
-         (let [new-task (proxy [TimerTask] []
-                          (run []
-                            (apply f args)
-                            (reset! task nil)
-                            (.purge timer)))]
-           (reset! task new-task)
-           (.schedule timer new-task timeout)))
-       {:task-atom task}))))
+(defonce ag (agent nil))
 
-(defn reload [ztx config]
+(defn reload! [ztx]
   ;; TODO emit zen event
   (println :request-reload)
-  (debounce #(hard-reload! ztx (:paths config)))
-  :ok)
+  ;; TODO do we need to do discovery here?
+  ;; maybe provide config explicitly?
+  (let [config (->> (zen/get-tag ztx 'zd/config)
+                    (first)
+                    (zen/get-symbol ztx))
+        sf (utils/safecall hard-reload! {:type :zd.loader/reload-error})]
+    (send-off ag sf ztx config)))
+
+(defn reload-sync! [ztx]
+  (reload! ztx)
+  (await ag)
+  (deref ag))

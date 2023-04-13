@@ -16,6 +16,15 @@
   :zen/state-key :zendoc-v2
   :type zen/map}
 
+ web-ui
+ {:zen/tags #{zen/schema zen/engine zen/tag}
+  :zen/state-key :javafx-web-ui
+  :type zen/map
+  ;; TODO set to zen-web/uri
+  :keys {:uri {:type zen/string}
+         :engine {:type zen/symbol
+                  :tags #{zen/engine}}}}
+
  on-doc-create
  {:zen/tags #{zen/event zen/schema}
   :zen/desc "Event on resource load or reload"
@@ -41,6 +50,34 @@
   :keys {:engine {:type zen/symbol
                   :tags #{zen/engine}}}
   :type zen/map}
+
+ remote
+ {:zen/tags #{zen/schema}
+  :type zen/map
+   ;; TODO use zen-web/url
+  :require #{:from}
+  :keys {:from {:type zen/string}
+         :to {:type zen/string}
+         :branch {:type zen/string}}}
+
+ gitsync
+ {:zen/tags #{zen/tag zen/engine zen/schema}
+  :zen/desc "service that syncs git repo in real-time"
+  :zen/state-key :gitsync
+  :type zen/map
+  :require #{:engine :pull-rate}
+  :keys {:engine {:type zen/symbol}
+         :pull-rate {:type zen/integer}
+         :remote {:confirms #{remote}}
+         :remotes {:type zen/vector :every {:confirms #{remote}}}}}
+
+ gitsync-doc
+ {:zen/tags #{zen/op}
+  :zen/desc "commits doc to its remote"}
+
+ gitsync-delete-doc
+ {:zen/tags #{zen/op}
+  :zen/desc "removes document from index and pushes to a remote"}
 
  config
  {:zen/tags #{zen/tag zen/schema}
@@ -92,10 +129,6 @@
   ;; TODO use zen binding
   :zendoc-config config-binding}
 
- dev-reload
- {:zen/tags #{zen-web/middleware zen/op zen-web/op middleware}
-  :dir #{:in}}
-
  layout
  {:zen/tags #{zen-web/op zen/op zen-web/middleware middleware}
   :zen/desc "wrap response in standard zd layout"
@@ -119,7 +152,7 @@
   :GET to-index
   ;; TODO move zen web defaults to zen web core
   :mw [zen-web/defaults]
-  [:id] {:mw [append-config dev-reload append-doc layout]
+  [:id] {:mw [append-config append-doc layout]
          :DELETE delete-doc
          :POST save-doc
          :GET render-doc

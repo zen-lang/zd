@@ -9,7 +9,9 @@
  {:zen/bind zd/config-binding
   :zen/tags #{zen/start zd/config}
   :engine zd/db
-  :paths ["test/zd/tdocs"]
+  ;; TODO make all io ops respect the path prefix
+  ;; TODO make api ops work w multiple paths
+  :paths ["test/zd/tdocs/test" #_"test/zd/tdocs/personal"]
   :layout zd/sidebar}
 
  to-customers
@@ -23,12 +25,27 @@
   :GET to-customers
   :apis [zd/api]}
 
+ gitsync
+ {:zen/tags #{zen/start zd/gitsync}
+  :engine zd/gitsync
+  ;; TODO make it in seconds
+  :pull-rate 10800
+  ;; TODO think about how to make the test reproducible
+  :remote {:from "git@github.com:carbon-hvze/personal.git"
+           :to "test/zd/tdocs/personal"}}
+
  http
  {:zen/tags #{zen/start zen-web/http}
   :engine zen-web/httpkit
   :port 4444
   :api zd/api}
 
+ ;; TODO rename to desktop ui
+ web-ui
+ {:zen/tags #{zen/start zd/web-ui}
+  :engine zd/web-ui
+  :uri "localhost:4444"}
+
  system
  {:zen/tags #{zen/system}
-  :start [datalog zendoc http]}}
+  :start [gitsync datalog zendoc http #_web-ui]}}
