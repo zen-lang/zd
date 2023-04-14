@@ -60,14 +60,16 @@
           (loader/reload! ztx))))))
 
 (defn init-remote [ztx config {:keys [from branch to] :as remote}]
-  (let [repo (if (.exists (io/file to))
+  (let [pulled? (.exists (io/file to))
+        repo (if pulled?
                (git/load-repo to)
                (git/git-clone from :dir to))]
     ;; TODO add create/checkout default branch if necessary?
     (when branch
       (git/git-checkout repo branch))
     (git/git-pull repo)
-    (git/git-submodule-init repo)
+    (when-not pulled?
+      (git/git-submodule-init repo))
     (git/git-submodule-update repo :strategy :recursive)
     repo))
 

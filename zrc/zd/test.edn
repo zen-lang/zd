@@ -11,7 +11,7 @@
   :engine zd/db
   ;; TODO make all io ops respect the path prefix
   ;; TODO make api ops work w multiple paths
-  :paths ["test/zd/tdocs/test" #_"test/zd/tdocs/personal"]
+  :paths ["test/zd/tdocs/test" #_"/docs"]
   :layout zd/sidebar}
 
  to-customers
@@ -31,8 +31,8 @@
   ;; TODO make it in seconds
   :pull-rate 10800
   ;; TODO think about how to make the test reproducible
-  :remote {:from "git@github.com:carbon-hvze/personal.git"
-           :to "test/zd/tdocs/personal"}}
+  :remote {:from "git@github.com:carbon-hvze/zendoc-gitsync.git"
+           :to "test/zd/tdocs/test"}}
 
  http
  {:zen/tags #{zen/start zen-web/http}
