@@ -18,8 +18,8 @@
 (deftest document-tree-loaded
   (load! ztx)
 
-  (testing "loading is complete"
-    (is (= 'ok @loader/ag)))
+  (testing "loading is complete in sync mode"
+    (is (= {:type :zd.utils/safecall, :result 'ok} @loader/ag)))
 
   (def docs ['customers 'customers.flame 'people.john 'people.todd])
 
