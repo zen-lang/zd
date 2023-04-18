@@ -34,8 +34,7 @@
           (let [msg (if (contains? untracked m)
                       (str "Create " d)
                       (str "Edit " d))]
-            (git/git-commit repo msg :committer {:name uname :email email}))
-          (git/git-push repo))))))
+            (git/git-commit repo msg :committer {:name uname :email email})))))))
 
 (defn delete-doc [_ ztx config repo {p :docpath d :docname}]
   (let [{:keys [missing]} (git/git-status repo)
@@ -45,10 +44,9 @@
     (doseq [m missing]
       (when (str/includes? p m)
         (git/git-rm repo m)
-        (git/git-commit repo (str "Delete " d) :committer {:name uname :email email})
-        (git/git-push repo)))))
+        (git/git-commit repo (str "Delete " d) :committer {:name uname :email email})))))
 
-(defn pull-remote [_ ztx config repo]
+(defn sync-remote [_ ztx config repo]
   (let [pull-result (git/git-pull repo)]
     ;; TODO resolve merge conflicts
     (when (.isSuccessful pull-result)
@@ -56,8 +54,11 @@
                          (.getTrackingRefUpdates)
                          (.isEmpty)
                          (not))]
+        (println :zd.gitsync/sync-remote)
         (when updated?
-          (loader/reload! ztx))))))
+          (loader/reload! ztx))
+        ;; TODO check the push status?
+        (git/git-push repo)))))
 
 (defn init-remote [ztx config {:keys [from branch to] :as remote}]
   (let [pulled? (.exists (io/file to))
@@ -103,7 +104,7 @@
     (if (instance? org.eclipse.jgit.api.Git repo)
       (let [task (proxy [TimerTask] []
                    (run []
-                     (let [sf (utils/safecall pull-remote {:type :gitsync/pull-remote-error})]
+                     (let [sf (utils/safecall sync-remote {:type :gitsync/pull-remote-error})]
                        (send-off ag sf ztx config repo))))]
         (.scheduleAtFixedRate ti task pull-rate pull-rate)
         {:ag ag
