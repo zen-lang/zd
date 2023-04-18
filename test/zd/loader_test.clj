@@ -21,11 +21,11 @@
   (testing "loading is complete in sync mode"
     (is (= {:type :zd.utils/safecall, :result 'ok} @loader/ag)))
 
-  (def docs ['customers 'customers.flame 'people.john 'people.todd])
+  (def docs (->> ['customers 'customers.flame 'people.john 'people.todd]
+                 (map #(loader/get-doc ztx %))))
 
   (testing "documents are loaded"
     (->> docs
-         (map #(loader/get-doc ztx %))
          (every? (fn [{m :zd/meta :as doc}]
                    (is (map? m))
                    (is (not-empty m))
@@ -93,10 +93,10 @@
 
   (matcho/assert
    {:zd/meta
-    {:ann {:rel {:zd/content-type :edn, :badge {}},
-           :tags {:zd/content-type :edn, :badge {}},
-           :icon {:zd/content-type :edn, :none {}},
-           :country {:zd/content-type :edn, :badge {}}}}}
+    {:ann {:rel {:zd/content-type :edn :badge {}}
+           :tags {:zd/content-type :edn :badge {}}
+           :icon {:zd/content-type :edn :none {}}
+           :country {:zd/content-type :edn :badge {}}}}}
    (loader/get-doc ztx 'customers.flame)))
 
 (deftest subdocuments-loaded

@@ -10,12 +10,6 @@
    [clojure.string :as str])
   (:import [java.util Timer TimerTask]))
 
-(declare blocks-meta)
-
-  ;; TODO use turtle/json ld
-(defn read-meta! [ztx]
-  (def blocks-meta (read-string (slurp (io/resource "zd/blocks-meta.edn")))))
-
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
 
@@ -132,21 +126,21 @@
                {})))
 
 (defn append-meta [ztx doc]
-  (let [subdocs*
-        (->> (:zd/subdocs doc)
-             (map (fn [[subname cnt]]
-                    [subname (append-meta ztx cnt)]))
-             (into {}))]
-    (->> doc
-         (remove (fn [[k _]]
-                   (namespace k)))
-         (reduce (fn [*doc [k _]]
-                   (update-in *doc [:zd/meta :ann k]
-                              (fn [anns] (merge anns (get blocks-meta k)))))
-                 (assoc doc :zd/subdocs subdocs*)))))
+  (let [blocks-meta (get @ztx :zd/schema)]
+    (let [subdocs*
+          (->> (:zd/subdocs doc)
+               (map (fn [[subname cnt]]
+                      [subname (append-meta ztx cnt)]))
+               (into {}))]
+      (->> doc
+           (remove (fn [[k _]]
+                     (namespace k)))
+           (reduce (fn [*doc [k _]]
+                     (update-in *doc [:zd/meta :ann k]
+                                (fn [anns] (merge anns (get blocks-meta k)))))
+                   (assoc doc :zd/subdocs subdocs*))))))
 
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
-  ;; TODO add validation, annotations with zen.schema
   (let [docname (symbol (str/replace (str/replace resource-path #"\.zd$" "")
                                      file-separator-regex
                                      "."))
@@ -165,20 +159,37 @@
     (swap! ztx assoc-in [:zd/macros docname] macros)
     (zen/pub ztx 'zd/on-doc-create doc)))
 
+(defn load-meta! [ztx {c :content}]
+  (let [ann-idx (reduce (fn [acc [k v]]
+                          (if-let [anns (not-empty (:ann v))]
+                            (assoc acc k anns)
+                            acc))
+                        {}
+                        (:zd/subdocs (reader/parse ztx {} c)))]
+    (swap! ztx update :zd/schema merge ann-idx)))
+
 (defn load-docs! [ztx dirs]
   (doseq [dir dirs]
     (let [dir (io/file dir)
           dir-path (.getPath dir)]
+      ;; load metadata
       (doseq [f (->> (file-seq dir)
-                     (sort-by (fn [x] (.getPath x))))]
-        (let [path (.getPath f)]
-          (when (and (str/ends-with? path ".zd")
-                     (not (str/starts-with? (.getName f) ".")))
-            (let [resource-path (subs path (inc (count dir-path)))
-                  content (slurp f)]
-              (load-document! ztx {:path path
-                                   :resource-path resource-path
-                                   :content content}))))))))
+                     (filter (fn [f] (str/includes? (.getName f) "_schema.zd"))))]
+        (let [content (slurp f)]
+          (load-meta! ztx {:path (.getPath f)
+                           :resource-path (subs (.getPath f) (inc (count dir-path)))
+                           :content content})))
+      ;; load documents
+      (doseq [[path f] (->> (file-seq dir)
+                            (map (fn [d] [(.getPath d) d]))
+                            (sort-by first))]
+        (when (and (str/ends-with? path ".zd")
+                   (not (str/starts-with? (.getName f) ".")))
+          (let [resource-path (subs path (inc (count dir-path)))
+                content (slurp f)]
+            (load-document! ztx {:path path
+                                 :resource-path resource-path
+                                 :content content})))))))
 
 (defn load-links!
   "add backlinks to docs"
@@ -223,13 +234,12 @@
   (eval-macros! ztx)
   'ok)
 
-;; first arg is an agent state. pass ni
+;; first arg is an agent state
 (defn hard-reload! [_ ztx {dirs :paths :as config}]
   ;; TODO emit zen event
   (prn :hard-reload)
   (swap! ztx dissoc :zdb)
   (swap! ztx assoc :zrefs {})
-  (read-meta! ztx)
   (zen/pub ztx 'zd/hard-reload {:dirs dirs})
   (load-dirs! ztx dirs))
 

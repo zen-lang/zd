@@ -23,3 +23,32 @@
 &mydoc
 :type :subdoc
 :schema {:require #{:rel :title}}
+
+&rel
+:type :dockey
+:group :zd/summary
+:schema {:type zen/set :every {:type zen/symbol}}
+:ann {:badge {}}
+:desc "relationship to an org"
+
+&tags
+:type :dockey
+:group :zd/summary
+:schema {:type zen/set :every {:type zen/symbol}}
+:ann {:badge {}}
+:desc "document tags"
+
+&country
+:type :dockey
+:group :zd/summary
+:schema {:type zen/set :every {:type zen/symbol}}
+:ann {:badge {}}
+:desc "set of related countries"
+
+&icon
+;; TODO make icon list searchable
+:type :dockey
+:group :zd/summary
+:schema {:type zen/vector :every {:type zen/keyword}}
+:ann {:none {}}
+:desc "icon of a document"
