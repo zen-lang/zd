@@ -11,7 +11,7 @@
 
 ;; by default just pretty prints the content
 (defmethod rendercontent :default
-  [ztx ctx {:keys [data]}]
+  [ztx ctx {:keys [data] :as block}]
   [:pre (with-out-str (pprint/pprint data))])
 
 ;; renders key of a document with provided annotation
@@ -49,7 +49,8 @@
 
 ;; renders UI widget that is updated asynchronously
 ;; TODO add ctx
-(defmulti widget (fn [ztx wgt page & [opts]] (keyword wgt)))
+
+(defmulti widget (fn [ztx ctx page & [opts]] (keyword (:widget ctx))))
 
 (defmethod widget
   :default

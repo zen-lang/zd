@@ -1,5 +1,6 @@
 (ns zd.blocks
   (:require
+   [zd.db :as db]
    [zd.zentext.blocks]
    [zd.datalog :as d]
    [zd.loader :as loader]
@@ -240,3 +241,78 @@
   (if (and (sequential? data) (every? map? data))
     (table ztx ctx (or headers (keys (first data))) data)
     [:pre (pr-str data)]))
+
+(defn add-page-param [qs c]
+  (let [qs (str qs)]
+    (cond
+      (str/includes? qs "page=") (str/replace qs #"page=\d+" (str "page=" c))
+      (str/blank? qs) (str "?page=" c)
+      :else (str qs "&page=" c))))
+
+(defn pagination [req items-count]
+  (let [pages-count (+ (quot items-count 24)
+                       (if (= 0 (rem items-count 24))
+                         0
+                         1))
+        path (get-in req [:headers "x-client-path"])
+        qs (get-in req [:headers "x-client-qs"])]
+    [:div {:class (c :flex :flex-row :justify-center [:py 6])}
+     (for [pn (map #(+ 1 %)
+                   (range pages-count))]
+       [:a {:href (str path (add-page-param qs pn))
+            :class (c [:mr 1.5] [:py 0.5] [:px 1.5] :text-sm [:text :gray-600]
+                      :border :rounded
+                      [:hover
+                       [:cursor-pointer]
+                       [:bg :gray-500]
+                       [:text "white"]])}
+        pn])]))
+
+(defn docs-cards [ztx ctx summary-keys query-result]
+  [:div {:class (c :flex :flex-row :flex-wrap)}
+   (for [[docname] query-result]
+     (let [{{anns :ann} :zd/meta :as doc} (loader/get-doc ztx (symbol docname))]
+       [:div {:class (c [:px 8] [:py 4] [:mr 4] [:mb 8] [:w-max "27rem"]
+                        :border
+                        :rounded)}
+        [:div {:class (c [:pb 4] :text-lg)}
+         (link/symbol-link ztx docname)]
+        (when-let [desc (get doc :desc)]
+          (when (string? desc)
+            [:div {:class (c :text-md [:text :gray-700] [:pt 4] [:pb 2])}
+             (->> (map-indexed vector desc)
+                  (take-while (fn [[i ch]]
+                                (or (< i 120)
+                                    (and (>= i 120)
+                                         (not= ch \.)))))
+                  (map second)
+                  (apply str))]))
+        [:div
+         (doall
+          (for [[k v] (select-keys doc summary-keys)]
+            (methods/renderkey ztx {} {:key k :data v :ann (get anns k)})))]]))])
+
+(defmethod methods/widget :folder
+  [ztx {{config :zd/config :as req} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
+  (let [summary-keys
+        (->> (get-in @ztx [:zd/schema])
+             (filter (fn [[k v]]
+                       (= :zd/summary (:group v))))
+             (map first)
+             (vec))
+        dn-param (if (= (symbol (:root config)) dn)
+                   ""
+                   (str dn))
+        page-number (->> (get-in req [:headers "x-client-qs"])
+                         (re-matches #".*page=(\d+).*")
+                         (second))
+        query-result (db/children ztx dn-param page-number)
+        items-count (ffirst (db/children-count ztx dn-param))]
+    [:div
+     (when (number? items-count)
+       (pagination req items-count))
+     (docs-cards ztx ctx summary-keys query-result)
+     (when (number? items-count)
+       (pagination req items-count))]))
+
+

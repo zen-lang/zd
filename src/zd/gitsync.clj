@@ -54,8 +54,8 @@
                          (.getTrackingRefUpdates)
                          (.isEmpty)
                          (not))]
-        (println :zd.gitsync/sync-remote)
         (when updated?
+          (println :zd.gitsync/sync-remote)
           (loader/reload! ztx))
         ;; TODO check the push status?
         (git/git-push repo)))))
@@ -69,9 +69,9 @@
     (when branch
       (git/git-checkout repo branch))
     (git/git-pull repo)
-    (when-not pulled?
+    #_(when-not pulled?
       (git/git-submodule-init repo))
-    (git/git-submodule-update repo :strategy :recursive)
+    #_(git/git-submodule-update repo :strategy :recursive)
     repo))
 
 (defn get-repo [ztx]

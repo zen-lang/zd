@@ -132,10 +132,6 @@
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:style (garden.core/css common-style)]
-    [:style "*, ::before, ::after {overflow-x: auto;}
-@media (max-width: 700px) {
- #aside {display: none;}
- #topbar {display: none;}} "]
     [:meta {:charset "UTF-8"}]
     ;; TODO fix title
     #_(when-let [title (->> (:doc page)

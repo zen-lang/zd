@@ -23,9 +23,9 @@
     (xt/submit-tx node [[::xt/put data]])
     :no/xtdb))
 
-(defn query [ztx query]
+(defn query [ztx query & params]
   (if-let [node (get-node ztx)]
-    (xt/q (xt/db node) query)
+    (apply xt/q (xt/db node) query params)
     :no/xtdb))
 
 (defmethod zen/op 'zd/query
@@ -51,6 +51,7 @@
   [ztx _config {_ev :ev doc :params} & [_session]]
   ;; TODO emit zen event
   #_(println 'on-doc-create)
+  ;; TODO call xtdb/sync to ensure tx status?
   (let [id (get-in doc [:zd/meta :docname])
         result
         (submit ztx
@@ -60,3 +61,4 @@
                        :parent (str/join "." (butlast (str/split (str id) #"\.")))))]
     ;; TODO und where does result go in pub/sub
     result))
+

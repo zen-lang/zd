@@ -19,17 +19,27 @@
   [ztx {cfg-symbol :zendoc-config} req & opts]
   (let [{pths :paths :as zendoc-cfg} (zen/get-symbol ztx cfg-symbol)]
     {:zd/config zendoc-cfg
+     :zd/config-symbol cfg-symbol
      :zd/paths pths}))
 
 (defmethod web/middleware-in 'zd/append-doc
   [ztx _cfg {{id :id} :route-params :as req} & opts]
-  {:doc (loader/get-doc ztx (symbol id))})
+  (when (some? id)
+    {:doc (loader/get-doc ztx (symbol id))}))
 
 (defmethod zen/op 'zd/render-doc
   [ztx cfg {{id :id} :route-params
             config :zd/config
+            sym :zd/config-symbol
+            uri :uri
             doc :doc :as req} & opts]
   (cond
+    (= uri "/")
+    (let [config (zen/get-symbol ztx sym)]
+      {:status 301
+       :headers {"Location" (str "/" (symbol (:root config)) "?" (:query-string req))
+                 "Cache-Control" "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"}})
+
     (nil? doc)
     {:status 301
      :headers {"Location" (str "/" id "/edit" "?" (:query-string req))
@@ -49,7 +59,7 @@
   [ztx _cfg {{id :id wgt :widget-id} :route-params :keys [doc] :as req} & opts]
   (if-not (nil? doc)
     {:status 200
-     :body (methods/widget ztx wgt doc)}
+     :body (methods/widget ztx {:widget (keyword wgt) :request req} doc)}
     {:status 200
      :body [:div "Error: " id " is not found"]}))
 

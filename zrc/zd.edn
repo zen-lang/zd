@@ -82,10 +82,11 @@
  config
  {:zen/tags #{zen/tag zen/schema}
   :type zen/map
-  :require #{:engine :paths}
+  :require #{:engine :paths :root}
   :schema-key {:key :engine}
   :keys {:zen/bind {:type zen/symbol
                     :tags #{zen/binding}}
+         :root {:type zen/string}
          :paths {:type zen/vector
                  :every {:type zen/string}}
          :engine {:type zen/symbol}
@@ -99,11 +100,6 @@
  {:zen/tags #{zen/op zen-web/op}
   :engine zen-web.engines/serve-static
   :serve ["src"]}
-
- to-index
- {:zen/tags #{zen/op zen-web/op}
-  :engine zen-web.engines/redirect
-  :to "/index"}
 
  render-doc
  {:zen/tags #{zen/op zen-web/op}}
@@ -149,10 +145,10 @@
  api
  {:zen/tags #{zen-web/api}
   :engine zen-web/routemap
-  :GET to-index
   ;; TODO move zen web defaults to zen web core
-  :mw [zen-web/defaults]
-  [:id] {:mw [append-config append-doc layout]
+  :mw [zen-web/defaults append-config]
+  :GET render-doc
+  [:id] {:mw [append-doc layout]
          :DELETE delete-doc
          :POST save-doc
          :GET render-doc

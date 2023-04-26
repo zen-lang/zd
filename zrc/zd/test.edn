@@ -8,6 +8,7 @@
  zendoc
  {:zen/bind zd/config-binding
   :zen/tags #{zen/start zd/config}
+  :root "customers"
   :engine zd/db
   ;; TODO make all io ops respect the path prefix
   ;; TODO make api ops work w multiple paths

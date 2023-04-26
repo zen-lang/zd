@@ -120,7 +120,8 @@ var update_widgets = ()=> {
         var url = el.dataset.url;
         if(url){
             el.innerHTML = "<i class='fa fa-spinner fa-spin'></i>";
-            fetch(url).then((resp)=>{
+            fetch(url, {headers: {'x-client-path': window.location.pathname,
+                                  'x-client-qs': window.location.search}}).then((resp)=>{
                 window.resp = resp;
                 if(resp.status < 300){
                     resp.text().then((t)=>{

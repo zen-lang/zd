@@ -161,9 +161,9 @@
 
 (defn load-meta! [ztx {c :content}]
   (let [ann-idx (reduce (fn [acc [k v]]
-                          (if-let [anns (not-empty (:ann v))]
-                            (assoc acc k anns)
-                            acc))
+                          (->> (select-keys v [:type :schema :group])
+                               (merge (:ann v))
+                               (assoc acc k)))
                         {}
                         (:zd/subdocs (reader/parse ztx {} c)))]
     (swap! ztx update :zd/schema merge ann-idx)))
@@ -238,7 +238,7 @@
 (defn hard-reload! [_ ztx {dirs :paths :as config}]
   ;; TODO emit zen event
   (prn :hard-reload)
-  (swap! ztx dissoc :zdb)
+  (swap! ztx dissoc :zdb :zd/schema)
   (swap! ztx assoc :zrefs {})
   (zen/pub ztx 'zd/hard-reload {:dirs dirs})
   (load-dirs! ztx dirs))
