@@ -126,7 +126,7 @@
                {})))
 
 (defn append-meta [ztx doc]
-  (let [blocks-meta (get @ztx :zd/schema)]
+  (let [blocks-meta (:zd/schema @ztx)]
     (let [subdocs*
           (->> (:zd/subdocs doc)
                (map (fn [[subname cnt]]
@@ -137,7 +137,8 @@
                      (namespace k)))
            (reduce (fn [*doc [k _]]
                      (update-in *doc [:zd/meta :ann k]
-                                (fn [anns] (merge anns (get blocks-meta k)))))
+                                (fn [anns]
+                                  (merge anns (get-in blocks-meta [k :ann])))))
                    (assoc doc :zd/subdocs subdocs*))))))
 
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
@@ -161,8 +162,7 @@
 
 (defn load-meta! [ztx {c :content}]
   (let [ann-idx (reduce (fn [acc [k v]]
-                          (->> (select-keys v [:type :schema :group])
-                               (merge (:ann v))
+                          (->> (select-keys v [:type :schema :group :ann])
                                (assoc acc k)))
                         {}
                         (:zd/subdocs (reader/parse ztx {} c)))]

@@ -75,12 +75,13 @@
                        {:font-size "1.1rem"})
              :href ""
              :onclick (when-not (= docname 'index) del-script)}
-         [:i.fas.fa-trash-xmark]]]
-    [:div {:class (c :flex :items-center)
-           :style {:visibility (if (and (some? qs) (str/includes? qs "tab=folder"))
-                                 "hidden"
-                                 "visible")}}
-     edit-btn create-btn del-btn]))
+         [:i.fas.fa-trash-xmark]]
+
+        container
+        [:div {:class (c :flex :items-center)}]]
+    (if (tab? qs)
+      (conj container create-btn)
+      (conj container edit-btn del-btn))))
 
 (defn breadcrumbs [ztx {{uri :uri {root :root} :zd/config} :request} {{:keys [docname]} :zd/meta :as doc}]
   (let [parts (str/split (str docname) #"\.")

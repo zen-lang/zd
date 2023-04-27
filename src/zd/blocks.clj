@@ -256,7 +256,7 @@
                          1))
         path (get-in req [:headers "x-client-path"])
         qs (get-in req [:headers "x-client-qs"])]
-    [:div {:class (c :flex :flex-row :justify-center [:py 6])}
+    [:div {:class (c :flex :flex-row :justify-center [:py 4])}
      (for [pn (map #(+ 1 %)
                    (range pages-count))]
        [:a {:href (str path (add-page-param qs pn))
@@ -272,7 +272,7 @@
   [:div {:class (c :flex :flex-row :flex-wrap)}
    (for [[docname] query-result]
      (let [{{anns :ann} :zd/meta :as doc} (loader/get-doc ztx (symbol docname))]
-       [:div {:class (c [:px 8] [:py 4] [:mr 4] [:mb 8] [:w-max "27rem"]
+       [:div {:class (c [:px 8] [:py 4] [:mr 4] [:mb 6] [:w-max "26rem"]
                         :border
                         :rounded)}
         [:div {:class (c [:pb 4] :text-lg)}
@@ -280,13 +280,17 @@
         (when-let [desc (get doc :desc)]
           (when (string? desc)
             [:div {:class (c :text-md [:text :gray-700] [:pt 4] [:pb 2])}
-             (->> (map-indexed vector desc)
-                  (take-while (fn [[i ch]]
-                                (or (< i 120)
-                                    (and (>= i 120)
-                                         (not= ch \.)))))
-                  (map second)
-                  (apply str))]))
+             (let [text-limit 128
+                   desc-text
+                   (->> (map-indexed vector desc)
+                        (take-while (fn [[i ch]]
+                                      (or (< i text-limit)
+                                          (and (>= i text-limit)
+                                               (not= ch \.)))))
+                        (map second)
+                        (apply str))
+                   block {:key :desc :data desc-text :ann (get anns :desc)}]
+               (methods/rendercontent ztx {} block))]))
         [:div
          (doall
           (for [[k v] (select-keys doc summary-keys)]
@@ -307,12 +311,17 @@
                          (re-matches #".*page=(\d+).*")
                          (second))
         query-result (db/children ztx dn-param page-number)
-        items-count (ffirst (db/children-count ztx dn-param))]
+        items-count (if-let [c (ffirst (db/children-count ztx dn-param))]
+                      c
+                      0)]
     [:div
-     (when (number? items-count)
+     (if (> items-count 0)
+       [:div {:class (c :flex :justify-center [:pt 4] [:text :gray-600] :text-sm)}
+        [:span "total: "] [:span items-count]]
+       [:div {:class (c [:text :gray-600] [:my 2])}
+        "Add a document with + button"])
+     (when (> items-count 24)
        (pagination req items-count))
      (docs-cards ztx ctx summary-keys query-result)
-     (when (number? items-count)
+     (when (> items-count 24)
        (pagination req items-count))]))
-
-
