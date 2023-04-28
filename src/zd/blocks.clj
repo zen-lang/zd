@@ -69,32 +69,24 @@
   (let [links
         (->> data
              (map (fn [{d :doc p :path t :to}]
-                    (let [parts (str/split (str d) #"\.")
-                          prefix (if (= (count parts) 1)
-                                   (first parts)
-                                   (last (butlast parts)))
-                          p* (->> p
-                                  (map (fn [v]
-                                         (if (keyword? v) (name v) (str v))))
-                                  (str/join "."))]
-                      {:to t
-                       :prefix prefix
-                       :doc d
-                       :path (str prefix "/" p*)})))
-             (sort-by :prefix)
+                    {:to t
+                     :doc d
+                     :path (->> (map name p)
+                                (str/join ".")
+                                (str ":"))}))
+
+             (sort-by :doc)
              (group-by :path))]
     [:div {:class (c [:text :gray-600])}
-     [:div {:class (c  [:py 2] [:px 0])}
-      [:span {:class (c [:text :gray-600] {:font-weight 400})}
+     [:div {:class (c [:px 0])}
+      [:div {:class (c :text-lg [:mb 4])}
        "Backlinks"]
       (doall
-       (for [[path links] links]
-         [:div {:class (c [:py 2] :text-sm)}
-          [:div {:class (c [:text :gray-600] :border-b [:mb 2] {:font-weight "400"})}
-           path]
-          [:div
-           (for [{doc-symbol :doc} links]
-             [:div {:class (c [:py 0.5])} (link/symbol-link ztx doc-symbol)])]]))]]))
+       (for [[p ls] links]
+         [:div {:class (c [:mb 4])}
+          [:div {:class (c :border-b [:py 2])} p]
+          (for [{:keys [to doc path]} ls]
+            [:div {:class (c [:pb 1]:text-sm)} (link/symbol-link ztx doc)])]))]]))
 
 (defmethod methods/rendercontent :edn
   [ztx ctx {:keys [data] :as block}]
@@ -124,7 +116,7 @@
 
 (defmethod methods/rendercontent :zentext
   [ztx ctx {:keys [data] :as block}]
-  [:div {:class (c [:px 0] [:py 1] [:bg :white] {:word-wrap "break"})}
+  [:div {:class (c [:px 0] [:py 1] {:word-wrap "break"})}
    (zentext/parse-block ztx data block)])
 
 (defmethod methods/renderkey :badge
@@ -269,28 +261,28 @@
         pn])]))
 
 (defn docs-cards [ztx ctx summary-keys query-result]
-  [:div {:class (c :flex :flex-row :flex-wrap)}
-   (for [[docname] query-result]
+  [:div
+   (for [[i [docname]] (map-indexed vector query-result)]
      (let [{{anns :ann} :zd/meta :as doc} (loader/get-doc ztx (symbol docname))]
-       [:div {:class (c [:px 8] [:py 4] [:mr 4] [:mb 6] [:w-max "26rem"]
-                        :border
-                        :rounded)}
+       [:div {:class (c [:py 8] [:px 2] [:bg "#F7FAFC"])
+              :style {:background-color (if (even? i)
+                                          "#F7FAFC"
+                                          "white")}}
         [:div {:class (c [:pb 4] :text-lg)}
          (link/symbol-link ztx docname)]
         (when-let [desc (get doc :desc)]
-          (when (string? desc)
-            [:div {:class (c :text-md [:text :gray-700] [:pt 4] [:pb 2])}
-             (let [text-limit 128
-                   desc-text
-                   (->> (map-indexed vector desc)
-                        (take-while (fn [[i ch]]
-                                      (or (< i text-limit)
-                                          (and (>= i text-limit)
-                                               (not= ch \.)))))
-                        (map second)
-                        (apply str))
-                   block {:key :desc :data desc-text :ann (get anns :desc)}]
-               (methods/rendercontent ztx {} block))]))
+          [:div {:class (c [:text :gray-700] [:pb 2])}
+           (let [text-limit 128
+                 desc-text
+                 (->> (map-indexed vector (str desc))
+                      (take-while (fn [[i ch]]
+                                    (or (< i text-limit)
+                                        (and (>= i text-limit)
+                                             (not= ch \.)))))
+                      (map second)
+                      (apply str))
+                 block {:key :desc :data desc-text :ann (get anns :desc)}]
+             (methods/rendercontent ztx {} block))])
         [:div
          (doall
           (for [[k v] (select-keys doc summary-keys)]

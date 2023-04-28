@@ -19,37 +19,33 @@
 (defn tabs [ztx {{uri :uri qs :query-string} :request} doc]
   ;; TODO add url lib to zen web
   ;; TODO think about better approach to tab positioning
-  [:div {:class (c [:mb "-28px"])}
-   [:a#document-tab
-    {:href uri
-     :class (c [:py 4]
-               [:px 6]
-               [:rounded-t 6]
-               [:mr 1]
-               [:text :gray-600]
-               :cursor-pointer
-               :border-t :border-l :border-r)
-     :style {:background-color (if (tab? qs) "#F7FAFC" "white")}}
-    [:span {:class (c [:text :orange-500]
-                      [:hover [:text :orange-600]]
-                      [:pr 1.5])}
-     [:i.fas.fa-clipboard]]
-    [:span "document"]]
-
-   [:a#folder-tab
-    {:href (str uri "?tab=folder")
-     :class (c [:py 4]
-               [:px 6]
-               [:rounded-t 6]
-               :cursor-pointer
-               [:text :gray-600]
-               :border-t :border-l :border-r)
-     :style {:background-color (if (tab? qs) "white" "#F7FAFC")}}
-    [:span {:class (c [:text :orange-500]
-                      [:hover [:text :orange-600]]
-                      [:pr 1.5])}
-     [:span.fas.fa-regular.fa-folder]]
-    [:span "folder"]]])
+  (let [tab-style (c [:py 1]
+                     [:px 3]
+                     [:mr 2]
+                     [:text :gray-600]
+                     :cursor-pointer
+                     :border
+                     :text-sm
+                     [:rounded 12])]
+    [:div
+     [:a#document-tab
+      {:href uri
+       :class tab-style
+       :style {:background-color (if (tab? qs) "white" "#F7FAFC")}}
+      [:span {:class (c [:text :orange-500]
+                        [:hover [:text :orange-600]]
+                        [:pr 1.5])}
+       [:i.fas.fa-clipboard]]
+      [:span "document"]]
+     [:a#folder-tab
+      {:href (str uri "?tab=folder")
+       :class tab-style
+       :style {:background-color (if (tab? qs) "#F7FAFC" "white")}}
+      [:span {:class (c [:text :orange-500]
+                        [:hover [:text :orange-600]]
+                        [:pr 1.5])}
+       [:span.fas.fa-regular.fa-folder]]
+      [:span "folder"]]]))
 
 (defn actions [ztx {{qs :query-string :as req} :request :as ctx} {{:keys [docname]} :zd/meta :as doc}]
   (let [edit-btn
@@ -94,9 +90,7 @@
            (mapcat (fn [x]
                      (let [pth (into [] (take x parts))
                            nm  (str/join "." pth)]
-                       [[:a {:data-dir nm
-                             :href (str "/" nm)
-                             :class (c :cursor-pointer [:text :orange-500] [:hover [:text :orange-600]])}
+                       [[:div {:class (c [:text :orange-500] :flex :self-center)}
                          (if (db/has-children? ztx nm)
                            [:span.fa-solid.fa-folder]
                            [:span.fa-regular.fa-file])]
@@ -106,15 +100,15 @@
                         (when-not (= x (count parts))
                           [:span {:class (c [:text :gray-500] [:mr 3] {:font-size "18px"})}
                            "/"])])))
-           (into [:div
+           (into [:div {:class (c :flex :flex-flow)}
                   [:a {:href (str "/") :class icon-class}
                    [:span.fa-regular.fa-house]
                    [:span {:class (c [:text :gray-500] [:m 3] {:font-size "18px"})}
                     "/"]]])))))
 
 (defn topbar [ztx ctx doc]
-  (-> [:div {:class (c :flex :flex-1 :items-center :justify-between :border-b [:bg "#F7FAFC"]
-                       [:px 10] [:py 6])}]
+  (-> [:div {:class (c :flex :flex-1 :items-center :justify-between :border-b #_[:bg "#f8f8fc"]
+                       [:px "24rem"] [:py 6])}]
         ;; TODO add transitions to tabs
       (conj (tabs ztx ctx doc))
       (conj (breadcrumbs ztx ctx doc))
@@ -152,8 +146,7 @@
            (methods/renderkey ztx ctx err-block)))))
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc}]
-  [:div {:class (c [:pt 4])}
-   (when-let [errs (:errors m)]
+  [:div (when-let [errs (:errors m)]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
     (for [k (filter #(get doc %) (:doc m))]
@@ -174,26 +167,24 @@
           [:div {:class (c [:px 8] [:py 2])}
            (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]))]]))])])
 
-(defn render-folder [ztx ctx {{dn :docname} :zd/meta :as doc}]
-  [:div#folder-items
-   [:div.widget {:data-url (str "/" dn "/widgets/folder")}]])
-
-(defn render-doc [ztx {{qs :query-string} :request :as ctx} doc]
+(defn render-doc [ztx {{qs :query-string} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
   [:div {:class (c :flex :flex-1)}
    [:div {:class (c :flex-1 {:min-width "30em"})}
     (topbar ztx ctx doc)
-    [:div {:class (c [:mr 12] :flex-1 [:pl 10] #_[:pt 6] [:pb 6])}
+    [:div {:class (c :flex-1 :flex-row [:px "24rem"] [:pb 12] [:pt 8])}
      (when-not (tab? qs)
        [:div#blocks {:class (c [:bg :white] {:color "#3b454e"})}
         (render-blocks ztx ctx doc)])
      (when (tab? qs)
-       (render-folder ztx ctx doc))]]
+       [:div#folder-items
+        [:div.widget {:data-url (str "/" dn "/widgets/folder")}]])]]
    (when-let [links (seq (get-in doc [:zd/meta :backlinks]))]
-     [:div {:class (c [:bg :gray-100] [:p 6] :border-l
-                      {:height "100vh"
-                       :overflow-y "auto"
-                       :min-width "15em"
-                       :max-width "20em"})}
+     [:div {:class (c [:bg "#F7FAFC"] [:px 6] [:py 4] :border-l
+                      [:w "24rem"] :overflow-y-auto
+                      :fixed
+                      [:top 0]
+                      [:right 0]
+                      {:height "100vh"})}
       (methods/renderkey ztx ctx {:data links :key :zd/backlinks})])])
 
 (defn *doc-view [ztx ctx doc]

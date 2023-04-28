@@ -28,13 +28,13 @@
 ;; by default add a header and renders content of a block
 (defmethod renderkey :default [ztx ctx {kp :key :as block}]
   [:div.zd-block
+   {:font-size "24px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "30px"}
+
    [:h2 {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
-    [:div {:class (c :flex :flex-1)}
-     ;; TODO add collapse annotation for default view?
-     [:a {:id kp :href (str "#" kp)}
-      (-> (name kp)
-          (str/replace "-" " ")
-          (str/capitalize))]]]
+    [:a {:id kp :href (str "#" kp)}
+     (-> (name kp)
+         (str/replace "-" " ")
+         (str/capitalize))]]
    [:div.zd-content (rendercontent ztx ctx block)]])
 
 ;; zentext methods
