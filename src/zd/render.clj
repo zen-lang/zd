@@ -162,7 +162,7 @@
       (doall
        (for [sub-key subdocs]
          [:div
-          [:div {:class (c :border-b :text-xl [:text :gray-700])}
+          [:div {:class (c :border-b [:text-lg] [:text :gray-700])}
            [:span {:class (c [:text :green-500])} "&"]
            [:span {:class (c [:text :gray-600])} (name sub-key)]]
           [:div
@@ -174,7 +174,7 @@
     (topbar ztx ctx doc)
     [:div {:class (c :flex-1 :flex-row [:px "18rem"])}
      (when-not (tab? qs)
-       [:div#blocks {:class (c [:bg :white] {:color "#3b454e"})}
+       [:div#blocks {:class (c [:bg :white] [:text "#3b454e"] [:py 4])}
         (render-blocks ztx ctx doc)])
      (when (tab? qs)
        [:div#folder-items

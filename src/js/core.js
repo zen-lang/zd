@@ -459,6 +459,20 @@ var on_hotkey = (e)=>{
     }
 }
 
+var search_debounce = debounce((v) => {
+    var searchParams = new URLSearchParams(window.location.search);
+    if (v.length == 0) {
+        searchParams.delete("search");
+    } else {
+        searchParams.set("search", v);
+    }
+    window.location.search = searchParams.toString();}, 600);
+
+var on_doc_search = (e) => {
+    var el = document.getElementById("zd-search");
+    search_debounce(el.value);
+}
+
 main(()=>{
     update_widgets();
 

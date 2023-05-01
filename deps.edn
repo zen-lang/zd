@@ -1,6 +1,7 @@
 {:paths ["zrc" "src"]
  :deps  {org.clojure/clojure  {:mvn/version "1.11.1"}
-         com.xtdb/xtdb-core                                  {:mvn/version "1.23.0"}
+         com.xtdb/xtdb-core                                  {:mvn/version "1.23.2"}
+         com.xtdb/xtdb-lucene                                {:mvn/version "1.23.2"}
          borkdude/edamame                                    {:mvn/version "0.0.18"}
          cheshire/cheshire                                   {:mvn/version "5.10.0"}
          clj-commons/clj-yaml                                {:mvn/version "0.7.106"}

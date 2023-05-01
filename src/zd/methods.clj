@@ -26,16 +26,17 @@
                         (:key block))))
 
 ;; by default add a header and renders content of a block
-(defmethod renderkey :default [ztx ctx {kp :key :as block}]
-  [:div {:class (c [:py 2])}
+(defmethod renderkey :default [ztx ctx {kp :key d :data :as block}]
+  [:div {:class (c [:py 3])}
    [:div {:class (c :flex :flex-row :justify-between [:bg "white"])}
     [:div
      [:span {:class (c [:text :orange-500])} ":"]
      [:span {:class (c [:text :gray-600])} kp]]
     [:div {:class (c [:text :gray-500])}
      (get-in block [:ann :zd/content-type])]]
-   [:div {:class (c [:bg "#F7FAFC"])}
-    (rendercontent ztx ctx block)]])
+   (when-not (and (string? d) (str/blank? d))
+     [:div {:class (c [:bg "#F7FAFC"])}
+      (rendercontent ztx ctx block)])])
 
 ;; zentext methods
 (defmulti inline-method   (fn [ztx m arg ctx] (keyword m)))

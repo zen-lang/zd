@@ -36,11 +36,12 @@
          {:width "100%"})]
     [:.zd-comments (c* :text-sm [:text :gray-500] [:py 1])]
     [:.zd-results (c* [:mt 2])
-     [:.zd-search-item (c* :cursor-pointer [:py 1] [:px 4] :flex [:space-x 2] :items-center [:hover [:bg :gray-200]] {:border "1px solid transparent"})
+     [:.zd-search-item (c* :cursor-pointer [:py 1] [:px 4]
+                           :flex [:space-x 2] :items-center
+                           [:hover [:bg :gray-200]] {:border "1px solid transparent"})
       [:&.current (c* [:bg :gray-200] :border)]
       [:i (c* [:text :gray-400])]
       [:.zd-search-desc (c* :text-sm [:text :gray-500])]]]]
-
    [:.zd-menu-item (c* :flex [:space-x 2] :items-center [:py 0.2]  :cursor-pointer [:px 6]
                        {:white-space "nowrap"})
     [:.zd-folder (c* [:text :transparent])]

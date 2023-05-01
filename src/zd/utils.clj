@@ -1,5 +1,13 @@
 (ns zd.utils
-  (:require [clojure.pprint :as ppr]))
+  (:require
+   [clojure.string :as str]
+   [zen-web.middlewares :as mw]
+   [clojure.pprint :as ppr]))
+
+(defn parse-params [qs]
+  (mw/parse-params* (if (str/starts-with? qs "?")
+                      (apply str (rest qs))
+                      qs)))
 
 (defn safecall [f err]
   (fn [& args]

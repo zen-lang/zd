@@ -1,5 +1,6 @@
 (ns zd.blocks
   (:require
+   [zd.utils :as utils]
    [zd.db :as db]
    [zd.zentext.blocks]
    [zd.datalog :as d]
@@ -10,15 +11,6 @@
    [stylo.core :refer [c]]
    [clojure.string :as str]
    [zd.methods :as methods]))
-
-(defn keystr [key]
-  (->> key
-       (map (fn [k]
-              (if (keyword? k)
-                (name k)
-                (str k))))
-       (clojure.string/join ".")
-       (str ".")))
 
 (defmethod methods/renderkey :linkedin
   [ztx {{m :zd/meta} :doc} {data :data :as block}]
@@ -86,7 +78,7 @@
          [:div {:class (c [:mb 2])}
           [:div {:class (c :border-b [:py 2] :text-sm)} p]
           (for [{:keys [to doc path]} ls]
-            [:div {:class (c [:pb 1]:text-sm)} (link/symbol-link ztx doc)])]))]]))
+            [:div {:class (c [:pb 1] :text-sm)} (link/symbol-link ztx doc)])]))]]))
 
 (defmethod methods/rendercontent :edn
   [ztx ctx {:keys [data] :as block}]
@@ -245,33 +237,30 @@
       (str/blank? qs) (str "?page=" c)
       :else (str qs "&page=" c))))
 
-(defn pagination [ztx {{path "x-client-path"
-                        qs "x-client-qs"} :headers :as req} dn-param]
-  (let [items-count (if-let [c (ffirst (db/children-count ztx dn-param))]
-                      c
-                      0)
-        pages-count (+ (quot items-count 24)
+(defn pagination [ztx {{path "x-client-path" qs "x-client-qs"} :headers :as req}
+                  dn-param items-count page-number]
+  (let [pages-count (+ (quot items-count 24)
                        (if (= 0 (rem items-count 24))
                          0
                          1))
-        page-number (read-string (or (second (re-matches #".*page=(\d+)" qs))
-                                     "1"))]
-
+        page-number* (if (some? page-number)
+                       (read-string page-number)
+                       1)]
     [:div {:class (c :flex :flex-row :justify-center [:text :gray-600] [:py 2])}
      (if (> items-count 0)
        [:div {:class (c :flex :flex-row :justify-between)}
         [:div {:class (c [:px 4])}
          [:a.fas.fa-regular.fa-arrow-left
-          {:href (when (> page-number 1)
-                   (str path (add-page-param qs (- page-number 1))))
+          {:href (when (> page-number* 1)
+                   (str path (add-page-param qs (- page-number* 1))))
            :style {:font-size "14px" :padding "0 4px 0 4px" :cursor "pointer"}}]
-         [:span "page " page-number]
+         [:span "page " page-number*]
          [:span
           "/"]
          [:span pages-count]
          [:a.fas.fa-regular.fa-arrow-right
-          {:href (when (< page-number pages-count)
-                   (str path (add-page-param qs (+ page-number 1))))
+          {:href (when (< page-number* pages-count)
+                   (str path (add-page-param qs (+ page-number* 1))))
            :style {:font-size "14px" :padding "0 4px 0 4px" :cursor "pointer"}}]]
         [:div {:class (c :flex :justify-center)}
          [:span "total: "] [:span items-count]]]
@@ -310,8 +299,24 @@
           (for [[k v] (select-keys doc summary-keys)]
             (methods/renderkey ztx {} {:key k :data v :ann (get anns k)})))]]))])
 
+(defn search [ztx {{qs "x-client-qs"} :headers :as req}]
+  [:div {:class (c :flex [:mt 4] :justify-around)}
+   [:div {:class (c [:w "80%"] :flex :flex-row)}
+    [:i.fas.fa-regular.fa-search
+     {:style {"margin-top" "8px" :margin-right "4px" :color "#718096"}}]
+    [:input#zd-search
+     {:type "search"
+      :oninput "on_doc_search()"
+      :value (:search (utils/parse-params qs))
+      :class (c :border
+                [:text :gray-600]
+                :rounded
+                [:px 4] [:py 1]
+                [:w "100%"])}]]])
+
 (defmethod methods/widget :folder
-  [ztx {{config :zd/config :as req} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
+  [ztx {{{qs "x-client-qs"} :headers config :zd/config :as req} :request :as ctx}
+   {{dn :docname} :zd/meta :as doc}]
   (let [summary-keys
         (->> (get-in @ztx [:zd/schema])
              (filter (fn [[k v]]
@@ -321,11 +326,16 @@
         dn-param (if (= (symbol (:root config)) dn)
                    ""
                    (str dn))
-        page-number (->> (get-in req [:headers "x-client-qs"])
-                         (re-matches #".*page=(\d+).*")
-                         (second))
-        query-result (db/children ztx dn-param page-number)]
+        page-number (:page (utils/parse-params qs))
+        search-text (:search (utils/parse-params qs))
+        query-result (db/children ztx dn-param page-number search-text)
+        items-count (if-let [c (->> search-text
+                                    (db/children-count ztx dn-param)
+                                    (ffirst))]
+                      c
+                      0)]
     [:div
-     (pagination ztx req dn-param)
+     (search ztx req)
+     (pagination ztx req dn-param items-count page-number)
      (docs-cards ztx ctx summary-keys query-result)
-     (pagination ztx req dn-param)]))
+     #_(pagination ztx req dn-param)]))

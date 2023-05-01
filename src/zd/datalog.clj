@@ -8,7 +8,7 @@
   [ztx config & opts]
   ;; TODO add zen pub sub event
   (println 'starting-datalog)
-  (xt/start-node {}))
+  (xt/start-node {:xtdb.lucene/lucene-store {}}))
 
 (defmethod zen/stop 'zd/datalog
   [ztx config state]
