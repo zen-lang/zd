@@ -108,7 +108,7 @@
 
 (defn topbar [ztx ctx doc]
   (-> [:div {:class (c :flex :flex-1 :items-center :justify-between :border-b #_[:bg "#f8f8fc"]
-                       [:px "24rem"] [:py 6])}]
+                       [:px "18rem"] [:py 6])}]
         ;; TODO add transitions to tabs
       (conj (tabs ztx ctx doc))
       (conj (breadcrumbs ztx ctx doc))
@@ -147,7 +147,7 @@
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc}]
   [:div (when-let [errs (:errors m)]
-     (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
+          (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
     (for [k (filter #(get doc %) (:doc m))]
       (let [block {:data (get doc k)
@@ -155,23 +155,24 @@
                    :ann (get-in doc [:zd/meta :ann k])}]
         (render-key ztx ctx block))))
    (when-let [subdocs (not-empty (filter #(get subs %) (:doc m)))]
-     [:div.zd-block
-      [:h2 {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
-       "Subdocs"]
+     [:div
+      [:div {:class (c [:text-xl])}
+       [:span {:class (c [:text :green-500])} "&"]
+       [:span {:class (c [:text :gray-600])} "subdocs"]]
       (doall
        (for [sub-key subdocs]
-         [:div {:class (c :border [:my 4] [:mr 2] :rounded)}
-          [:div {:class (c [:bg :gray-100] [:px 8] [:py 2] :text-l [:text :gray-700]
-                           {:font-weight "400"})}
-           (name sub-key)]
-          [:div {:class (c [:px 8] [:py 2])}
+         [:div
+          [:div {:class (c :border-b :text-xl [:text :gray-700])}
+           [:span {:class (c [:text :green-500])} "&"]
+           [:span {:class (c [:text :gray-600])} (name sub-key)]]
+          [:div
            (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]))]]))])])
 
 (defn render-doc [ztx {{qs :query-string} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
   [:div {:class (c :flex :flex-1)}
    [:div {:class (c :flex-1 {:min-width "30em"})}
     (topbar ztx ctx doc)
-    [:div {:class (c :flex-1 :flex-row [:px "24rem"] [:pb 12] [:pt 8])}
+    [:div {:class (c :flex-1 :flex-row [:px "18rem"])}
      (when-not (tab? qs)
        [:div#blocks {:class (c [:bg :white] {:color "#3b454e"})}
         (render-blocks ztx ctx doc)])
@@ -180,7 +181,7 @@
         [:div.widget {:data-url (str "/" dn "/widgets/folder")}]])]]
    (when-let [links (seq (get-in doc [:zd/meta :backlinks]))]
      [:div {:class (c [:bg "#F7FAFC"] [:px 6] [:py 4] :border-l
-                      [:w "24rem"] :overflow-y-auto
+                      [:w "16rem"] :overflow-y-auto
                       :fixed
                       [:top 0]
                       [:right 0]

@@ -1,5 +1,6 @@
 (ns zd.loader
   (:require
+   [zd.fs :as fs]
    [zd.methods :as methods]
    [zd.utils :as utils]
    [zd.macros]
@@ -147,6 +148,7 @@
                                      "."))
         headers {:zd/meta {:docname docname
                            :file resource-path
+                           :last-updated (zen/op-call ztx 'zd/gitsync-last-updated path)
                            :path path}}
         doc (->> content
                  (reader/parse ztx {})

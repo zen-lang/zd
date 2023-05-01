@@ -1,5 +1,6 @@
 (ns zd.datalog-test
   (:require
+   [xtdb.api :as xtdb]
    [zd.api]
    [zd.datalog :as datalog]
    [clojure.test :refer [deftest is testing]]
@@ -20,8 +21,13 @@
 
   (zen/start-system ztx 'zd.test/system)
 
-  ;; TODO how to check tx status in xtdb?
-  (Thread/sleep 2000)
+  (xtdb/sync (datalog/get-node ztx))
+
+  (testing "metadata is loaded into xtdb"
+    (matcho/assert
+     #{["customers"]}
+     (datalog/query ztx '{:find [?id] :where [[?e :meta/docname "customers"]
+                                              [?e :xt/id ?id]]})))
 
   (matcho/assert
    #{["customers.flame"]}

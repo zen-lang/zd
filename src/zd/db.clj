@@ -17,12 +17,14 @@
            dn))
 
 ;; conversion of dn to str is required
-(defn children [ztx dn page]
-  (let [query '{:find [?id]
+(defn children [ztx dn & [page]]
+  (let [query '{:find [?id ?lu]
                 :where [[?e :parent docname]
-                        [?e :xt/id ?id]]
+                        [?e :xt/id ?id]
+                        [?e :meta/last-updated ?lu]]
                 :in [docname]
-                :order-by [[?id :asc]]
+                #_:order-by #_[[?id :asc]]
+                :order-by [[?lu :desc]]
                 :limit 24
                 :offset 0}
         query* (cond-> query

@@ -27,15 +27,15 @@
 
 ;; by default add a header and renders content of a block
 (defmethod renderkey :default [ztx ctx {kp :key :as block}]
-  [:div.zd-block
-   {:font-size "24px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "30px"}
-
-   [:h2 {:class (str "zd-block-title " (name (c :flex :items-baseline)))}
-    [:a {:id kp :href (str "#" kp)}
-     (-> (name kp)
-         (str/replace "-" " ")
-         (str/capitalize))]]
-   [:div.zd-content (rendercontent ztx ctx block)]])
+  [:div {:class (c [:py 2])}
+   [:div {:class (c :flex :flex-row :justify-between [:bg "white"])}
+    [:div
+     [:span {:class (c [:text :orange-500])} ":"]
+     [:span {:class (c [:text :gray-600])} kp]]
+    [:div {:class (c [:text :gray-500])}
+     (get-in block [:ann :zd/content-type])]]
+   [:div {:class (c [:bg "#F7FAFC"])}
+    (rendercontent ztx ctx block)]])
 
 ;; zentext methods
 (defmulti inline-method   (fn [ztx m arg ctx] (keyword m)))

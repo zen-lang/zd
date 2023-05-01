@@ -79,6 +79,10 @@
  {:zen/tags #{zen/op}
   :zen/desc "removes document from index and pushes to a remote"}
 
+ gitsync-last-updated
+ {:zen/tags #{zen/op}
+  :zen/desc "removes document from index and pushes to a remote"}
+
  config
  {:zen/tags #{zen/tag zen/schema}
   :type zen/map

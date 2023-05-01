@@ -79,12 +79,12 @@
              (group-by :path))]
     [:div {:class (c [:text :gray-600])}
      [:div {:class (c [:px 0])}
-      [:div {:class (c :text-lg [:mb 4])}
+      [:div {:class (c [:mb 4])}
        "Backlinks"]
       (doall
        (for [[p ls] links]
-         [:div {:class (c [:mb 4])}
-          [:div {:class (c :border-b [:py 2])} p]
+         [:div {:class (c [:mb 2])}
+          [:div {:class (c :border-b [:py 2] :text-sm)} p]
           (for [{:keys [to doc path]} ls]
             [:div {:class (c [:pb 1]:text-sm)} (link/symbol-link ztx doc)])]))]]))
 
@@ -109,7 +109,11 @@
                 :float     "right"
                 :top       "5px"
                 :right     "20px"}}]
-      [:code {:style {:word-wrap "break-word"} :class (str "language-edn hljs")}
+      ;; TODO fix edn display code block
+      [:code {:style {:background "white"
+                      :border :none
+                      :word-wrap "break-word"}
+              :class (str "language-edn hljs")}
        (if (string? data)
          data
          (with-out-str (pprint/pprint data)))]]]))
@@ -241,35 +245,53 @@
       (str/blank? qs) (str "?page=" c)
       :else (str qs "&page=" c))))
 
-(defn pagination [req items-count]
-  (let [pages-count (+ (quot items-count 24)
+(defn pagination [ztx {{path "x-client-path"
+                        qs "x-client-qs"} :headers :as req} dn-param]
+  (let [items-count (if-let [c (ffirst (db/children-count ztx dn-param))]
+                      c
+                      0)
+        pages-count (+ (quot items-count 24)
                        (if (= 0 (rem items-count 24))
                          0
                          1))
-        path (get-in req [:headers "x-client-path"])
-        qs (get-in req [:headers "x-client-qs"])]
-    [:div {:class (c :flex :flex-row :justify-center [:py 4])}
-     (for [pn (map #(+ 1 %)
-                   (range pages-count))]
-       [:a {:href (str path (add-page-param qs pn))
-            :class (c [:mr 1.5] [:py 0.5] [:px 1.5] :text-sm [:text :gray-600]
-                      :border :rounded
-                      [:hover
-                       [:cursor-pointer]
-                       [:bg :gray-500]
-                       [:text "white"]])}
-        pn])]))
+        page-number (read-string (or (second (re-matches #".*page=(\d+)" qs))
+                                     "1"))]
+
+    [:div {:class (c :flex :flex-row :justify-center [:text :gray-600] [:py 2])}
+     (if (> items-count 0)
+       [:div {:class (c :flex :flex-row :justify-between)}
+        [:div {:class (c [:px 4])}
+         [:a.fas.fa-regular.fa-arrow-left
+          {:href (when (> page-number 1)
+                   (str path (add-page-param qs (- page-number 1))))
+           :style {:font-size "14px" :padding "0 4px 0 4px" :cursor "pointer"}}]
+         [:span "page " page-number]
+         [:span
+          "/"]
+         [:span pages-count]
+         [:a.fas.fa-regular.fa-arrow-right
+          {:href (when (< page-number pages-count)
+                   (str path (add-page-param qs (+ page-number 1))))
+           :style {:font-size "14px" :padding "0 4px 0 4px" :cursor "pointer"}}]]
+        [:div {:class (c :flex :justify-center)}
+         [:span "total: "] [:span items-count]]]
+       [:div {:class (c [:text :gray-600] [:my 2])}
+        "Add a document with + button"])]))
 
 (defn docs-cards [ztx ctx summary-keys query-result]
   [:div
-   (for [[i [docname]] (map-indexed vector query-result)]
-     (let [{{anns :ann} :zd/meta :as doc} (loader/get-doc ztx (symbol docname))]
-       [:div {:class (c [:py 8] [:px 2] [:bg "#F7FAFC"])
+   (for [[i [docname _]] (map-indexed vector query-result)]
+     (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
+           (loader/get-doc ztx (symbol docname))]
+       [:div {:class (c [:py 8] [:py 6] [:px 2] [:bg "#F7FAFC"])
               :style {:background-color (if (even? i)
                                           "#F7FAFC"
                                           "white")}}
-        [:div {:class (c [:pb 4] :text-lg)}
-         (link/symbol-link ztx docname)]
+        [:div {:class (c :flex :flex-row :justify-between)}
+         [:div {:class (c [:pb 2] :text-lg)}
+          (link/symbol-link ztx docname)]
+         [:div {:class (c [:text :gray-600] :text-sm :self-center)}
+          [:span "upd: " lu]]]
         (when-let [desc (get doc :desc)]
           [:div {:class (c [:text :gray-700] [:pb 2])}
            (let [text-limit 128
@@ -302,18 +324,8 @@
         page-number (->> (get-in req [:headers "x-client-qs"])
                          (re-matches #".*page=(\d+).*")
                          (second))
-        query-result (db/children ztx dn-param page-number)
-        items-count (if-let [c (ffirst (db/children-count ztx dn-param))]
-                      c
-                      0)]
+        query-result (db/children ztx dn-param page-number)]
     [:div
-     (if (> items-count 0)
-       [:div {:class (c :flex :justify-center [:pt 4] [:text :gray-600] :text-sm)}
-        [:span "total: "] [:span items-count]]
-       [:div {:class (c [:text :gray-600] [:my 2])}
-        "Add a document with + button"])
-     (when (> items-count 24)
-       (pagination req items-count))
+     (pagination ztx req dn-param)
      (docs-cards ztx ctx summary-keys query-result)
-     (when (> items-count 24)
-       (pagination req items-count))]))
+     (pagination ztx req dn-param)]))
