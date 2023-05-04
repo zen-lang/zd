@@ -9,13 +9,6 @@
   (and (string? search-text)
        (not (str/blank? search-text))))
 
-(defn has-children? [ztx dn]
-  (let [q '{:find [(pull ?e [:xt/id])]
-            :in [docname]
-            :where [[?e :parent docname]]
-            :limit 1}]
-    (not-empty (d/query ztx q dn))))
-
 (defn children-count [ztx dn & [search-text]]
   (let [q '{:find [(count ?id)]
             :where [[?e :parent docname]
@@ -35,13 +28,13 @@
 
 ;; conversion of dn to str is required
 (defn children [ztx dn & [page search-text]]
-  (let [q '{:find [?id ?lu]
+  (let [q '{:find [?id]
             :where [[?e :parent docname]
                     [?e :xt/id ?id]
-                    [?e :meta/last-updated ?lu]]
+                    #_[?e :meta/last-updated ?lu]]
             :in [docname]
-            #_:order-by #_[[?id :asc]]
-            :order-by [[?lu :desc]]
+            :order-by [[?id :asc]]
+            #_:order-by #_[[?lu :desc]]
             :limit 24
             :offset 0}
 

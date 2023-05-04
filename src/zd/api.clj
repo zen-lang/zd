@@ -1,7 +1,7 @@
 (ns zd.api
   (:require
    [zd.gitsync]
-   [zd.schema :as schema]
+   [zd.meta :as meta]
    [zd.datalog]
    [hiccup.core :as hiccup]
    [zd.loader :as loader]
@@ -32,6 +32,7 @@
             config :zd/config
             sym :zd/config-symbol
             uri :uri
+            hs :headers
             doc :doc :as req} & opts]
   (cond
     (= uri "/")
@@ -45,9 +46,13 @@
      :headers {"Location" (str "/" id "/edit" "?" (:query-string req))
                "Cache-Control" "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"}}
 
+    (get-in hs "x-body")
+    {:status 200
+     :body (render/render-doc ztx {:request req :doc doc} doc)}
+
     :else
     {:status 200
-     :body (render/doc-view ztx {:request req :doc doc} config doc)}))
+     :body (render/doc-view ztx {:request req :doc doc} doc)}))
 
 (defmethod web/middleware-out 'zd/layout
   [ztx _cfg {page :page {lay-sym :layout} :zd/config :as req} {bdy :body :as resp} & args]
@@ -79,8 +84,8 @@
                      (str/join "\n"))
 
         doc (->> (reader/parse ztx {:req req} lines)
-                 (loader/append-meta ztx)
-                 (schema/validate-doc ztx))
+                 (meta/append-meta ztx)
+                 (meta/validate-doc ztx))
 
         docname (str (:zd/docname doc))]
     (if-let [errs (seq (get-in doc [:zd/meta :errors]))]

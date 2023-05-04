@@ -1,7 +1,8 @@
 (ns zd.render
   (:require
+   [zd.utils :as utils]
    [zd.db :as db]
-   [zd.schema :as schema]
+   [zd.meta :as meta]
    [zd.reader :as reader]
    [cheshire.core :as json]
    [hiccup.core :as hiccup]
@@ -16,45 +17,14 @@
 (defn tab? [s]
   (str/includes? (str s) "tab=folder"))
 
-(defn tabs [ztx {{uri :uri qs :query-string} :request} doc]
-  ;; TODO add url lib to zen web
-  ;; TODO think about better approach to tab positioning
-  (let [tab-style (c [:py 1]
-                     [:px 3]
-                     [:mr 2]
-                     [:text :gray-600]
-                     :cursor-pointer
-                     :border
-                     :text-sm
-                     [:rounded 12])]
-    [:div
-     [:a#document-tab
-      {:href uri
-       :class tab-style
-       :style {:background-color (if (tab? qs) "white" "#F7FAFC")}}
-      [:span {:class (c [:text :orange-500]
-                        [:hover [:text :orange-600]]
-                        [:pr 1.5])}
-       [:i.fas.fa-clipboard]]
-      [:span "document"]]
-     [:a#folder-tab
-      {:href (str uri "?tab=folder")
-       :class tab-style
-       :style {:background-color (if (tab? qs) "#F7FAFC" "white")}}
-      [:span {:class (c [:text :orange-500]
-                        [:hover [:text :orange-600]]
-                        [:pr 1.5])}
-       [:span.fas.fa-regular.fa-folder]]
-      [:span "folder"]]]))
-
-(defn actions [ztx {{qs :query-string :as req} :request :as ctx} {{:keys [docname]} :zd/meta :as doc}]
+(defn actions [ztx {{uri :uri qs :query-string :as req} :request :as ctx} {{:keys [docname]} :zd/meta :as doc}]
   (let [edit-btn
-        [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :green-600]])
+        [:a {:class (c [:text :gray-600] [:hover [:text :green-600]] [:ml 4])
              :href (str docname "/" "edit" "?" qs)}
          [:i.fas.fa-edit]]
 
         create-btn
-        [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :green-600]])
+        [:a {:class (c [:text :gray-600] [:hover [:text :green-600]] [:ml 4])
              :href (cond->> (str "_draft/edit?" qs)
                      (not= docname 'index) (str docname "."))}
          [:i.fas.fa-plus]]
@@ -67,52 +37,69 @@
                 docname)
 
         del-btn
-        [:a {:class (c [:mx 4] [:text :gray-600] [:hover [:text :red-600]]
-                       {:font-size "1.1rem"})
+        [:a {:class (c [:text :gray-600] [:hover [:text :red-600]] [:ml 4])
              :href ""
              :onclick (when-not (= docname 'index) del-script)}
          [:i.fas.fa-trash-xmark]]
 
+        folder-btn
+        [:a#folder-tab
+         {:href (str uri "?tab=folder")}
+         [:span {:class (c [:text :gray-600])}
+          [:i.fas.fa-regular.fa-folder]]]
+
         container
-        [:div {:class (c :flex :items-center)}]]
+        [:div {:class (c :flex :items-center [:ml 4])}]]
+
     (if (tab? qs)
-      (conj container create-btn)
-      (conj container edit-btn del-btn))))
+      (conj container folder-btn create-btn)
+      (conj container folder-btn edit-btn del-btn))))
 
 (defn breadcrumbs [ztx {{uri :uri {root :root} :zd/config} :request} {{:keys [docname]} :zd/meta :as doc}]
   (let [parts (str/split (str docname) #"\.")
         icon-class (c :cursor-pointer [:text :orange-500] [:hover [:text :orange-600]])]
     (if (= (symbol root) docname)
-      [:div {:class (c [:py 1])}
+      [:a {:href (str "/") :class icon-class}
+       [:span.fa-regular.fa-house]]
+      [:div {:class (c :flex :flex-flow :items-baseline)}
        [:a {:href (str "/") :class icon-class}
-        [:span.fa-regular.fa-house]]]
-      (->> (range 1 (+ 1 (count parts)))
-           (mapcat (fn [x]
-                     (let [pth (into [] (take x parts))
-                           nm  (str/join "." pth)]
-                       [[:div {:class (c [:text :orange-500] :flex :self-center)}
-                         (if (db/has-children? ztx nm)
-                           [:span.fa-solid.fa-folder]
-                           [:span.fa-regular.fa-file])]
-                        [:a {:href (str "/" nm)
-                             :class (c [:text :blue-500] [:px 2])}
-                         (last pth)]
-                        (when-not (= x (count parts))
-                          [:span {:class (c [:text :gray-500] [:mr 3] {:font-size "18px"})}
-                           "/"])])))
-           (into [:div {:class (c :flex :flex-flow)}
-                  [:a {:href (str "/") :class icon-class}
-                   [:span.fa-regular.fa-house]
-                   [:span {:class (c [:text :gray-500] [:m 3] {:font-size "18px"})}
-                    "/"]]])))))
+        [:span.fa-regular.fa-house]]
+       [:span {:class (c [:mx 1] [:text :gray-500])}
+        "/"]
+       (for [x (range 1 (+ 1 (count parts)))]
+         (let [pth (into [] (take x parts))
+               nm  (str/join "." pth)]
+           [:div {:class (c :flex :flex-row :items-baseline)}
+            [:a {:href (str "/" nm)
+                 :class (c [:text :blue-500])}
+             (last pth)]
+            (when-not (= x (count parts))
+              [:span {:class (c [:text :gray-500] [:mx 1] {:font-size "18px"})}
+               "/"])]))])))
+
+(defn search [ztx {{{search-text :search} :query-params :as req} :request} doc]
+  [:div
+   [:div {:class (c [:w "20rem"] :flex :flex-row :items-baseline)}
+    [:span {:class (c {:font-size "14px"
+                       :margin-right "4px"
+                       :color "#718096"})}
+     [:i.fas.fa-regular.fa-search]]
+    [:input#zd-search
+     {:type "search"
+      :oninput "on_doc_search()"
+      :value search-text
+      :class (c :border
+                [:text :gray-600]
+                :text-sm
+                :rounded
+                [:px 2]
+                [:w "100%"])}]]])
 
 (defn topbar [ztx ctx doc]
-  (-> [:div {:class (c :flex :flex-1 :items-center :justify-between :border-b #_[:bg "#f8f8fc"]
-                       [:px "18rem"] [:py 6])}]
-        ;; TODO add transitions to tabs
-      (conj (tabs ztx ctx doc))
-      (conj (breadcrumbs ztx ctx doc))
-      (conj (actions ztx ctx doc))))
+  [:div {:class (c :flex :items-baseline :justify-between [:w "64rem"] [:py 4])}
+   (breadcrumbs ztx ctx doc)
+   (actions ztx ctx doc)
+   (search ztx ctx doc)])
 
 (defn navigation [ztx ctx doc]
   [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm
@@ -146,59 +133,48 @@
            (methods/renderkey ztx ctx err-block)))))
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc}]
-  [:div (when-let [errs (:errors m)]
-          (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
+  [:div
+   (when-let [errs (:errors m)]
+     (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
     (for [k (filter #(get doc %) (:doc m))]
       (let [block {:data (get doc k)
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
         (render-key ztx ctx block))))
+   (when-let [links (seq (get-in doc [:zd/meta :backlinks]))]
+     [:div (methods/renderkey ztx ctx {:data links :key :zd/backlinks})])
    (when-let [subdocs (not-empty (filter #(get subs %) (:doc m)))]
      [:div
-      [:div {:class (c [:text-xl])}
+      [:div {:class (c :text-lg)}
        [:span {:class (c [:text :green-500])} "&"]
        [:span {:class (c [:text :gray-600])} "subdocs"]]
       (doall
        (for [sub-key subdocs]
-         [:div
-          [:div {:class (c :border-b [:text-lg] [:text :gray-700])}
+         [:div {:class (c [:pt 4])}
+          [:div {:class (c :text-lg [:text :gray-700])}
            [:span {:class (c [:text :green-500])} "&"]
            [:span {:class (c [:text :gray-600])} (name sub-key)]]
-          [:div
+          [:div {:class (c [:px 8])}
            (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]))]]))])])
 
 (defn render-doc [ztx {{qs :query-string} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
-  [:div {:class (c :flex :flex-1)}
-   [:div {:class (c :flex-1 {:min-width "30em"})}
-    (topbar ztx ctx doc)
-    [:div {:class (c :flex-1 :flex-row [:px "18rem"])}
-     (when-not (tab? qs)
-       [:div#blocks {:class (c [:bg :white] [:text "#3b454e"] [:py 4])}
-        (render-blocks ztx ctx doc)])
-     (when (tab? qs)
-       [:div#folder-items
-        [:div.widget {:data-url (str "/" dn "/widgets/folder")}]])]]
-   (when-let [links (seq (get-in doc [:zd/meta :backlinks]))]
-     [:div {:class (c [:bg "#F7FAFC"] [:px 6] [:py 4] :border-l
-                      [:w "16rem"] :overflow-y-auto
-                      :fixed
-                      [:top 0]
-                      [:right 0]
-                      {:height "100vh"})}
-      (methods/renderkey ztx ctx {:data links :key :zd/backlinks})])])
+  [:div {:class (c :flex :w-full :flex-col :flex-wrap :content-center)}
+   (topbar ztx ctx doc)
+   (if (tab? qs)
+     [:div#folder-items {:class (c [:w-max "64rem"] [:w-min "30rem"] [:py 4])}
+      [:div.widget {:data-url (str "/" dn "/widgets/folder")}]]
+     [:div#blocks {:class (c [:text "#3b454e"] [:pb 4] [:w-max "64rem"] [:w-min "30rem"])}
+      (render-blocks ztx ctx doc)])])
 
-(defn *doc-view [ztx ctx doc]
-  [:div {:class (c :flex :items-top :w-full)}
+(defn doc-view [ztx ctx doc]
+  ;; TODO remove wrapper div
+  ;; when new nav is complete
+  [:div
    #_(navigation ztx ctx doc)
-   [:div#page {:class (c :flex-1 {:height "100vh" :overflow-y "auto"})}
-    (render-doc ztx ctx doc)]])
-
-(defn doc-view [ztx ctx config doc]
-  ;; TODO move to layout mw
-  (if (get-in ctx [:request :headers "x-body"])
+   [:div#page
     (render-doc ztx ctx doc)
-    (*doc-view ztx ctx doc)))
+    ]])
 
 (def default-tpl ":title \"\"\n:tags #{}")
 
@@ -215,8 +191,8 @@
 (defn preview [ztx ctx text]
   (let [parsed (reader/parse ztx ctx text)]
     (->> parsed
-         (loader/append-meta ztx)
-         (schema/validate-doc ztx)
+         (meta/append-meta ztx)
+         (meta/validate-doc ztx)
          (render-blocks ztx ctx))))
 
 (defn editor [ztx ctx {m :zd/meta :as doc}]

@@ -4,6 +4,13 @@
    [zen-web.middlewares :as mw]
    [clojure.pprint :as ppr]))
 
+(defn add-page-param [hash c]
+  (let [hash (str hash)]
+    (cond
+      (str/includes? hash "page=") (str/replace hash #"page=\d+" (str "page=" c))
+      (str/blank? hash) (str "?page=" c)
+      :else (str hash "&page=" c))))
+
 (defn parse-params [qs]
   (mw/parse-params* (if (str/starts-with? qs "?")
                       (apply str (rest qs))

@@ -28,15 +28,14 @@
 ;; by default add a header and renders content of a block
 (defmethod renderkey :default [ztx ctx {kp :key d :data :as block}]
   [:div {:class (c [:py 3])}
-   [:div {:class (c :flex :flex-row :justify-between [:bg "white"])}
+   [:div {:class (c :flex :flex-row :justify-between :border-b)}
     [:div
      [:span {:class (c [:text :orange-500])} ":"]
      [:span {:class (c [:text :gray-600])} kp]]
     [:div {:class (c [:text :gray-500])}
      (get-in block [:ann :zd/content-type])]]
    (when-not (and (string? d) (str/blank? d))
-     [:div {:class (c [:bg "#F7FAFC"])}
-      (rendercontent ztx ctx block)])])
+     [:div (rendercontent ztx ctx block)])])
 
 ;; zentext methods
 (defmulti inline-method   (fn [ztx m arg ctx] (keyword m)))
@@ -68,11 +67,3 @@
   {:error {:message (str (pr-str macro) " implementation not found")
            :type "macro-notfound"
            :docpath docpath}})
-
-;; renders cell of a UI table component
-(defmulti render-cell (fn [ztx ctx key data] key))
-
-(defmethod render-cell :default
-  [ztx ctx k row]
-  (when-let [v (get row k)]
-    (rendercontent ztx ctx {:data v :key k :ann {:zd/content-type :edn}})))

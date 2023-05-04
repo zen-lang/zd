@@ -1,25 +1,45 @@
-(ns zd.schema
+(ns zd.meta
   (:require
+   [zd.reader :as reader]
    [clojure.string :as str]
    [zen.core :as zen]))
 
-(defn find-schema [ztx docname]
-  ;; TODO collect all schemas and merge them
-  (loop [pths (str/split docname #"\.")]
-    (if (empty? pths)
-      (get-in @ztx [:zdb '_schema])
-      (let [sch-symbol (symbol (str (str/join "." pths) "._schema"))]
-        (if-let [sch (get-in @ztx [:zdb sch-symbol])]
-          sch
-          (recur (butlast pths)))))))
+(defn append-meta
+  "appends annotations from _schemas to a block"
+  [ztx doc]
+  (let [blocks-meta (:zd/meta @ztx)]
+    (let [subdocs*
+          (->> (:zd/subdocs doc)
+               (map (fn [[subname cnt]]
+                      [subname (append-meta ztx cnt)]))
+               (into {}))]
+      (->> doc
+           (remove (fn [[k _]]
+                     (namespace k)))
+           (reduce (fn [*doc [k _]]
+                     (update-in *doc [:zd/meta :ann k]
+                                (fn [anns]
+                                  (merge anns (get-in blocks-meta [k :ann])))))
+                   (assoc doc :zd/subdocs subdocs*))))))
 
-(defn zen-schema [ztx docname]
-  (let [doc-schema (find-schema ztx docname)
-        head {:type 'zen/map
+(defn load-meta!
+  "load _schema into ztx"
+  [ztx {c :content}]
+  (let [ann-idx (reduce (fn [acc [k v]]
+                          (->> (select-keys v [:type :schema :group :ann])
+                               (assoc acc k)))
+                        {}
+                        (:zd/subdocs (reader/parse ztx {} c)))]
+    (swap! ztx update :zd/meta merge ann-idx)))
+
+(defn zen-schema
+  "compile zen schema from _schema.zd"
+  [ztx docname]
+  (let [head {:type 'zen/map
               :validation-type :open}
-        doc-keys (->> (:zd/subdocs doc-schema)
-                      (remove (fn [[k v]]
-                                (= :subdoc (:type v))))
+        doc-keys (->> (:zd/meta @ztx)
+                      (filter (fn [[_ v]]
+                                (not= :subdoc (:type v))))
                       (map (fn [[k v]] [k (:schema v)]))
                       (into {:zd/docname {:type 'zen/symbol}}))
         meta-sch
@@ -39,7 +59,7 @@
          :validation-type :open
          ;; TODO add validation of subdocs
          :values (assoc head :keys (merge doc-keys {:zd/meta meta-sch}))
-         :keys (->> (:zd/subdocs doc-schema)
+         :keys (->> (:zd/meta @ztx)
                     (filter (fn [[_ v]]
                               (= :subdoc (:type v))))
                     (map (fn [[k v]]
@@ -47,7 +67,8 @@
                     (into {}))}]
     (-> {:zen/name 'zd.schema/document :tags #{'zen/schema}}
         (merge head)
-        (merge (:schema doc-schema))
+        ;; TODO add :schema from top level of _schema.zd
+;;        (merge (:schema doc-schema))
         (assoc-in [:keys :zd/meta] meta-sch)
         (assoc-in [:keys :zd/subdocs] subdocs)
         (update :keys merge doc-keys))))

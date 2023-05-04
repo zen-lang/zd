@@ -1,4 +1,4 @@
-(ns zd.zentext.blocks
+(ns zd.blocks.zentext
   (:require
    [zd.link :as link]
    [stylo.core :refer [c]]

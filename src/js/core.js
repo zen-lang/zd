@@ -121,7 +121,8 @@ var update_widgets = ()=> {
         if(url){
             el.innerHTML = "<i class='fa fa-spinner fa-spin'></i>";
             fetch(url, {headers: {'x-client-path': window.location.pathname,
-                                  'x-client-qs': window.location.search}}).then((resp)=>{
+                                  'x-client-qs': window.location.search,
+                                  'x-client-hash': window.location.hash}}).then((resp)=>{
                 window.resp = resp;
                 if(resp.status < 300){
                     resp.text().then((t)=>{
@@ -460,13 +461,21 @@ var on_hotkey = (e)=>{
 }
 
 var search_debounce = debounce((v) => {
-    var searchParams = new URLSearchParams(window.location.search);
-    if (v.length == 0) {
-        searchParams.delete("search");
-    } else {
-        searchParams.set("search", v);
+    var searchString = window.location.search;
+
+    var searchParams = new URLSearchParams(searchString);
+
+    if(searchParams.get('search') === null) {
+        searchParams.set('tab', 'folder');
     }
-    window.location.search = searchParams.toString();}, 600);
+
+    if (v.length == 0) {
+        searchParams.delete('search');
+        searchParams.delete('page');
+    } else {
+        searchParams.set('search', v);
+    }
+    window.location.search = searchParams.toString();}, 1200);
 
 var on_doc_search = (e) => {
     var el = document.getElementById("zd-search");
@@ -475,6 +484,11 @@ var on_doc_search = (e) => {
 
 main(()=>{
     update_widgets();
+
+    var search_input = document.getElementById('zd-search');
+
+    search_input.focus();
+    search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
 
     var sym = localStorage.getItem('zd/nav');
     if(sym === undefined) {

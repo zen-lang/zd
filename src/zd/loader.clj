@@ -1,6 +1,7 @@
 (ns zd.loader
   (:require
    [zd.fs :as fs]
+   [zd.meta :as meta]
    [zd.methods :as methods]
    [zd.utils :as utils]
    [zd.macros]
@@ -126,34 +127,18 @@
        (reduce (fn [acc [k v]] (*collect-macros acc [k] v))
                {})))
 
-(defn append-meta [ztx doc]
-  (let [blocks-meta (:zd/schema @ztx)]
-    (let [subdocs*
-          (->> (:zd/subdocs doc)
-               (map (fn [[subname cnt]]
-                      [subname (append-meta ztx cnt)]))
-               (into {}))]
-      (->> doc
-           (remove (fn [[k _]]
-                     (namespace k)))
-           (reduce (fn [*doc [k _]]
-                     (update-in *doc [:zd/meta :ann k]
-                                (fn [anns]
-                                  (merge anns (get-in blocks-meta [k :ann])))))
-                   (assoc doc :zd/subdocs subdocs*))))))
-
 (defn load-document! [ztx {:keys [resource-path path content] :as doc}]
   (let [docname (symbol (str/replace (str/replace resource-path #"\.zd$" "")
                                      file-separator-regex
                                      "."))
         headers {:zd/meta {:docname docname
                            :file resource-path
-                           :last-updated (zen/op-call ztx 'zd/gitsync-last-updated path)
+                           ;;:last-updated (zen/op-call ztx 'zd/gitsync-last-updated path)
                            :path path}}
         doc (->> content
                  (reader/parse ztx {})
                  (deep-merge headers)
-                 (append-meta ztx))
+                 (meta/append-meta ztx))
         links (collect-links ztx doc)
         macros (collect-macros ztx doc)]
     (swap! ztx assoc-in [:zdb docname] doc)
@@ -161,14 +146,6 @@
     (swap! ztx update :zd/keys (fnil into #{}) (keys doc))
     (swap! ztx assoc-in [:zd/macros docname] macros)
     (zen/pub ztx 'zd/on-doc-create doc)))
-
-(defn load-meta! [ztx {c :content}]
-  (let [ann-idx (reduce (fn [acc [k v]]
-                          (->> (select-keys v [:type :schema :group :ann])
-                               (assoc acc k)))
-                        {}
-                        (:zd/subdocs (reader/parse ztx {} c)))]
-    (swap! ztx update :zd/schema merge ann-idx)))
 
 (defn load-docs! [ztx dirs]
   (doseq [dir dirs]
@@ -178,9 +155,9 @@
       (doseq [f (->> (file-seq dir)
                      (filter (fn [f] (str/includes? (.getName f) "_schema.zd"))))]
         (let [content (slurp f)]
-          (load-meta! ztx {:path (.getPath f)
-                           :resource-path (subs (.getPath f) (inc (count dir-path)))
-                           :content content})))
+          (meta/load-meta! ztx {:path (.getPath f)
+                                :resource-path (subs (.getPath f) (inc (count dir-path)))
+                                :content content})))
       ;; load documents
       (doseq [[path f] (->> (file-seq dir)
                             (map (fn [d] [(.getPath d) d]))

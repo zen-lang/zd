@@ -62,7 +62,7 @@
               :list-style "decimal"})]
     [:ol (c* [:ml 4])]]
 
-   [:p (c* [:my 2] {:line-height "1.5rem"})]
+   [:p (c* #_[:my 2] {:line-height "1.5rem"})]
 
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
