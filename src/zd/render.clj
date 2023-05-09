@@ -11,7 +11,8 @@
    [zd.blocks]
    [zd.methods :as methods]
    [stylo.core :refer [c]]
-   [zd.memstore :as memstore]))
+   [zd.memstore :as memstore]
+   [zd.db :as db]))
 
 (defn tab? [s]
   (str/includes? (str s) "tab=folder"))
@@ -102,25 +103,6 @@
    (actions ztx ctx doc)
    (search ztx ctx doc)])
 
-(defn navigation [ztx ctx doc]
-  [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm
-                            :border-r
-                            [:bg :gray-100]
-                            {:height "100vh"
-                             :overflow-y "auto"
-                             :min-width "300px"
-                             :max-width "400px"})}
-   [:div#search {:class (c [:px 5] [:py 2] [:bg :gray-200]
-                           :flex :items-center
-                           [:space-x 2]
-                           [:mb 2]
-                           :cursor-pointer
-                           :border-b [:hover [:text :blue-500]])}
-    [:i.fa-solid.fa-magnifying-glass]
-    [:span "[ctrl-k]"]]
-   [:aside#aside
-    {:class (c [:text :gray-600] [:px 0] [:py 0]  :text-sm {})}]])
-
 (defn render-key [ztx ctx {k :key :as block}]
   (try (methods/renderkey ztx ctx block)
        (catch Exception e
@@ -168,9 +150,22 @@
      [:div#blocks {:class (c [:text "#3b454e"] [:pb 4] [:w-max "64rem"] [:w-min "30rem"])}
       (render-blocks ztx ctx doc)])])
 
+(defn navigation [ztx ctx doc]
+  [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]
+                            :text-sm
+                            :border-r
+                            :fixed
+                            [:bg :gray-100]
+                            {:height "100vh"
+                             :overflow-y "auto"})}
+   [:div {:class (c [:py 4] [:px 6])}
+    (for [d (db/root-docs ztx)]
+      [:div {:class (c [:py 0.5])}
+       (link/symbol-link ztx (symbol d))])]])
+
 (defn doc-view [ztx ctx doc]
   [:div
-   #_(navigation ztx ctx doc)
+   (navigation ztx ctx doc)
    [:div#page
     (render-doc ztx ctx doc)]])
 

@@ -47,3 +47,10 @@
                (valid-search? search-text) (conj search-text))]
 
     (apply d/query args)))
+
+(defn root-docs [ztx]
+  (->> (d/query ztx '{:find [?id]
+                      :where [[?e :parent ""]
+                              [?e :xt/id ?id]]
+                      :order-by [[?id :asc]]})
+       (map first)))
