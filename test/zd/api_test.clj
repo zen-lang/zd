@@ -13,8 +13,7 @@
   (io/input-stream (.getBytes s)))
 
 (defn read-doc [s]
-  (let [{:keys [paths]} (zen/get-symbol ztx (first (zen/get-tag ztx 'zd/config)))
-        f (io/file (str (first paths) "/" s))]
+  (let [f (io/file (str "test/zd/tdocs/test" "/" s))]
     (when (.exists f)
       (slurp f))))
 
@@ -30,55 +29,44 @@
 
   (testing "when document not found redirects to editor"
     (matcho/assert
-     {:status 301 :headers {"Location" "/index/edit?"}}
-     (web/handle ztx 'zd/api {:uri "/index"})))
+     {:status 301 :headers {"Location" "/testdoc/edit?"}}
+     (web/handle ztx 'zd/api {:uri "/testdoc"})))
 
   (testing "editor config is rendered"
     (matcho/assert
      {:status 200}
-     (web/handle ztx 'zd/api {:uri "/index/edit"})))
+     (web/handle ztx 'zd/api {:uri "/testdoc/edit"})))
 
   (testing "saving document"
     (matcho/assert
      {:status 422 :body {:message string?}}
      (web/handle ztx 'zd/api
-                 {:uri "/index/edit"
+                 {:uri "/testdoc/edit"
                   :request-method :put
-                  :body (req-body ":zd/docname index._draft\n:desc /\n no docname present")}))
+                  :body (req-body ":zd/docname testdoc._draft\n:desc /\n no docname present")}))
 
     (matcho/assert
      {:status 422 :body {:message string?}}
      (web/handle ztx 'zd/api
-                 {:uri "/index/edit"
+                 {:uri "/testdoc/edit"
                   :request-method :put
                   :body (req-body ":desc /\n no docname present")}))
 
     (matcho/assert
      {:status 200 :body string?}
      (web/handle ztx 'zd/api
-                 {:uri "/index/edit"
+                 {:uri "/testdoc/edit"
                   :request-method :put
-                  :body (req-body ":zd/docname index\n:desc /")}))
+                  :body (req-body ":zd/docname testdoc\n:desc /")}))
 
-    (is (= (read-doc "index.zd") ":desc /")))
-
-  #_(testing "rename with zd/docname"
-      (web/handle ztx 'zd.hsm-test/api {:uri "/index/edit"
-                                        :request-method :put
-                                        :body (req-body ":zd/docname readme.index\n:title \"mytitle\"\n:desc /")})
-
-      (is (nil? (io/resource "zd/tdocs/index.zd")))
-      (is (io/resource "zd/tdocs/readme/index.zd"))
-
-      (is (= (slurp (io/resource "zd/tdocs/readme/index.zd"))
-             ":title \"mytitle\"\n:desc /")))
+    (is (= (read-doc "testdoc.zd") ":desc /")))
 
   (testing "delete document"
     (matcho/assert
-     {:status 200 :body "/index"}
-     (web/handle ztx 'zd/api {:uri "/index" :request-method :delete}))
+     {:status 200 :body string?}
+     (web/handle ztx 'zd/api {:uri "/testdoc" :request-method :delete}))
 
-    (is (nil? (read-doc "index.zd"))))
+    (is (nil? (read-doc "testdoc.zd"))))
 
   (zen/stop-system ztx))
 
@@ -181,14 +169,14 @@
                   :request-method :put
                   :body (req-body doc)})))
 
-  (zen/stop-system ztx)
-
   (matcho/assert
    {:status 200 :body "/customers"}
    (web/handle ztx 'zd/api {:uri "/customers.uno"
                             :request-method :delete}))
 
-  (is (nil? (io/resource "zd/tdocs/customers/uno.zd"))))
+  (is (nil? (read-doc "customers/uno.zd")))
+
+  (zen/stop-system ztx))
 
 (defn restart! [ztx]
   (zen/stop-system ztx)

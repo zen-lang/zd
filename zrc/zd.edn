@@ -1,5 +1,5 @@
 {:ns zd
- :import #{zen-web}
+ :import #{zen-web zd.engines zd.events}
 
  view
  {:zen/tags {zen/tag zen/schema}
@@ -11,30 +11,6 @@
   :zen/desc "left-sided sidebar"
   :styles :common}
 
- db
- {:zen/tags #{zen/schema zen/engine}
-  :zen/state-key :zendoc-v2
-  :type zen/map}
-
- web-ui
- {:zen/tags #{zen/schema zen/engine zen/tag}
-  :zen/state-key :javafx-web-ui
-  :type zen/map
-  ;; TODO set to zen-web/uri
-  :keys {:uri {:type zen/string}
-         :engine {:type zen/symbol
-                  :tags #{zen/engine}}}}
-
- on-doc-create
- {:zen/tags #{zen/event zen/schema}
-  :zen/desc "Event on resource load or reload"
-  :type zen/map
-  :keys {:zd/meta {:type zen/map}}}
-
- datalog-sync
- {:zen/tags #{zen/sub}
-  :events #{on-doc-create}}
-
  query
  {:zen/tags #{zen/op}
   :zen/desc "datalog query"}
@@ -43,34 +19,6 @@
  {:zen/tags #{zen/op}
   :zen/desc "datalog submit"}
 
- datalog
- {:zen/tags #{zen/schema zen/engine zen/tag}
-  :zen/desc "Datalog engine"
-  :zen/state-key :datalog
-  :keys {:engine {:type zen/symbol
-                  :tags #{zen/engine}}}
-  :type zen/map}
-
- remote
- {:zen/tags #{zen/schema}
-  :type zen/map
-   ;; TODO use zen-web/url
-  :require #{:from}
-  :keys {:from {:type zen/string}
-         :to {:type zen/string}
-         :branch {:type zen/string}}}
-
- gitsync
- {:zen/tags #{zen/tag zen/engine zen/schema}
-  :zen/desc "service that syncs git repo in real-time"
-  :zen/state-key :gitsync
-  :type zen/map
-  :require #{:engine :pull-rate}
-  :keys {:engine {:type zen/symbol}
-         :pull-rate {:type zen/integer}
-         :remote {:confirms #{remote}}
-         :remotes {:type zen/vector :every {:confirms #{remote}}}}}
-
  gitsync-doc
  {:zen/tags #{zen/op}
   :zen/desc "commits doc to its remote"}
@@ -78,27 +26,6 @@
  gitsync-delete-doc
  {:zen/tags #{zen/op}
   :zen/desc "removes document from index and pushes to a remote"}
-
- gitsync-last-updated
- {:zen/tags #{zen/op}
-  :zen/desc "removes document from index and pushes to a remote"}
-
- config
- {:zen/tags #{zen/tag zen/schema}
-  :type zen/map
-  :require #{:engine :paths :root}
-  :schema-key {:key :engine}
-  :keys {:zen/bind {:type zen/symbol
-                    :tags #{zen/binding}}
-         :root {:type zen/string}
-         :paths {:type zen/vector
-                 :every {:type zen/string}}
-         :engine {:type zen/symbol}
-         :layout {:type zen/symbol
-                  :tags #{view}}}}
-
- config-binding
- {:zen/tags #{zen/tag zen/binding}}
 
  serve-static
  {:zen/tags #{zen/op zen-web/op}
@@ -111,26 +38,13 @@
  delete-doc
  {:zen/tags #{zen-web/op zen/op}}
 
- middleware
- {:zen/tags #{zen/schema zen/tag}
-  :type zen/map
-  :keys {:zendoc-config {:type zen/symbol
-                         :tags #{zen/binding}}}}
-
  append-doc
- {:zen/tags #{zen-web/middleware zen/op zen-web/op middleware}
+ {:zen/tags #{zen-web/middleware zen/op zen-web/op}
   :zen/desc "resolve page from route-params to zen document"
   :dir #{:in}}
 
- append-config
- {:zen/tags #{zen-web/middleware zen/op zen-web/op middleware}
-  :zen/desc "mount zendoc config from ztx"
-  :dir #{:in}
-  ;; TODO use zen binding
-  :zendoc-config config-binding}
-
  layout
- {:zen/tags #{zen-web/op zen/op zen-web/middleware middleware}
+ {:zen/tags #{zen-web/op zen/op zen-web/middleware}
   :zen/desc "wrap response in standard zd layout"
   :dir #{:out}}
 
@@ -150,7 +64,7 @@
  {:zen/tags #{zen-web/api}
   :engine zen-web/routemap
   ;; TODO move zen web defaults to zen web core
-  :mw [zen-web/defaults append-config]
+  :mw [zen-web/defaults]
   :GET render-doc
   [:id] {:mw [append-doc layout]
          :DELETE delete-doc

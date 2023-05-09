@@ -1,0 +1,31 @@
+{:ns zd.events
+
+ on-doc-save
+ {:zen/tags #{zen/event zen/schema}
+  :zen/desc "save document in an api"
+  :type zen/map
+  :keys {:docname {:type zen/string}
+         :content {:type zen/string}}}
+
+ on-doc-load
+ {:zen/tags #{zen/event zen/schema}
+  :zen/desc "Event on document load or reload from fs"
+  :type zen/map
+  :keys {:zd/meta {:type zen/map}}}
+
+ on-doc-delete
+ {:zen/tags #{zen/event zen/schema}
+  :type zen/map
+  :keys {:docname {:type zen/string}}}
+
+ fs-save
+ {:zen/tags #{zen/sub}
+  :events #{on-doc-save}}
+
+ fs-delete
+ {:zen/tags #{zen/sub}
+  :events #{on-doc-delete}}
+
+ datalog-sync
+ {:zen/tags #{zen/sub}
+  :events #{on-doc-load}}}

@@ -2,11 +2,12 @@
   (:require
    [zd.db :as db]
    [clojure.string :as str]
-   [zd.loader :as loader]
+   [zd.memstore :as memstore]
    [zd.link :as link]
    [zd.methods :as methods]
    [zd.utils :as utils]
-   [stylo.core :refer [c]]))
+   [stylo.core :refer [c]]
+   [zd.meta :as meta]))
 
 (defn pagination [ztx
                   {{path "x-client-path"
@@ -59,7 +60,7 @@
    ;; TODO remove last-updated from db query?
    (for [[i [docname _]] (map-indexed vector query-result)]
      (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
-           (loader/get-doc ztx (symbol docname))]
+           (memstore/get-doc ztx (symbol docname))]
        [:div {:class (c [:py 3])}
         [:div {:class (c :flex :flex-row :justify-between :border-b)}
          (link/symbol-link ztx docname)
@@ -80,17 +81,10 @@
            (methods/renderkey ztx {} {:key k :data v :ann (get anns k)})))]))])
 
 (defmethod methods/widget :folder
-  [ztx {{{qs "x-client-qs"} :headers config :zd/config :as req} :request :as ctx}
-   {{dn :docname} :zd/meta :as doc}]
+  [ztx {{{qs "x-client-qs"} :headers :as req} :request r :root :as ctx} {{dn :docname} :zd/meta :as doc}]
   (let [{page-number :page search-text :search} (utils/parse-params qs)
-
-        summary-keys
-        (->> (get-in @ztx [:zd/schema])
-             (filter (fn [[k v]]
-                       (= :zd/summary (:group v))))
-             (map first)
-             (vec))
-        dn-param (if (= (symbol (:root config)) dn)
+        summary-keys (meta/get-group ztx :zd/summary)
+        dn-param (if (= (symbol r) dn)
                    ""
                    (str dn))
         query-result (db/children ztx dn-param page-number search-text)

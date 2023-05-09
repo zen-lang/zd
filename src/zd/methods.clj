@@ -27,7 +27,7 @@
 
 ;; by default add a header and renders content of a block
 (defmethod renderkey :default [ztx ctx {kp :key d :data :as block}]
-  [:div {:class (c [:py 3])}
+  [:div {:class (c [:py 4])}
    [:div {:class (c :flex :flex-row :justify-between :border-b)}
     [:div
      [:span {:class (c [:text :orange-500])} ":"]

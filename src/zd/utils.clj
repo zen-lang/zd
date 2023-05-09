@@ -25,6 +25,6 @@
                              :message (.getMessage e)
                              :trace (.getStackTrace e))]
              ;; TODO emit zen pub sub event
-             (println :safecall-error)
+             (println :zd.utils/safecall-error)
              (ppr/pprint err*)
              err*)))))

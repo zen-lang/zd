@@ -1,7 +1,7 @@
 (ns zd.link
   (:require
    [stylo.core :refer [c]]
-   [zd.loader :as loader]
+   [zd.memstore :as memstore]
    [clojure.string :as str]))
 
 (defn get-parent [ztx res]
@@ -10,7 +10,7 @@
                   (butlast)
                   (str/join "."))]
       (when-not (str/blank? pn)
-        (or (loader/get-doc ztx (symbol pn))
+        (or (memstore/get-doc ztx (symbol pn))
             {:zd/name (symbol pn)})))))
 
 (defn resolve-icon [ztx res]
@@ -36,7 +36,7 @@
                            (name (c [:mr 1] [:text :gray-500])))}])))
 
 (defn symbol-link [ztx s & [opts]]
-  (if-let [res (loader/get-doc ztx (symbol s))]
+  (if-let [res (memstore/get-doc ztx (symbol s))]
     [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
      (icon ztx res)
      (when-not (:compact opts)

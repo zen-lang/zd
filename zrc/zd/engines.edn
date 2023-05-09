@@ -1,0 +1,46 @@
+{:ns zd.engines
+
+ http
+ {:zen/tags #{zen/tag zen/schema}
+  :type zen/map
+  :keys {:root {:type zen/string}}}
+
+ fs
+ {:zen/tags #{zen/schema zen/tag zen/engine}
+  :zen/state-key :zd.fs
+  :require #{:engine :paths :pull-rate}
+  :type zen/map
+  :keys {:engine {:type zen/symbol}
+         :pull-rate {:type zen/integer}
+         :remote {:confirms #{remote}}
+         :remotes {:type zen/vector
+                   :every {:confirms #{remote}}}
+         :paths {:type zen/vector
+                 :every {:type zen/string}}}}
+
+ remote
+ {:zen/tags #{zen/schema}
+  :type zen/map
+   ;; TODO use zen-web/url
+  :require #{:from}
+  :keys {:from {:type zen/string}
+         :to {:type zen/string}
+         :branch {:type zen/string}}}
+
+ datalog
+ {:zen/tags #{zen/schema zen/engine zen/tag}
+  :zen/desc "Datalog engine"
+  :zen/state-key :datalog
+  :keys {:engine {:type zen/symbol
+                  :tags #{zen/engine}}}
+  :type zen/map}
+
+ web-ui
+ {:zen/tags #{zen/schema zen/engine zen/tag}
+  :zen/state-key :javafx-web-ui
+  :type zen/map
+  ;; TODO set to zen-web/uri
+  :keys {:uri {:type zen/string}
+         :engine {:type zen/symbol
+                  :tags #{zen/engine}}}}}
+

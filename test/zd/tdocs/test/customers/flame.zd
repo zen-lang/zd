@@ -8,10 +8,6 @@
 
 :linkedin "https://www.linkedin.com/company/health-samurai"
 
-:fhir-users 23
-
-:num-employees 2000
-
 :funding funding.e
 
 :country #{countries.br}
@@ -48,4 +44,3 @@
 :easy-to-work :no
 :challenging :yes
 :techstack-match :yes
-

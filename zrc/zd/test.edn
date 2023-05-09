@@ -2,33 +2,14 @@
  :import #{zen-web zd}
 
  datalog
- {:zen/tags #{zen/start zd/datalog}
-  :engine zd/datalog}
+ {:zen/tags #{zen/start zd.engines/datalog}
+  :engine zd.engines/datalog}
 
- zendoc
- {:zen/bind zd/config-binding
-  :zen/tags #{zen/start zd/config}
-  :root "customers"
-  :engine zd/db
-  ;; TODO make all io ops respect the path prefix
+ fs
+ {:zen/tags #{zen/start zd.engines/fs}
+  :engine zd.engines/fs
   ;; TODO make api ops work w multiple paths
   :paths ["test/zd/tdocs/test" #_"/docs"]
-  :layout zd/sidebar}
-
- to-customers
- {:zen/tags #{zen/op zen-web/op}
-  :engine zen-web.engines/redirect
-  :to "/customers"}
-
- api
- {:zen/tags #{zen-web/api}
-  :engine zen-web/routemap
-  :GET to-customers
-  :apis [zd/api]}
-
- gitsync
- {:zen/tags #{zen/start zd/gitsync}
-  :engine zd/gitsync
   ;; TODO make it in seconds
   :pull-rate 10800
   ;; TODO think about how to make the test reproducible
@@ -36,17 +17,18 @@
            :to "test/zd/tdocs/test"}}
 
  http
- {:zen/tags #{zen/start zen-web/http}
+ {:zen/tags #{zen/start zen-web/http zd.engines/http}
   :engine zen-web/httpkit
   :port 4444
+  :root "index"
   :api zd/api}
 
  ;; TODO rename to desktop ui
  web-ui
- {:zen/tags #{zen/start zd/web-ui}
-  :engine zd/web-ui
+ {:zen/tags #{zen/start zd.engines/web-ui}
+  :engine zd.engines/web-ui
   :uri "localhost:4444"}
 
  system
  {:zen/tags #{zen/system}
-  :start [gitsync datalog zendoc http #_web-ui]}}
+  :start [datalog fs http #_web-ui]}}

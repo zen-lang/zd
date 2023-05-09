@@ -128,7 +128,7 @@
                  (mapv (fn [[k v]] (:name v)))
                  (into ['index]))}))
 
-(defn sidebar-layout [ztx content]
+(defn sidebar [ztx content]
   [:html
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
@@ -160,8 +160,3 @@
     [:script "var zd={};"]
     [:script "zd.nav=" (json/generate-string (build-navigation ztx))]
     [:script "hljs.highlightAll()"]]])
-
-(defmethod methods/layout 'zd/sidebar
-  [ztx config content page]
-  ;; TODO emit zen event
-  (sidebar-layout ztx content))

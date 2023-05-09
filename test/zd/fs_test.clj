@@ -1,28 +1,37 @@
-(ns zd.loader-test
+(ns zd.fs-test
   (:require
    [matcho.core :as matcho]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
-   [zd.loader :as loader]
+   [zd.fs :as fs]
+   [zd.memstore :as memstore]
    [zen.core :as zen]
    [zen-web.core :as web]))
 
 (defonce ztx (zen/new-context {}))
 
+(comment
+  (def ztx (zen/new-context {})))
+
+(defn req-body [s]
+  (io/input-stream (.getBytes s)))
+
 (defn load! [ztx]
-  ;; TODO add trailing slash validation in system config
   (zen/read-ns ztx 'zd.test)
-  (loader/reload-sync! ztx))
+  (get-in (zen/start-call ztx 'zd.test/fs) [:zen/state :zd.fs]))
+
+;; TODO add tests on document updates and deletion
+;; check that memstore is reloaded correctly
 
 (deftest document-tree-loaded
   (load! ztx)
 
   (testing "loading is complete in sync mode"
-    (is (= {:type :zd.utils/safecall, :result 'ok} @loader/ag)))
+    (is (= {:type :zd.utils/safecall, :result 'ok} @fs/ag)))
 
   (def docs (->> ['customers 'customers.flame 'people.john 'people.todd]
-                 (map #(loader/get-doc ztx %))))
+                 (map #(memstore/get-doc ztx %))))
 
   (testing "documents are loaded"
     (->> docs
@@ -53,7 +62,7 @@
       :not-found {:zd/macro list?}
       :office-locations {:zd/macro list?}}}}
 
-   (loader/get-doc ztx 'customers)))
+   (memstore/get-doc ztx 'customers)))
 
 (deftest referenced-loaded
   (load! ztx)
@@ -77,16 +86,16 @@
   ;; TODO make links formats same?
   (testing "backlinks are collected"
     (matcho/assert {:zd/meta {:backlinks [{:to 'customers.flame :path [:desc] :doc 'customers}]}}
-                   (loader/get-doc ztx 'customers.flame))
+                   (memstore/get-doc ztx 'customers.flame))
 
     (matcho/assert {:zd/meta {:backlinks [{:to 'people.john :path [:desc] :doc 'customers}
                                           {:to 'people.john :path [:best-customer] :doc 'customers}
                                           {:to 'people.john :path [:ceo] :doc 'customers.flame}
                                           {:to 'people.john :path [:founder] :doc 'customers.flame}]}}
-                   (loader/get-doc ztx 'people.john))
+                   (memstore/get-doc ztx 'people.john))
 
     (matcho/assert {:zd/meta {:backlinks [{:to 'people.todd :doc 'customers :path [:desc]}]}}
-                   (loader/get-doc ztx 'people.todd))))
+                   (memstore/get-doc ztx 'people.todd))))
 
 (deftest block-meta-added
   (load! ztx)
@@ -97,13 +106,13 @@
            :tags {:zd/content-type :edn :badge {}}
            :icon {:zd/content-type :edn :none {}}
            :country {:zd/content-type :edn :badge {}}}}}
-   (loader/get-doc ztx 'customers.flame)))
+   (memstore/get-doc ztx 'customers.flame)))
 
 (deftest subdocuments-loaded
 
   (load! ztx)
 
-  (def doc (loader/get-doc ztx 'customers))
+  (def doc (memstore/get-doc ztx 'customers))
 
   (matcho/assert
    {:zd/subdocs
@@ -117,3 +126,46 @@
 
   (is (contains? (:tags subdoc-ann) :badge))
   (is (contains? (:countries subdoc-ann) :badge)))
+
+(deftest ^:kaocha/pending gitsync
+
+  (zen/stop-system ztx)
+
+  (zen/read-ns ztx 'zd)
+
+  (zen/read-ns ztx 'zd.test)
+
+  (zen/start-system ztx 'zd.test/system)
+
+  (def st (fs/get-state ztx))
+
+  ;; timers are ready
+  (is (instance? java.util.Timer (:ti st)))
+  (is (instance? java.util.TimerTask (:task st)))
+
+  (is (nil? (agent-errors fs/ag)))
+
+  ;; repo is ready
+  (is (instance? org.eclipse.jgit.api.Git  (get-in st [:remote :repo])))
+
+  (matcho/assert
+   {:status 200}
+   (web/handle ztx 'zd/api
+               {:uri "/_draft/edit"
+                :request-method :put
+                :body (req-body ":zd/docname index\n:desc /")}))
+
+  (matcho/assert
+   {:status 200}
+   (web/handle ztx 'zd/api
+               {:uri "/index/edit"
+                :request-method :put
+                :body (req-body ":zd/docname index\n:desc /\na description")}))
+
+  (matcho/assert
+   {:status 200 :body "/index"}
+   (web/handle ztx 'zd/api {:uri "/index" :request-method :delete}))
+
+  (is (nil? (agent-errors fs/ag)))
+
+  (zen/stop-system ztx))

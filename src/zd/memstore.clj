@@ -1,16 +1,12 @@
-(ns zd.loader
+(ns zd.memstore
   (:require
-   [zd.fs :as fs]
    [zd.meta :as meta]
    [zd.methods :as methods]
-   [zd.utils :as utils]
    [zd.macros]
    [zen.core :as zen]
    [zen-web.utils :refer [deep-merge]]
    [zd.reader :as reader]
-   [clojure.java.io :as io]
-   [clojure.string :as str])
-  (:import [java.util Timer TimerTask]))
+   [clojure.string :as str]))
 
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
@@ -145,30 +141,7 @@
     (swap! ztx update :zrefs patch-links links)
     (swap! ztx update :zd/keys (fnil into #{}) (keys doc))
     (swap! ztx assoc-in [:zd/macros docname] macros)
-    (zen/pub ztx 'zd/on-doc-create doc)))
-
-(defn load-docs! [ztx dirs]
-  (doseq [dir dirs]
-    (let [dir (io/file dir)
-          dir-path (.getPath dir)]
-      ;; load metadata
-      (doseq [f (->> (file-seq dir)
-                     (filter (fn [f] (str/includes? (.getName f) "_schema.zd"))))]
-        (let [content (slurp f)]
-          (meta/load-meta! ztx {:path (.getPath f)
-                                :resource-path (subs (.getPath f) (inc (count dir-path)))
-                                :content content})))
-      ;; load documents
-      (doseq [[path f] (->> (file-seq dir)
-                            (map (fn [d] [(.getPath d) d]))
-                            (sort-by first))]
-        (when (and (str/ends-with? path ".zd")
-                   (not (str/starts-with? (.getName f) ".")))
-          (let [resource-path (subs path (inc (count dir-path)))
-                content (slurp f)]
-            (load-document! ztx {:path path
-                                 :resource-path resource-path
-                                 :content content})))))))
+    (zen/pub ztx 'zd.events/on-doc-load doc)))
 
 (defn load-links!
   "add backlinks to docs"
@@ -191,51 +164,10 @@
         (recur oth)))))
 
 (defn eval-macros! [ztx]
-  (let [eval-macro
-        (fn [[sym macros]]
-          (let [doc (get-in @ztx [:zdb sym])]
-            (map (fn [[docpath macro]]
-                   [sym docpath macro (methods/eval-macro! ztx doc docpath macro)])
-                 macros)))]
-    (->> (get @ztx :zd/macros)
-         (mapcat eval-macro)
-         (map (fn [[sym path macro result]]
-                (swap! ztx update-in [:zdb sym]
-                       (fn [doc]
-                         (-> doc
-                             (assoc-in [:zd/meta :ann (first path) :zd/macro] macro)
-                             (assoc (first path) result))))))
-         doall)))
-
-(defn load-dirs! [ztx dirs]
-  (load-docs! ztx dirs)
-  (load-links! ztx)
-  (eval-macros! ztx)
-  'ok)
-
-;; first arg is an agent state
-(defn hard-reload! [_ ztx {dirs :paths :as config}]
-  ;; TODO emit zen event
-  (prn :hard-reload)
-  (swap! ztx dissoc :zdb :zd/schema)
-  (swap! ztx assoc :zrefs {})
-  (zen/pub ztx 'zd/hard-reload {:dirs dirs})
-  (load-dirs! ztx dirs))
-
-(defonce ag (agent nil))
-
-(defn reload! [ztx]
-  ;; TODO emit zen event
-  (println :request-reload)
-  ;; TODO do we need to do discovery here?
-  ;; maybe provide config explicitly?
-  (let [config (->> (zen/get-tag ztx 'zd/config)
-                    (first)
-                    (zen/get-symbol ztx))
-        sf (utils/safecall hard-reload! {:type :zd.loader/reload-error})]
-    (send-off ag sf ztx config)))
-
-(defn reload-sync! [ztx]
-  (reload! ztx)
-  (await ag)
-  (deref ag))
+  (doseq [[sym macros] (get @ztx :zd/macros)]
+    (doseq [[docpath macro] macros]
+      (swap! ztx update-in [:zdb sym]
+             (fn [doc]
+               (-> doc
+                   (assoc-in [:zd/meta :ann (first docpath) :zd/macro] macro)
+                   (assoc (first docpath) (methods/eval-macro! ztx doc docpath macro))))))))

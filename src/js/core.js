@@ -487,9 +487,11 @@ main(()=>{
 
     var search_input = document.getElementById('zd-search');
 
-    search_input.focus();
-    search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
-
+    // TODO focus on widget update
+    if (window.location.search.includes('tab=folder')){
+        search_input.focus();
+        search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
+    }
     var sym = localStorage.getItem('zd/nav');
     if(sym === undefined) {
         sym =  href_sym();
@@ -519,6 +521,4 @@ main(()=>{
     var searchIdx = new quickScore.QuickScore(search_items, ["name", "title"]);
     searchIdx.config.maxIterations = 1000;
     zd.searchIdx = searchIdx;
-
-
 });

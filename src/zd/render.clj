@@ -1,7 +1,6 @@
 (ns zd.render
   (:require
-   [zd.utils :as utils]
-   [zd.db :as db]
+   [zd.link :as link]
    [zd.meta :as meta]
    [zd.reader :as reader]
    [cheshire.core :as json]
@@ -12,7 +11,7 @@
    [zd.blocks]
    [zd.methods :as methods]
    [stylo.core :refer [c]]
-   [zd.loader :as loader]))
+   [zd.memstore :as memstore]))
 
 (defn tab? [s]
   (str/includes? (str s) "tab=folder"))
@@ -55,31 +54,32 @@
       (conj container folder-btn create-btn)
       (conj container folder-btn edit-btn del-btn))))
 
-(defn breadcrumbs [ztx {{uri :uri {root :root} :zd/config} :request} {{:keys [docname]} :zd/meta :as doc}]
+(defn breadcrumbs [ztx {{uri :uri} :request root :root} {{:keys [docname]} :zd/meta :as doc}]
   (let [parts (str/split (str docname) #"\.")
-        icon-class (c :cursor-pointer [:text :orange-500] [:hover [:text :orange-600]])]
+        icon-class (c :cursor-pointer [:text :gray-500] [:hover [:text :orange-600]])]
     (if (= (symbol root) docname)
       [:a {:href (str "/") :class icon-class}
        [:span.fa-regular.fa-house]]
       [:div {:class (c :flex :flex-flow :items-baseline)}
        [:a {:href (str "/") :class icon-class}
         [:span.fa-regular.fa-house]]
-       [:span {:class (c [:mx 1] [:text :gray-500])}
+       [:span {:class (c [:mx 1.5] [:text :gray-500])}
         "/"]
        (for [x (range 1 (+ 1 (count parts)))]
          (let [pth (into [] (take x parts))
                nm  (str/join "." pth)]
-           [:div {:class (c :flex :flex-row :items-baseline)}
+           [:div {:class (c :flex :flex-row :items-center)}
+            (link/icon ztx (memstore/get-doc ztx (symbol nm)))
             [:a {:href (str "/" nm)
                  :class (c [:text :blue-500])}
              (last pth)]
             (when-not (= x (count parts))
-              [:span {:class (c [:text :gray-500] [:mx 1] {:font-size "18px"})}
+              [:span {:class (c [:text :gray-500] [:mx 1.5] {:font-size "18px"})}
                "/"])]))])))
 
 (defn search [ztx {{{search-text :search} :query-params :as req} :request} doc]
   [:div
-   [:div {:class (c [:w "20rem"] :flex :flex-row :items-baseline)}
+   [:div {:class (c [:w "14rem"] :flex :flex-row :items-baseline)}
     [:span {:class (c {:font-size "14px"
                        :margin-right "4px"
                        :color "#718096"})}
@@ -92,6 +92,7 @@
                 [:text :gray-600]
                 :text-sm
                 :rounded
+                [:py 0.5]
                 [:px 2]
                 [:w "100%"])}]]])
 
@@ -146,16 +147,16 @@
      [:div (methods/renderkey ztx ctx {:data links :key :zd/backlinks})])
    (when-let [subdocs (not-empty (filter #(get subs %) (:doc m)))]
      [:div
-      [:div {:class (c :text-lg)}
-       [:span {:class (c [:text :green-500])} "&"]
-       [:span {:class (c [:text :gray-600])} "subdocs"]]
       (doall
        (for [sub-key subdocs]
          [:div {:class (c [:pt 4])}
-          [:div {:class (c :text-lg [:text :gray-700])}
-           [:span {:class (c [:text :green-500])} "&"]
-           [:span {:class (c [:text :gray-600])} (name sub-key)]]
-          [:div {:class (c [:px 8])}
+          [:div {:class (c :border-b [:text :gray-700] :flex :flex-row :justify-between)}
+           [:span
+            [:span {:class (c [:text :green-500])} "&"]
+            [:span {:class (c [:text :gray-600])} (name sub-key)]]
+           [:span {:class (c [:text :gray-500])}
+            "subdoc"]]
+          [:div {:class (c [:pl 4])}
            (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]))]]))])])
 
 (defn render-doc [ztx {{qs :query-string} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
@@ -168,16 +169,14 @@
       (render-blocks ztx ctx doc)])])
 
 (defn doc-view [ztx ctx doc]
-  ;; TODO remove wrapper div
-  ;; when new nav is complete
   [:div
    #_(navigation ztx ctx doc)
    [:div#page
-    (render-doc ztx ctx doc)
-    ]])
+    (render-doc ztx ctx doc)]])
 
 (def default-tpl ":title \"\"\n:tags #{}")
 
+;; TODO find template in memstore
 (defn find-template [ztx nm]
   (when nm
     (let [parts (str/split (str nm) #"\.")]

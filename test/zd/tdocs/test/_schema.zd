@@ -1,8 +1,5 @@
-:required #{:title :rel}
-
 &title
 :type :dockey
-:group :zd/summary
 :desc "document title"
 :schema {:type zen/string}
 

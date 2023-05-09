@@ -4,6 +4,14 @@
    [clojure.string :as str]
    [zen.core :as zen]))
 
+(defn get-group
+  "finds keys by :group from a _schema"
+  [ztx group-name]
+  (->> (get-in @ztx [:zd/meta])
+       (filter (fn [[k v]]
+                 (= group-name (:group v))))
+       (map first)))
+
 (defn append-meta
   "appends annotations from _schemas to a block"
   [ztx doc]
@@ -73,7 +81,9 @@
         (assoc-in [:keys :zd/subdocs] subdocs)
         (update :keys merge doc-keys))))
 
-(defn validate-doc [ztx doc]
+(defn validate-doc
+  "validate doc with zen schema compiled from a _schema.zd"
+  [ztx doc]
   (let [docname (str (:zd/docname doc))]
     (if-let [sch (zen-schema ztx docname)]
       (let [errs (->> (zen/validate-schema ztx sch doc)

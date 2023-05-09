@@ -330,7 +330,8 @@ var editor = (zendoc) => {
     var editor_style = {position: relative ,
                         background: black,
                         color: 'white',
-                        overflow: 'auto', width: in_chrome ? '100vw' : '40vw',
+                        overflow: 'auto',
+                        width: "50%",
                         height: 'calc(100vh)'};
 
     ctx.container = el({tag: 'div',

@@ -1,0 +1,5 @@
+:title "people list"
+
+:people datalog/
+{:find [(pull e [:xt/id])]
+ :where [[e :parent "people"]]}
