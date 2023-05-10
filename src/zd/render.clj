@@ -158,7 +158,7 @@
                             [:bg :gray-100]
                             {:height "100vh"
                              :overflow-y "auto"})}
-   [:div {:class (c [:py 4] [:px 6])}
+   [:div {:class (c [:py 12] [:px 6])}
     (for [d (db/root-docs ztx)]
       [:div {:class (c [:py 0.5])}
        (link/symbol-link ztx (symbol d))])]])

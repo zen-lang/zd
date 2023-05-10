@@ -27,8 +27,10 @@
 (deftest document-tree-loaded
   (load! ztx)
 
+  (is (nil? (agent-errors fs/ag)))
+
   (testing "loading is complete in sync mode"
-    (is (= {:type :zd.utils/safecall, :result 'ok} @fs/ag)))
+    (matcho/assert {:memstore 'ok} (fs/get-state ztx)))
 
   (def docs (->> ['customers 'customers.flame 'people.john 'people.todd]
                  (map #(memstore/get-doc ztx %))))
@@ -42,6 +44,8 @@
 
 (deftest macros-loaded
   (load! ztx)
+
+  (is (nil? (agent-errors fs/ag)))
 
   (matcho/assert
    {:macro-notfound
@@ -66,6 +70,8 @@
 
 (deftest referenced-loaded
   (load! ztx)
+
+  (is (nil? (agent-errors fs/ag)))
 
   (testing "edn links loaded"
     (:zrefs @ztx)

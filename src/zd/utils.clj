@@ -23,7 +23,7 @@
          (catch Exception e
            (let [err* (assoc err
                              :message (.getMessage e)
-                             :trace (.getStackTrace e))]
+                             #_:trace #_(.getStackTrace e))]
              ;; TODO emit zen pub sub event
              (println :zd.utils/safecall-error)
              (ppr/pprint err*)

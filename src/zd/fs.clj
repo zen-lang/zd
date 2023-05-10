@@ -44,22 +44,14 @@
 
 (defonce ti (Timer.))
 
-(defn reload [ag ztx paths]
-  ((utils/safecall (fn []
-                     (println :zd.fs/reload)
-                     (swap! ztx dissoc :zdb :zd/meta :zrefs :zd/macros)
-                     (load-docs! ztx paths)
-                     (memstore/load-links! ztx)
-                     (memstore/eval-macros! ztx)
-                     ;; TODO think about return value
-                     'ok)
-                {:type :zd.fs/reload-error})))
-
-(defn delete-doc! [ag ztx filepath]
-  ((utils/safecall (fn [] (io/delete-file filepath)) {:type 'zd.fs/delete-doc-error})))
-
-(defn gitsync-delete! [ag ztx repo params]
-  ((utils/safecall gitsync/delete-doc {:type :gitsync/delete-doc-error}) ztx repo params))
+(defn reload [ztx paths]
+  (println :zd.fs/reload)
+  (swap! ztx dissoc :zdb :zd/meta :zrefs :zd/macros)
+  (load-docs! ztx paths)
+  (memstore/load-links! ztx)
+  (memstore/eval-macros! ztx)
+  ;; TODO think about return value
+  'ok)
 
 (defmethod zen/op 'zd.events/fs-delete
   [ztx config {_ev :ev {docname :docname} :params} & [_session]]
@@ -70,21 +62,16 @@
         (str (first pths)
              "/"
              (str/join "/" parts)
-             ".zd")]
-    (send-off ag delete-doc! ztx filepath)
-    (when-let [repo (get-repo ztx)]
-      (send-off ag gitsync-delete! ztx repo {:docpath filepath :docname docname}))
-    (send-off ag reload ztx pths)
+             ".zd")
+        fs-delete (utils/safecall (fn [ag]
+                                    (io/delete-file filepath)
+                                    (when-let [repo (get-repo ztx)]
+                                      (gitsync/delete-doc ztx repo {:docpath filepath :docname docname}))
+                                    ;; TODO implement deletion of a single document
+                                    (reload ztx pths))
+                                  {:type 'zd.fs/delete-doc-error})]
+    (send-off ag fs-delete)
     (await ag)))
-
-(defn save-doc! [ag dirname filename content]
-  ((utils/safecall (fn []
-                     (.mkdirs (io/file dirname))
-                     (spit filename content))
-                   {:type :zd.fs/save-doc-error})))
-
-(defn gitsync-commit! [ag ztx repo params]
-  ((utils/safecall gitsync/commit-doc {:type :zd.gitsync/put-doc-error}) ztx repo params))
 
 (defmethod zen/op 'zd.events/fs-save
   [ztx config {_ev :ev {docname :docname cnt :content} :params} & [_session]]
@@ -96,19 +83,22 @@
              butlast
              (str/join "/")
              (str (first pths) "/"))
-        filename (str (first pths) "/" (str/replace docname "." "/") ".zd")]
-    (send-off ag save-doc! dirname filename cnt)
-    (when-let [repo (get-repo ztx)]
-      (send-off ag gitsync-commit! ztx repo {:docpath filename :docname docname}))
-    (send-off ag reload ztx pths)
-    (await ag)
-    #_(send-off ag reload-single ztx config {:docpath filename :docname docname})))
+        docpath (str (str/replace docname "." "/") ".zd")
+        filepath (str (first pths) "/" docpath)
+        fs-save (utils/safecall (fn [ag]
+                                  (.mkdirs (io/file dirname))
+                                  (spit filepath cnt)
+                                  (when-let [repo (get-repo ztx)]
+                                    (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
+                                  (memstore/load-document! ztx {:path filepath
+                                                                :resource-path docpath
+                                                                :content cnt})
+                                  (memstore/load-links! ztx)
+                                  (memstore/eval-macros! ztx))
+                                {:type :zd.fs/save-error})]
 
-(defn sync-remote [ag ztx paths repo]
-  (let [{st :status}
-        ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)]
-    (when (= :updated st)
-      (reload ag ztx paths))))
+    (send-off ag fs-save)
+    (await ag)))
 
 (defmethod zen/start 'zd.engines/fs
   [ztx {:keys [remote paths pull-rate] :as config} & args]
@@ -116,25 +106,32 @@
   ;; TODO emit zen event
   (println :zd.fs/start)
   (let [repo
-        (:result ((utils/safecall gitsync/init-remote {:type :gitsync/remote-init-error}) ztx remote))
-        st
-        (if (instance? org.eclipse.jgit.api.Git repo)
-          (let [task (proxy [TimerTask] []
-                       (run []
-                         (send-off ag sync-remote ztx paths repo)))]
-            (.scheduleAtFixedRate ti task pull-rate pull-rate)
-            {:ag ag
-             :ti ti
-             :paths paths
-             :task task
-             :remote (assoc remote :repo repo)})
-          ;; TODO if no git repo schedule retry
-          {:ag ag
-           :paths paths
-           :ti ti})]
-    (send-off ag reload ztx paths)
+        (-> ((utils/safecall gitsync/init-remote {:type :gitsync/remote-init-error}) ztx remote)
+            (:result))
+        sync-fn
+        (fn [ag]
+          (let [{st :status}
+                ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)]
+            (when (= :updated st)
+              (reload ztx paths))))
+        load-result (reload ztx paths)]
     (await ag)
-    st))
+    (if (instance? org.eclipse.jgit.api.Git repo)
+      (let [task (proxy [TimerTask] []
+                   (run []
+                     (send-off ag sync-fn)))]
+        (.scheduleAtFixedRate ti task pull-rate pull-rate)
+        {:ag ag
+         :ti ti
+         :memstore load-result
+         :paths paths
+         :task task
+         :remote (assoc remote :repo repo)})
+      ;; TODO if no git repo schedule retry
+      {:ag ag
+       :memstore load-result
+       :paths paths
+       :ti ti})))
 
 (defmethod zen/stop 'zd.engines/fs
   [ztx config {r :remote :as state} & args]
