@@ -465,10 +465,6 @@ var search_debounce = debounce((v) => {
 
     var searchParams = new URLSearchParams(searchString);
 
-    if(searchParams.get('search') === null) {
-        searchParams.set('tab', 'folder');
-    }
-
     if (v.length == 0) {
         searchParams.delete('search');
         searchParams.delete('page');
@@ -481,6 +477,13 @@ var on_doc_search = (e) => {
     var el = document.getElementById("zd-search");
     search_debounce(el.value);
 }
+
+// TODO implement create by backlink flow
+var create_redirect  = (e) => {
+    var el = document.getElementById("zd-select");
+    var p = window.location.pathname.substring(1);
+    window.location.href = p + "._draft/edit?" + window.location.search;
+};
 
 main(()=>{
     update_widgets();

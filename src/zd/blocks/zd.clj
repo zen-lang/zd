@@ -14,7 +14,7 @@
     data]])
 
 (defmethod methods/renderkey :zd/backlinks
-  [ztx ctx {:keys [data] :as block}]
+  [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]
   (let [links
         (->> data
              (map (fn [{d :doc p :path t :to}]
@@ -26,14 +26,23 @@
 
              (sort-by :doc)
              (group-by :path))]
-
     [:div {:class (c [:text :gray-600])}
      [:div {:class (c :flex :flex-row [:text :gray-600] :justify-between :border-b)}
       [:div
        [:span ":backlinks"]]
-      [:div {:class (c [:text :gray-500])}
-       [:span "zd"]]]
-     [:div
+      [:div
+       [:a {:class (c :cursor-pointer [:text :gray-600] [:hover [:text :green-600]])
+            :href (cond->> (str "_draft/edit?" qs)
+                    (not= dn (symbol r)) (str dn "."))
+            ;; TODO impl create by backlink flow
+            #_:onclick #_"create_redirect()"}
+        [:i.fas.fa-plus]]
+       [:select#zd-select {:class (c :text-base)}
+        [:option {:value "parent"} ":parent"]]]
+      #_[:div {:class (c [:text :gray-500])}
+       [:span "zdkey"]]]
+     [:div {:class (c [:py 2])}
+
       (doall
        (for [[p ls] links]
          [:div

@@ -11,10 +11,6 @@
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
 
-(defn get-blocks [ztx doc]
-  (remove #(= "zd" (namespace (first %)))
-          doc))
-
 ;; needed for windows compatibility
 (def file-separator-regex
   (re-pattern
@@ -82,14 +78,15 @@
                    (update-in acc* [to docname] (fnil conj #{}) path))
                  acc))))
 
-(defn collect-links [ztx {{:keys [docname ann]} :zd/meta :as doc}]
-  (->> (get-blocks ztx doc)
+(defn collect-links [ztx {{:keys [docname ann] :as meta} :zd/meta :as doc}]
+  (->> (remove #(= "zd" (namespace (first %)))
+               doc)
        (reduce (fn [acc [k cnt]]
-                 (let [cnt-type (get-in ann [k :zd/content-type])]
-                   (cond (= cnt-type :edn) (edn-links acc docname [k] cnt)
-                         (= cnt-type :zentext) (zentext-links acc docname [k] cnt)
-                         :else acc)))
-               {})))
+             (let [cnt-type (get-in ann [k :zd/content-type])]
+               (cond (= cnt-type :edn) (edn-links acc docname [k] cnt)
+                     (= cnt-type :zentext) (zentext-links acc docname [k] cnt)
+                     :else acc)))
+           {})))
 
 (defn patch-links [idx patch]
   (loop [acc idx
@@ -123,17 +120,27 @@
        (reduce (fn [acc [k v]] (*collect-macros acc [k] v))
                {})))
 
-(defn load-document! [ztx {:keys [resource-path path content] :as doc}]
+(defn load-document! [ztx {:keys [root resource-path path content] :as doc}]
   (let [docname (symbol (str/replace (str/replace resource-path #"\.zd$" "")
                                      file-separator-regex
                                      "."))
-        headers {:zd/meta {:docname docname
-                           :file resource-path
-                           ;;:last-updated (zen/op-call ztx 'zd/gitsync-last-updated path)
-                           :path path}}
+        parent-link
+        (->> (str/split (str docname) #"\.")
+             (butlast)
+             (str/join "."))
+        doc-body {:zd/meta {:docname docname
+                            :file resource-path
+                            :ann {:parent {:zd/content-type :edn}}
+                            ;; TODO add last updated from git to a document here?
+                            :path path}
+                  :parent
+                  (cond
+                    (= (str docname) root) ""
+                    (str/blank? parent-link) (symbol root)
+                    :else (symbol parent-link))}
         doc (->> content
                  (reader/parse ztx {})
-                 (deep-merge headers)
+                 (deep-merge doc-body)
                  (meta/append-meta ztx))
         links (collect-links ztx doc)
         macros (collect-macros ztx doc)]

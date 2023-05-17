@@ -6,7 +6,8 @@
    [zd.link :as link]
    [clojure.pprint :as pprint]
    [stylo.core :refer [c]]
-   [zd.methods :as methods]))
+   [zd.methods :as methods]
+   [zd.utils :as utils]))
 
 (defmethod methods/rendercontent :edn
   [ztx ctx {:keys [data] :as block}]
@@ -45,7 +46,10 @@
 
 (defmethod methods/rendercontent :datalog
   [ztx ctx {{headers :table-of} :ann data :data :as block}]
-  (let [result (d/query ztx data)]
+  (let [result
+        (if (vector? data)
+          (apply d/query (concat [ztx] data))
+          (d/query ztx data))]
     (if (set? result)
       (if (seq headers)
         (comp/table ztx ctx headers (map first result))

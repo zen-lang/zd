@@ -1,26 +1,34 @@
 {:ns zd.test
  :import #{zen-web zd}
 
+ zendoc
+ {:zen/tags #{zd/zendoc}
+  ;; TODO make api ops work w multiple paths
+  :paths ["test/zd/tdocs/test" #_"/docs"]
+  :root "customers"
+  :storage ".storage"
+  ;; TODO make it in seconds
+  :pull-rate 10800
+  :remote
+  ;; TODO think about how to make the test reproducible
+  {:from "git@github.com:carbon-hvze/zendoc-gitsync.git"
+   :to "test/zd/tdocs/test"}}
+
  datalog
  {:zen/tags #{zen/start zd.engines/datalog}
-  :engine zd.engines/datalog}
+  :engine zd.engines/datalog
+  :zendoc zendoc}
 
  fs
  {:zen/tags #{zen/start zd.engines/fs}
   :engine zd.engines/fs
-  ;; TODO make api ops work w multiple paths
-  :paths ["test/zd/tdocs/test" #_"/docs"]
-  ;; TODO make it in seconds
-  :pull-rate 10800
-  ;; TODO think about how to make the test reproducible
-  :remote {:from "git@github.com:carbon-hvze/zendoc-gitsync.git"
-           :to "test/zd/tdocs/test"}}
+  :zendoc zendoc}
 
  http
  {:zen/tags #{zen/start zen-web/http zd.engines/http}
   :engine zen-web/httpkit
   :port 4444
-  :root "index"
+  :zendoc zendoc
   :api zd/api}
 
  ;; TODO rename to desktop ui

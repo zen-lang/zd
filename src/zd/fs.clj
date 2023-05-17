@@ -17,7 +17,7 @@
   (->> [:zen/state :zd.fs :state]
        (get-in @ztx)))
 
-(defn load-docs! [ztx dirs]
+(defn load-docs! [ztx root dirs]
   (doseq [dir dirs]
     (let [dir (io/file dir)
           dir-path (.getPath dir)]
@@ -37,6 +37,7 @@
           (let [resource-path (subs path (inc (count dir-path)))
                 content (slurp f)]
             (memstore/load-document! ztx {:path path
+                                          :root root
                                           :resource-path resource-path
                                           :content content})))))))
 
@@ -44,10 +45,10 @@
 
 (defonce ti (Timer.))
 
-(defn reload [ztx paths]
+(defn reload [ztx root paths]
   (println :zd.fs/reload)
   (swap! ztx dissoc :zdb :zd/meta :zrefs :zd/macros)
-  (load-docs! ztx paths)
+  (load-docs! ztx root paths)
   (memstore/load-links! ztx)
   (memstore/eval-macros! ztx)
   ;; TODO think about return value
@@ -56,7 +57,7 @@
 (defmethod zen/op 'zd.events/fs-delete
   [ztx config {_ev :ev {docname :docname} :params} & [_session]]
   (println :zd.fs/delete docname)
-  (let [{pths :paths} (get-state ztx)
+  (let [{r :root pths :paths} (get-state ztx)
         parts (str/split docname #"\.")
         filepath ;; TODO scan all paths?
         (str (first pths)
@@ -68,7 +69,7 @@
                                     (when-let [repo (get-repo ztx)]
                                       (gitsync/delete-doc ztx repo {:docpath filepath :docname docname}))
                                     ;; TODO implement deletion of a single document
-                                    (reload ztx pths))
+                                    (reload ztx r pths))
                                   {:type 'zd.fs/delete-doc-error})]
     (send-off ag fs-delete)
     (await ag)))
@@ -77,7 +78,7 @@
   [ztx config {_ev :ev {docname :docname cnt :content} :params} & [_session]]
   ;; TODO emit zen event
   (println :zd.fs/save docname)
-  (let [{pths :paths} (get-state ztx)
+  (let [{r :root pths :paths} (get-state ztx)
         dirname
         (->> (str/split docname #"\.")
              butlast
@@ -91,6 +92,7 @@
                                   (when-let [repo (get-repo ztx)]
                                     (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
                                   (memstore/load-document! ztx {:path filepath
+                                                                :root r
                                                                 :resource-path docpath
                                                                 :content cnt})
                                   (memstore/load-links! ztx)
@@ -101,11 +103,12 @@
     (await ag)))
 
 (defmethod zen/start 'zd.engines/fs
-  [ztx {:keys [remote paths pull-rate] :as config} & args]
+  [ztx {zd-config :zendoc :as config} & args]
   ;; TODO process possible error and shutdown gracefully
   ;; TODO emit zen event
   (println :zd.fs/start)
-  (let [repo
+  (let [{:keys [remote root paths pull-rate]} (zen/get-symbol ztx zd-config)
+        repo
         (-> ((utils/safecall gitsync/init-remote {:type :gitsync/remote-init-error}) ztx remote)
             (:result))
         sync-fn
@@ -113,8 +116,8 @@
           (let [{st :status}
                 ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)]
             (when (= :updated st)
-              (reload ztx paths))))
-        load-result (reload ztx paths)]
+              (reload ztx root paths))))
+        load-result (reload ztx root paths)]
     (await ag)
     (if (instance? org.eclipse.jgit.api.Git repo)
       (let [task (proxy [TimerTask] []
@@ -126,9 +129,11 @@
          :memstore load-result
          :paths paths
          :task task
+         :root root
          :remote (assoc remote :repo repo)})
       ;; TODO if no git repo schedule retry
       {:ag ag
+       :root root
        :memstore load-result
        :paths paths
        :ti ti})))

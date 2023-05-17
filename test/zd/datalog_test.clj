@@ -21,7 +21,7 @@
 
   (zen/start-system ztx 'zd.test/system)
 
-  (xtdb/sync (datalog/get-node ztx))
+  (xtdb/sync (:node (datalog/get-state ztx)))
 
   (testing "metadata is loaded into xtdb"
     (matcho/assert
@@ -30,7 +30,7 @@
                                               [?e :xt/id ?id]]})))
 
   (matcho/assert
-   #{["customers.flame"]}
+   #{["people"] ["_schema"] ["customers.flame"]}
    (datalog/query ztx '{:find [e]
                         :where [[e :parent "customers"]]}))
 

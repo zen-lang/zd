@@ -1,15 +1,27 @@
 {:ns zd
  :import #{zen-web zd.engines zd.events}
 
- view
- {:zen/tags {zen/tag zen/schema}
-  :zen/desc "opclass that renders hiccup by keypath"
-  :type zen/map}
+ remote
+ {:zen/tags #{zen/schema}
+  :type zen/map
+   ;; TODO use zen-web/url
+  :require #{:from}
+  :keys {:from {:type zen/string}
+         :to {:type zen/string}
+         :branch {:type zen/string}}}
 
- sidebar
- {:zen/tags #{view}
-  :zen/desc "left-sided sidebar"
-  :styles :common}
+ zendoc
+ {:zen/tags #{zen/tag zen/schema}
+  :type zen/map
+  :keys {:root {:type zen/string}
+         :paths {:type zen/vector
+                 :every {:type zen/string}}
+         :pull-rate {:type zen/integer}
+         :storage {:type zen/string
+                   :zen/desc "path to a db storage folder"}
+         :remote {:confirms #{remote}}
+         :remotes {:type zen/vector
+                   :every {:confirms #{remote}}}}}
 
  query
  {:zen/tags #{zen/op}
@@ -17,7 +29,7 @@
 
  submit
  {:zen/tags #{zen/op}
-  :zen/desc "datalog submit"}
+  :zen/desc "datalog document submit operation"}
 
  gitsync-doc
  {:zen/tags #{zen/op}

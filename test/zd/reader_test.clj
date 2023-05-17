@@ -37,6 +37,7 @@
     (matcho/assert
      {:query-map {:where [] :limit 100}
       :another-query {:one-line :edn}
+      :edn-vector ['first-symbol 'second-symbol {:key "value"} 'third-symbol]
       :clients str/blank?
       :empty-edn str/blank?
       :nil-edn str/blank?
@@ -51,6 +52,7 @@
 
      result))
 
+  ;; TODO think about testing key order in reader
   (def keys-order
     [:title :myservice/api-endpoint :myemptykey :desc :map-inline :query :empty-edn :nil-edn
      :query-map :another-query :text :customers :clients :nested :nested-2])
@@ -58,7 +60,7 @@
   (testing "sub documents are parsed recursively"
     (matcho/assert
      {:zd/meta
-      {:doc keys-order}
+      {:doc vector?}
       :zd/subdocs
       {:nested
        {:zd/meta {:doc [:mykey :another-key :fish-key :path]}

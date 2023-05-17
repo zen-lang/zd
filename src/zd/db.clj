@@ -2,55 +2,57 @@
   (:require [zd.datalog :as d]
             [clojure.string :as str]))
 
-(def search-clause '(or [(text-search :meta/docname search-text) [[?e]]]
-                        [(text-search :title search-text) [[?e]]]))
+(def search-clause '[(text-search :title search-text) [[?e]]])
 
 (defn valid-search? [search-text]
   (and (string? search-text)
        (not (str/blank? search-text))))
 
-(defn children-count [ztx dn & [search-text]]
-  (let [q '{:find [(count ?id)]
-            :where [[?e :parent docname]
-                    [?e :xt/id ?id]]
-            :in [docname]}
-
-        query
-        (cond-> q
-          (valid-search? search-text)
-          (-> (update :where conj search-clause)
-              (update :in conj 'search-text)))
-
-        args (cond-> [ztx query dn]
-               (valid-search? search-text) (conj search-text))]
-
-    (apply d/query args)))
-
-;; conversion of dn to str is required
-(defn children [ztx dn & [page search-text]]
+(defn search [ztx search-text & [dn page]]
   (let [q '{:find [?id]
-            :where [[?e :parent docname]
-                    [?e :xt/id ?id]
+            :where [[?e :xt/id ?id]
                     #_[?e :meta/last-updated ?lu]]
-            :in [docname]
+            :in [#_docname]
             :order-by [[?id :asc]]
+            ;; TODO bring back last updated?
             #_:order-by #_[[?lu :desc]]
-            :limit 24
             :offset 0}
 
         query (cond-> q
+                (some? dn) (-> (update :where conj '[?e :parent docname])
+                               (update :in conj 'docname))
+                ;; TODO bring back pagination to search?
                 (some? page) (assoc :offset (* 24 (- (read-string page) 1)))
                 (valid-search? search-text) (-> (update :where conj search-clause)
                                                 (update :in conj 'search-text)))
 
-        args (cond-> [ztx query dn]
-               (valid-search? search-text) (conj search-text))]
-
+        args (cond-> [ztx query]
+               (some? dn) (conj dn)
+               ;; here we use fuzzy lucene trailing wildcard
+               (valid-search? search-text) (conj (str search-text "*")))]
     (apply d/query args)))
 
-(defn root-docs [ztx]
-  (->> (d/query ztx '{:find [?id]
-                      :where [[?e :parent ""]
+(defn navbar-docs [ztx]
+  (let [{r :root} (d/get-state ztx)]
+
+    {:views
+     (d/query ztx '{:find [?id]
+                    :where [[?e :xt/id ?id]
+                            [(clojure.string/includes? ?id "_views.")]]})
+     :templates
+     (d/query ztx '{:find [?id]
+                    :where [[?e :xt/id ?id]
+                            [(clojure.string/includes? ?id "_template")]]
+                    :order-by [[?id :asc]]})
+     :schemas
+     (d/query ztx '{:find [?id]
+                    :where [[?e :xt/id ?id]
+                            [(clojure.string/includes? ?id "_schema")]]})
+
+     :docs (d/query ztx
+                    '{:find [?id]
+                      :where [[?e :parent root]
                               [?e :xt/id ?id]]
-                      :order-by [[?id :asc]]})
-       (map first)))
+                      :in [root]
+                      :order-by [[?id :asc]]}
+                    (symbol r))}))

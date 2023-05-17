@@ -1,36 +1,30 @@
 (ns zd.datalog
   (:require [zen.core :as zen]
+            [clojure.java.io :as io]
             [xtdb.api :as xt]
             [clojure.string :as str]
             [clojure.walk :as walk]))
 
-(defn get-node [ztx]
+(defn get-state [ztx]
   (get-in @ztx [:zen/state :datalog :state]))
 
 (defn submit [ztx data]
-  (if-let [node (get-node ztx)]
-    (xt/submit-tx node [[::xt/put data]])
+  (if-let [{n :node} (get-state ztx)]
+    (xt/submit-tx n [[::xt/put data]])
     :no/xtdb))
 
 (defn query [ztx query & params]
-  (if-let [node (get-node ztx)]
-    (apply xt/q (xt/db node) query params)
+  (if-let [{n :node} (get-state ztx)]
+    (apply xt/q (xt/db n) query params)
     :no/xtdb))
 
 (defn flatten-doc [ztx {{dn :docname :as m} :zd/meta :as doc}]
-  (let [parent-id (->> (str/split (str dn) #"\.")
-                       (butlast)
-                       (str/join "."))
-        meta (->> m
+  (let [meta (->> m
                   (map (fn [[k v]] [(keyword "meta" (name k)) v]))
-                  (into {}))
-        xtdb-doc
-        (-> (dissoc doc :zd/backlinks :zd/subdocs :zd/meta)
-            (merge meta)
-            (assoc :xt/id (str (:docname m)))
-            (assoc :parent parent-id))]
-    (walk/postwalk (fn [x] (if (symbol? x) (str x) x))
-                   xtdb-doc)))
+                  (into {}))]
+    (-> (dissoc doc :zd/backlinks :zd/subdocs :zd/meta)
+        (merge meta)
+        (assoc :xt/id (str (:docname m))))))
 
 (defmethod zen/op 'zd/query
   [ztx config params & [session]]
@@ -48,12 +42,17 @@
     result))
 
 (defmethod zen/start 'zd.engines/datalog
-  [ztx config & opts]
+  [ztx {zd-config :zendoc :as config} & opts]
   ;; TODO add zen pub sub event
   (println :zd.datalog/start)
-  (xt/start-node {:xtdb.lucene/lucene-store {}}))
+  ;; TODO use fs directory for lucene index
+  (let [{r :root s :storage} (zen/get-symbol ztx zd-config)]
+    (println :zd.datalog/storage s)
+    {:config config
+     :root r
+     :node (xt/start-node {:xtdb.lucene/lucene-store {:db-dir s}})}))
 
 (defmethod zen/stop 'zd.engines/datalog
-  [ztx config state]
+  [ztx config {n :node}]
   (println :zd.datalog/stop)
-  (.close state))
+  (.close n))

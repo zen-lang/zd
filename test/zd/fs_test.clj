@@ -5,6 +5,7 @@
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [zd.fs :as fs]
+   [zd.api]
    [zd.memstore :as memstore]
    [zen.core :as zen]
    [zen-web.core :as web]))
@@ -73,12 +74,19 @@
 
   (is (nil? (agent-errors fs/ag)))
 
+  (:zdb @ztx)
+
   (testing "edn links loaded"
     (:zrefs @ztx)
     (matcho/match
      '{rdfs.class {customers #{[:meta :tags :#]}}
+       people {people.john #{[:parent]}
+               people.todd #{[:parent]}}
        people.john {customers #{[:best-customer] [:desc]}
                     customers.flame #{[:ceo] [:founder]}}
+       customers {customers.flame #{[:parent]}
+                  _schema #{[:parent]}
+                  people #{[:parent]}}
        tags.data-platform {customers.flame #{[:tags :#]}}
        tags.telemed {customers.flame #{[:tags :#]}}}))
 

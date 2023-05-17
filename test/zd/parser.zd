@@ -35,6 +35,16 @@ nil
 :another-query edn/
 {:one-line :edn}
 
+:edn-vector edn/
+[first-symbol,
+second-symbol
+{:key "value"}
+third-symbol]
+
+;; key with trailing whitespace after /
+:w-key / 
+my zentext value
+
 ;; a zentext block
 :text /
 
