@@ -96,7 +96,8 @@
                                                                 :resource-path docpath
                                                                 :content cnt})
                                   (memstore/load-links! ztx)
-                                  (memstore/eval-macros! ztx))
+                                  (memstore/eval-macros! ztx)
+                                  'ok)
                                 {:type :zd.fs/save-error})]
 
     (send-off ag fs-save)

@@ -50,9 +50,8 @@
                             [(clojure.string/includes? ?id "_schema")]]})
 
      :docs (d/query ztx
-                    '{:find [?id]
-                      :where [[?e :parent root]
-                              [?e :xt/id ?id]]
-                      :in [root]
-                      :order-by [[?id :asc]]}
-                    (symbol r))}))
+                    '{:find [?id ?mu]
+                      :where [[?e :xt/id ?id]
+                              [(some? ?mu)]
+                              [?e :menu-order ?mu]]
+                      :order-by [[?mu :asc]]})}))

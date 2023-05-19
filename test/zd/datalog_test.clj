@@ -26,13 +26,18 @@
   (testing "metadata is loaded into xtdb"
     (matcho/assert
      #{["customers"]}
-     (datalog/query ztx '{:find [?id] :where [[?e :meta/docname "customers"]
-                                              [?e :xt/id ?id]]})))
+     (datalog/query ztx '{:find [?id]
+                          :where [[?e :meta/docname docname]
+                                  [?e :xt/id ?id]]
+                          :in [docname]}
+                    'customers)))
 
   (matcho/assert
    #{["people"] ["_schema"] ["customers.flame"]}
    (datalog/query ztx '{:find [e]
-                        :where [[e :parent "customers"]]}))
+                        :where [[e :parent parent]]
+                        :in [parent]}
+                  'customers))
 
   (matcho/assert
    #{[{:xt/id "people.john" :name "John"}]}

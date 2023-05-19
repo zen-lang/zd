@@ -63,37 +63,44 @@
                "/"])]))])))
 
 (defn search [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  [:div {:class (c [:text :gray-600] [:px 6] [:py 8]
-                   :text-sm
-                   [:w "18rem"]
-                   :border-l
-                   :fixed
-                   [:top 0]
-                   [:right 0]
-                   [:h "100vh"]
-                   {:overflow-y "auto"})}
+  [:div#zd-search {:class (c [:text :gray-600] [:px 6] [:py 4] [:h "100vh"] :overflow-y-auto)
+                   :style (if (str/blank? search-text)
+                            {:display "none"}
+                            {:display "block"})}
    [:div {:class (c [:w "14rem"] :flex :flex-row :items-baseline)}
     [:span {:class (c {:font-size "14px"
                        :margin-right "4px"
                        :color "#718096"})}
      [:i.fas.fa-regular.fa-search]]
-    [:input#zd-search
+    [:input#zd-search-input
      {:type "search"
-      :oninput "on_doc_search()"
       :value search-text
       :class (c :border
                 [:text :gray-600]
                 :text-sm
-                :rounded
+                [:rounded 14]
                 [:py 0.5]
-                [:px 2]
+                [:px 3]
                 [:w "100%"])}]]
    (when-let [search-text (not-empty search-text)]
-     (let [summary-keys (meta/get-group ztx :zd/summary)
-           query-result (db/search ztx search-text #_(get-in doc [:zd/meta :docname]) #_page-number)]
+     (let [query-result (map first (db/search ztx search-text #_(get-in doc [:zd/meta :docname]) #_page-number))]
        (if (seq query-result)
          [:div {:class (c [:py 2])}
-          (widgets/docs-cards ztx ctx summary-keys query-result)]
+          (for [[i docname] (map-indexed vector query-result)]
+            (let [{{anns :ann lu :last-updated} :zd/meta p :parent :as doc}
+                  (memstore/get-doc ztx (symbol docname))]
+              [:div {:class (c [:py 2])}
+               [:div {:class (c :overflow-hidden)}
+                (link/symbol-link ztx docname)
+                [:div {:class (c :flex :flex-row :items-baseline)}
+                 (when (symbol? p)
+                   [:div p])
+                 (when (str/includes? (str docname) "_template")
+                   [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
+                    "_template"])
+                 (when (str/includes? (str docname) "_schema")
+                   [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
+                    "_schema"])]]]))]
          [:span {:class (c [:text :gray-600] :text-sm)}
           "No results"])))])
 
@@ -129,11 +136,11 @@
       (doall
        (for [sub-key subdocs]
          [:div {:class (c [:pt 4])}
-          [:div {:class (c :border-b [:text :gray-700] :flex :flex-row :justify-between)}
+          [:div {:class (c :border-b [:text :gray-700] :flex :flex-row)}
            [:span
             [:span {:class (c [:text :green-500])} "&"]
             [:span {:class (c [:text :gray-600])} (name sub-key)]]
-           [:span {:class (c [:text :gray-500])}
+           [:span {:class (c [:text :gray-500] [:pl 2])}
             "subdoc"]]
           (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])
    (let [links (seq (get-in doc [:zd/meta :backlinks]))]
@@ -146,43 +153,36 @@
    [:div#blocks {:class (c [:text "#3b454e"] [:pb 4] [:w "60rem"])}
     (render-blocks ztx ctx doc)]])
 
-(defn navigation [ztx ctx doc]
-  [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]
-                            :text-sm
-                            :border-r
-                            :fixed
-                            [:top 0]
-                            [:left 0]
-                            [:w "14rem"]
-                            [:h "100vh"]
-                            {:overflow-y "auto"})}
-   (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
-     [:div {:class (c [:py 8] [:px 8])}
-      [:div {:class (c [:pb 4])}
-       [:div "Views"]
-       (for [[v] views]
-         [:div {:class (c [:py 0.5])}
-          (link/symbol-link ztx (symbol v))])]
-      [:div {:class (c [:pb 4])}
-       [:div "Templates"]
-       (for [[t] templates]
-         [:div {:class (c [:py 0.5])}
-          (link/symbol-link ztx (symbol t))])]
-      [:div {:class (c [:pb 4] :border-b)}
-       [:div "Schemas"]
-       (for [[s] schemas]
-         [:div {:class (c [:py 0.5])}
-          (link/symbol-link ztx (symbol s))])]
-      (for [[d] docs]
-        [:div {:class (c [:py 0.5])}
-         (link/symbol-link ztx (symbol d))])])])
+(defn navigation [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
+  (let [tab-class (c [:mr 2] [:px 3] [:py 0.2] :border [:rounded 14] [:hover :cursor-pointer [:text :orange-500]])]
+    [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]
+                              :border-r
+                              :fixed
+                              :text-sm
+                              [:top 0]
+                              [:left 0]
+                              [:w "18rem"]
+                              [:h "100vh"]
+                              {:overflow-y "auto"})}
+     [:div {:class (c :flex :flex-col)}
+      [:div {:class (c [:mt 4] [:px 8] :items-center :flex :flex-row)}
+       [:span#zd-menu-tab {:class tab-class} "menu"]
+       [:span#zd-search-tab {:class tab-class} "search"]]
+      (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
+        [:div#zd-menu {:class (c [:px 8] [:py 2])
+                       :style (if (str/blank? search-text)
+                                {:display "block"}
+                                {:display "none"})}
+         (for [[d] docs]
+           [:div {:class (c [:py 1])}
+            (link/symbol-link ztx (symbol d))])])
+      (search ztx ctx doc)]]))
 
 (defn doc-view [ztx ctx doc]
   [:div {:class (c :flex :flex-row :justify-center)}
    (navigation ztx ctx doc)
    [:div#page
-    (render-doc ztx ctx doc)]
-   (search ztx ctx doc)])
+    (render-doc ztx ctx doc)]])
 
 (def default-tpl ":title \"\"\n:tags #{}")
 

@@ -28,12 +28,12 @@
 ;; by default add a header and renders content of a block
 (defmethod renderkey :default [ztx ctx {kp :key d :data :as block}]
   [:div {:class (c [:py 4])}
-   [:div {:class (c :flex :flex-row :justify-between :border-b)}
+   [:div {:class (c :flex :flex-row #_:border-b :items-center)}
     [:div
      [:span {:class (c [:text :orange-500])} ":"]
      [:span {:class (c [:text :gray-600])} kp]]
-    [:div {:class (c [:text :gray-500])}
-     (get-in block [:ann :zd/content-type])]]
+    [:div {:class (c [:text :gray-500] [:px 2])}
+     (name (get-in block [:ann :zd/content-type]))]]
    (when-not (and (string? d) (str/blank? d))
      [:div (rendercontent ztx ctx block)])])
 

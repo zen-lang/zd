@@ -46,11 +46,10 @@
   ;; TODO add zen pub sub event
   (println :zd.datalog/start)
   ;; TODO use fs directory for lucene index
-  (let [{r :root s :storage} (zen/get-symbol ztx zd-config)]
-    (println :zd.datalog/storage s)
+  (let [{r :root} (zen/get-symbol ztx zd-config)]
     {:config config
      :root r
-     :node (xt/start-node {:xtdb.lucene/lucene-store {:db-dir s}})}))
+     :node (xt/start-node {:xtdb.lucene/lucene-store {}})}))
 
 (defmethod zen/stop 'zd.engines/datalog
   [ztx config {n :node}]

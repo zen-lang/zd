@@ -6,7 +6,6 @@
   ;; TODO make api ops work w multiple paths
   :paths ["test/zd/tdocs/test" #_"/docs"]
   :root "customers"
-  :storage ".storage"
   ;; TODO make it in seconds
   :pull-rate 10800
   :remote

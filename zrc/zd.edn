@@ -17,8 +17,6 @@
          :paths {:type zen/vector
                  :every {:type zen/string}}
          :pull-rate {:type zen/integer}
-         :storage {:type zen/string
-                   :zen/desc "path to a db storage folder"}
          :remote {:confirms #{remote}}
          :remotes {:type zen/vector
                    :every {:confirms #{remote}}}}}

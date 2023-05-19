@@ -139,13 +139,13 @@ var update_widgets = ()=> {
 
 var load_page = (href, do_push)=>{
     fetch(href,{headers: {'x-body': 'true', 'cache-control': 'no-cache'}}).then((res)=>{
-        console.log('redirect?', res);
         if(res.redirected){
             window.location.href = res.url;
         } else {
             res.text().then((txt)=>{
                 if(do_push){
-                    window.history.pushState({href: href}, '', href);
+                    const new_href = href + window.location.search;
+                    window.history.pushState({href: new_href}, '', new_href);
                 }
                 document.getElementById('page').innerHTML= txt;
                 update_widgets();
@@ -460,6 +460,19 @@ var on_hotkey = (e)=>{
     }
 }
 
+const on_tab_click = (e) => {
+    search_div = document.getElementById('zd-search');
+    menu_div = document.getElementById('zd-menu');
+
+    if(e.target.id == 'zd-menu-tab'){
+        search_div.style.display = 'none';
+        menu_div.style.display = 'block';
+    } else {
+        search_div.style.display = 'block';
+        menu_div.style.display = 'none';
+    }
+}
+
 var search_debounce = debounce((v) => {
     var searchString = window.location.search;
 
@@ -473,9 +486,8 @@ var search_debounce = debounce((v) => {
     }
     window.location.search = searchParams.toString();}, 1200);
 
-var on_doc_search = (e) => {
-    var el = document.getElementById("zd-search");
-    search_debounce(el.value);
+var on_search_input = (e) => {
+    search_debounce(e.target.value);
 }
 
 // TODO implement create by backlink flow
@@ -488,13 +500,17 @@ var create_redirect  = (e) => {
 main(()=>{
     update_widgets();
 
-    var search_input = document.getElementById('zd-search');
+    var search_input = document.getElementById('zd-search-input');
 
-    // TODO focus on widget update
-    if (window.location.search.includes('tab=folder')){
-        search_input.focus();
-        search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
-    }
+    search_input.addEventListener('input', on_search_input);
+
+    var search_tab = document.getElementById('zd-search-tab');
+
+    var menu_tab = document.getElementById('zd-menu-tab');
+
+    search_tab.addEventListener('click', on_tab_click);
+    menu_tab.addEventListener('click', on_tab_click);
+
     var sym = localStorage.getItem('zd/nav');
     if(sym === undefined) {
         sym =  href_sym();
