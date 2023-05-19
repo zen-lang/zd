@@ -29,7 +29,7 @@
 (defmethod renderkey :default [ztx ctx {kp :key d :data :as block}]
   [:div {:class (c [:py 4])}
    [:div {:class (c :flex :flex-row #_:border-b :items-center)}
-    [:div
+    [:a {:id kp}
      [:span {:class (c [:text :orange-500])} ":"]
      [:span {:class (c [:text :gray-600])} kp]]
     [:div {:class (c [:text :gray-500] [:px 2])}
@@ -67,3 +67,8 @@
   {:error {:message (str (pr-str macro) " implementation not found")
            :type "macro-notfound"
            :docpath docpath}})
+
+(comment
+  (ns-unmap *ns* 'renderkey)
+
+  )

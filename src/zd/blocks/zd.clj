@@ -22,34 +22,34 @@
      (for [[i {docname :doc p :path}] (map-indexed vector docs)]
        (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
              (memstore/get-doc ztx (symbol docname))]
-         [:div {:class (c [:py 4] :flex :flex-row)}
-          [:div {:class (c :flex :flex-row :overflow-hidden)}
-           (link/symbol-link ztx docname)
-           [:div {:class (c :flex :text-sm :self-center)}
-            [:div {:class (c [:px 2])}
-             (when (str/includes? (str docname) "_template")
-               [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
-                "_template"])
-             (when (str/includes? (str docname) "_schema")
-               [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
-                "_schema"])
-             (when-not (= p ":parent")
-               [:span p])]
-            #_[:div {:class (c [:text :gray-500])}
-               "upd: " lu]]]
+         [:div {:class (c [:py 3] :flex :flex-row :flex-wrap)}
+          (link/symbol-link ztx docname)
+          [:div {:class (c :flex :text-sm :self-center)}
+           [:div {:class (c [:px 2])}
+            (when (str/includes? (str docname) "_template")
+              [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
+               "_template"])
+            (when (str/includes? (str docname) "_schema")
+              [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
+               "_schema"])
+            (when-not (= p ":parent")
+              [:span p])]
+           #_[:div {:class (c [:text :gray-500])}
+              "upd: " lu]]
           #_(when-let [desc (get doc :desc)]
               (render-desc ztx anns desc))
-          [:div {:class (c :text-xs)}
-           (doall
-            (for [[k v] (select-keys doc summary-keys)]
+          (doall
+           (for [[k v] (select-keys doc summary-keys)]
               ;; display edn summary props as small badges
-              (when (= (get-in anns [k :zd/content-type]) :edn)
-                [:div {:class (str "badge " (name (c :border [:mr 3] :inline-flex :rounded [:p 0] :items-baseline)))}
-                 [:div
-                  {:class (c :inline-block [:px 1] [:bg :gray-100] [:py 0.5] [:text :gray-700] {:font-weight "400"})}
-                  k]
-                 [:div {:class (c [:px 2] #_[:py 0.5] :inline-block)}
-                  (methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]]))]))
+             (when (= (get-in anns [k :zd/content-type]) :edn)
+               ;; TODO check if badge class is still neeeded
+               [:div {:class (str "badge " (name (c :border [:mr 3] [:mt 0.5]
+                                                    :inline-flex :rounded [:p 0] :text-xs :items-baseline)))}
+                [:div
+                 {:class (c :inline-block [:px 1] [:bg :gray-100] [:py 0.5] [:text :gray-700] {:font-weight "400"})}
+                 k]
+                [:div {:class (c [:px 2] #_[:py 0.5] :flex :flex-no-wrap)}
+                 (methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]))]))
 
 (defmethod methods/renderkey :zd/backlinks
   [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]
@@ -68,9 +68,10 @@
     [:div {:class (c [:text :gray-600])}
      [:div {:class (c :flex :flex-row [:text :gray-600] :border-b :items-baseline :justify-between)}
       [:div {:class (c :flex :items-center)}
-       [:span ":backlinks"]
-       [:span {:class (c [:text :gray-500] [:px 2])}
-        "total: " (count links)]]
+       [:a {:id "backlinks"}
+        [:span ":backlinks"]
+        [:span {:class (c [:text :gray-500] [:px 2])}
+         "total: " (count links)]]]
       [:div {:class (c [:pl 2])}
        [:a {:class (c :cursor-pointer [:text :gray-600] [:hover [:text :green-600]])
             :href (cond->> (str "_draft/edit?" qs)

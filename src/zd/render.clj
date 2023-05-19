@@ -63,18 +63,18 @@
                "/"])]))])))
 
 (defn search [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  [:div#zd-search {:class (c [:text :gray-600] [:px 6] [:py 4] [:h "100vh"] :overflow-y-auto)}
+  [:div#zd-search {:class (c [:text :gray-600] [:px 6] [:py 4] [:h "100vh"] :overflow-y-auto :hidden)}
    [:div {:class (c [:w "14rem"] :flex :flex-row :items-baseline)}
     [:span {:class (c {:font-size "14px"
                        :margin-right "4px"
-                       :color "#718096"})}
-     [:i.fas.fa-regular.fa-search]]
+                       :color "#718096"})}]
     [:input#zd-search-input
      {:type "search"
       :value search-text
       :class (c :border
                 [:text :gray-600]
                 :text-sm
+                :outline-none
                 [:rounded 14]
                 [:py 0.5]
                 [:px 3]
@@ -151,7 +151,8 @@
     (render-blocks ztx ctx doc)]])
 
 (defn navigation [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  (let [tab-class (c [:mr 2] [:px 3] [:py 0.2] :border [:rounded 14] [:hover :cursor-pointer [:text :orange-500]])]
+  (let [tab-class (c [:mr 2] [:px 3] [:py 0.2] [:border 1 :gray-300]
+                     [:rounded 14] [:hover :cursor-pointer [:border 1 :blue-200] [:text :blue-500]])]
     [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]
                               :border-r
                               :fixed
@@ -162,11 +163,17 @@
                               [:h "100vh"]
                               {:overflow-y "auto"})}
      [:div {:class (c :flex :flex-col)}
-      [:div {:class (c [:mt 4] [:px 8] :items-center :flex :flex-row)}
-       [:span#zd-menu-tab {:class tab-class} "menu"]
-       [:span#zd-search-tab {:class tab-class} "search"]]
+      [:div {:class (c [:mt 4] [:px 8] :items-center :justify-center :flex :flex-row)}
+       [:span#zd-menu-tab {:class tab-class}
+        [:span {:class (c :text-xs [:px 1])}
+         [:i.fas.fa-burger]]
+        "menu"]
+       [:span#zd-search-tab {:class tab-class}
+        [:span {:class (c :text-xs [:px 1])}
+         [:i.fas.fa-regular.fa-search]]
+        "search"]]
       (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
-        [:div#zd-menu {:class (c [:px 8] [:py 2])}
+        [:div#zd-menu {:class (c [:px 8] [:py 2] :hidden )}
          (for [[d] docs]
            [:div {:class (c [:py 1])}
             (link/symbol-link ztx (symbol d))])])

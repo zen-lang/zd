@@ -469,6 +469,7 @@ const on_tab_click = (e) => {
         menu_div.style.display = 'block';
     } else {
         search_div.style.display = 'block';
+        document.getElementById('zd-search-input').focus();
         menu_div.style.display = 'none';
     }
 }
@@ -500,6 +501,8 @@ var create_redirect  = (e) => {
 main(()=>{
     update_widgets();
 
+    // TODO move to nav widget init, use dom model
+
     document.getElementById('zd-search-input').addEventListener('input', on_search_input);
 
     document.getElementById('zd-search-tab').addEventListener('click', on_tab_click);
@@ -510,12 +513,15 @@ main(()=>{
 
     var search_div = document.getElementById('zd-search');
     var menu_div = document.getElementById('zd-menu');
+    var search_input = document.getElementById('zd-search-input');
 
     if (!sp.get('search')){
         search_div.style.display = 'none';
         menu_div.style.display = 'block';
     } else {
         search_div.style.display = 'block';
+        search_input.focus();
+        search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
         menu_div.style.display = 'none';
     }
 
