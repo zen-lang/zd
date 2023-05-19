@@ -500,16 +500,24 @@ var create_redirect  = (e) => {
 main(()=>{
     update_widgets();
 
-    var search_input = document.getElementById('zd-search-input');
+    document.getElementById('zd-search-input').addEventListener('input', on_search_input);
 
-    search_input.addEventListener('input', on_search_input);
+    document.getElementById('zd-search-tab').addEventListener('click', on_tab_click);
 
-    var search_tab = document.getElementById('zd-search-tab');
+    document.getElementById('zd-menu-tab').addEventListener('click', on_tab_click);
 
-    var menu_tab = document.getElementById('zd-menu-tab');
+    var sp = new URLSearchParams(window.location.search);
 
-    search_tab.addEventListener('click', on_tab_click);
-    menu_tab.addEventListener('click', on_tab_click);
+    var search_div = document.getElementById('zd-search');
+    var menu_div = document.getElementById('zd-menu');
+
+    if (!sp.get('search')){
+        search_div.style.display = 'none';
+        menu_div.style.display = 'block';
+    } else {
+        search_div.style.display = 'block';
+        menu_div.style.display = 'none';
+    }
 
     var sym = localStorage.getItem('zd/nav');
     if(sym === undefined) {

@@ -63,10 +63,7 @@
                "/"])]))])))
 
 (defn search [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  [:div#zd-search {:class (c [:text :gray-600] [:px 6] [:py 4] [:h "100vh"] :overflow-y-auto)
-                   :style (if (str/blank? search-text)
-                            {:display "none"}
-                            {:display "block"})}
+  [:div#zd-search {:class (c [:text :gray-600] [:px 6] [:py 4] [:h "100vh"] :overflow-y-auto)}
    [:div {:class (c [:w "14rem"] :flex :flex-row :items-baseline)}
     [:span {:class (c {:font-size "14px"
                        :margin-right "4px"
@@ -169,10 +166,7 @@
        [:span#zd-menu-tab {:class tab-class} "menu"]
        [:span#zd-search-tab {:class tab-class} "search"]]
       (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
-        [:div#zd-menu {:class (c [:px 8] [:py 2])
-                       :style (if (str/blank? search-text)
-                                {:display "block"}
-                                {:display "none"})}
+        [:div#zd-menu {:class (c [:px 8] [:py 2])}
          (for [[d] docs]
            [:div {:class (c [:py 1])}
             (link/symbol-link ztx (symbol d))])])
