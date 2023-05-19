@@ -42,8 +42,8 @@
 
 (defmethod methods/renderkey :badge
   [ztx ctx {key :key :as block}]
-  [:div {:class (str "badge " (name (c :border [:my 1] [:mr 2]  :inline-flex :rounded [:p 0])))}
-   [:div {:class (c :inline-block [:px 2] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
+  [:div {:class (c :border [:my 1] [:mr 2] :inline-flex :rounded [:p 0])}
+   [:div {:class (c :inline-block [:px 1] [:bg :gray-100] [:py 0.5] :text-sm [:text :gray-700] {:font-weight "400"})}
     key]
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
     (methods/rendercontent ztx ctx block)]])

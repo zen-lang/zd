@@ -19,37 +19,37 @@
   (let [summary-keys (meta/get-group ztx :zd/summary)]
     [:div
    ;; TODO remove last-updated from db query?
-     (for [[i {docname :doc p :path}] (map-indexed vector docs)]
-       (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
-             (memstore/get-doc ztx (symbol docname))]
-         [:div {:class (c [:py 3] :flex :flex-row :flex-wrap)}
-          (link/symbol-link ztx docname)
-          [:div {:class (c :flex :text-sm :self-center)}
-           [:div {:class (c [:px 2])}
-            (when (str/includes? (str docname) "_template")
-              [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
-               "_template"])
-            (when (str/includes? (str docname) "_schema")
-              [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
-               "_schema"])
-            (when-not (= p ":parent")
-              [:span p])]
-           #_[:div {:class (c [:text :gray-500])}
-              "upd: " lu]]
-          #_(when-let [desc (get doc :desc)]
-              (render-desc ztx anns desc))
-          (doall
-           (for [[k v] (select-keys doc summary-keys)]
+     (for [[p links] (group-by :path docs)]
+       [:div {:class (c [:mt 2])}
+        [:span p]
+        (for [{docname :doc} links]
+          (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
+                (memstore/get-doc ztx (symbol docname))]
+            [:div {:class (c [:py 2] [:my 2] :flex :flex-col [:border-b "0.5" :gray-200])}
+             [:div {:class (c :inline-flex)}
+              (link/symbol-link ztx docname)
+              [:div {:class (c :flex :self-center)}
+               (when (str/includes? (str docname) "_template")
+                 [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
+                  "_template"])
+               (when (str/includes? (str docname) "_schema")
+                 [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
+                  "_schema"])
+               #_[:div {:class (c [:text :gray-500])}
+                  "upd: " lu]]]
+             #_(when-let [desc (get doc :desc)]
+                 (render-desc ztx anns desc))
+             [:div
+              (doall
+               (for [[k v] (select-keys doc summary-keys)]
               ;; display edn summary props as small badges
-             (when (= (get-in anns [k :zd/content-type]) :edn)
+                 (when (= (get-in anns [k :zd/content-type]) :edn)
                ;; TODO check if badge class is still neeeded
-               [:div {:class (str "badge " (name (c :border [:mr 3] [:mt 0.5]
-                                                    :inline-flex :rounded [:p 0] :text-xs :items-baseline)))}
-                [:div
-                 {:class (c :inline-block [:px 1] [:bg :gray-100] [:py 0.5] [:text :gray-700] {:font-weight "400"})}
-                 k]
-                [:div {:class (c [:px 2] #_[:py 0.5] :flex :flex-no-wrap)}
-                 (methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]))]))
+                   [:div {:class (c :inline-flex :text-sm :items-baseline [:mr 2])}
+                    [:div {:class (c [:text :gray-700] [:mr 0.5])}
+                     (str (name k) ":")]
+                    [:div {:class (c :flex :flex-no-wrap :overflow-hidden [:mr 1])}
+                     (methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]]))])]))
 
 (defmethod methods/renderkey :zd/backlinks
   [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]
@@ -65,13 +65,12 @@
              (sort-by (juxt :path :doc))
              ;; TODO impl paging for backlinks?
              #_(take 50))]
-    [:div {:class (c [:text :gray-600])}
+    [:div {:class (c [:text :gray-600] [:pt 2])}
      [:div {:class (c :flex :flex-row [:text :gray-600] :border-b :items-baseline :justify-between)}
       [:div {:class (c :flex :items-center)}
        [:a {:id "backlinks"}
-        [:span ":backlinks"]
-        [:span {:class (c [:text :gray-500] [:px 2])}
-         "total: " (count links)]]]
+        [:span {:class (c :text-sm {:text-transform "uppercase"})}
+         ":backlinks"]]]
       [:div {:class (c [:pl 2])}
        [:a {:class (c :cursor-pointer [:text :gray-600] [:hover [:text :green-600]])
             :href (cond->> (str "_draft/edit?" qs)

@@ -163,7 +163,7 @@
                               [:h "100vh"]
                               {:overflow-y "auto"})}
      [:div {:class (c :flex :flex-col)}
-      [:div {:class (c [:mt 4] [:px 8] :items-center :justify-center :flex :flex-row)}
+      [:div {:class (c [:mt 4] [:px 8] :items-center :flex :flex-row)}
        [:span#zd-menu-tab {:class tab-class}
         [:span {:class (c :text-xs [:px 1])}
          [:i.fas.fa-burger]]
@@ -173,7 +173,7 @@
          [:i.fas.fa-regular.fa-search]]
         "search"]]
       (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
-        [:div#zd-menu {:class (c [:px 8] [:py 2] :hidden )}
+        [:div#zd-menu {:class (c [:px 8] [:py 2] :hidden)}
          (for [[d] docs]
            [:div {:class (c [:py 1])}
             (link/symbol-link ztx (symbol d))])])
