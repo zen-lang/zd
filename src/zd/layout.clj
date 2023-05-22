@@ -1,19 +1,16 @@
 (ns zd.layout
   (:require
-   [zd.methods :as methods]
-   [cheshire.core :as json]
    [garden.core]
-   [zen-web.core :as web]
    [stylo.core :refer [c]]
-   [stylo.rule :refer [rule join-rules]]
-   [clojure.string :as str]))
+   [stylo.rule :refer [join-rules]]))
 
 (defn c* [& args]
   (join-rules args))
 
+;; TODO groom these global styles, delete unused css
 (def common-style
   [:body {:font-family "sohne, \"Helvetica Neue\", Helvetica, Arial, sans-serif;" :padding "0" :margin "0"}
-   [:h1 (c* #_:border-b {:font-size "32px" :margin-top "10px" :margin-bottom "16px" :font-weight "600"})]
+   [:h1 (c* {:font-size "32px" :margin-top "10px" :margin-bottom "16px" :font-weight "600"})]
    [:h2 (c* :border-b {:font-size "24px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "30px"})]
    [:h3 (c* :border-b {:font-size "20px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "25px"})]
    [:h4 (c* {:font-size "16px" :margin-top "20px" :margin-bottom "14px" :font-weight "600" :line-height "20px"})]
@@ -62,7 +59,7 @@
               :list-style "decimal"})]
     [:ol (c* [:ml 4])]]
 
-   [:p (c* #_[:my 2] {:line-height "1.5rem"})]
+   [:p (c* {:line-height "1.5rem"})]
 
    [:.hljs (c* [:bg :gray-100] :shadow-sm
                :border)]
@@ -93,70 +90,28 @@
     [:.zd-block-title [:.fas {:transform "rotate(90deg)"
                               :transition "all 0.26s"}]]]])
 
-(defn build-navigation [ztx]
-  ;; TODO think about caching navigation tree
-  (let [resources
-        (reduce (fn [acc [k v]]
-                  (assoc acc k (select-keys v [:title :tags :icon :logo :desc])))
-                {}
-                (:zdb @ztx))
-
-        tree
-        (->> resources
-             (sort-by (fn [[k _]] (name k)))
-             (reduce (fn [acc [k _]]
-                       (let [path (str/split (name k) #"\.")]
-                         ;; TODO add menu order from metadata to tree
-                         (assoc-in acc path {:name k})))
-                     {}))
-
-        resources
-        (->> resources
-             (reduce (fn [acc [k v]]
-                       (let [path (str/split (name k) #"\.")
-                             items (dissoc (get-in tree path) :menu-order :name)]
-                         (assoc acc k
-                                (cond-> (assoc v :name k)
-                                  (seq items) (assoc :items
-                                                     (->> items
-                                                          (sort-by (fn [[k v]] [(or (:menu-order v) 100000) k]))
-                                                          (mapv (fn [[kk v]] (or (:name v) (str k "." kk))))))))))
-                     {}))]
-    {:resources resources
-     :tree tree
-     :items (->> (dissoc tree 'index)
-                 (mapv (fn [[k v]] (:name v)))
-                 (into ['index]))}))
-
-(defn sidebar [ztx content]
+(defn sidebar [ztx {{{id :id} :route-params} :request} content]
   [:html
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:style (garden.core/css common-style)]
     [:meta {:charset "UTF-8"}]
-    ;; TODO fix title
-    #_(when-let [title (->> (:doc page)
-                            (filter #(= [:title] (:path %)))
-                            (first)
-                            (:data))]
-        [:title title])
+    ;; TODO think about title update on x-body doc re-render requests
+    #_(when (not (str/blank? id))
+        (let [title (:title (memstore/get-doc ztx (symbol id)))]
+          [:title (or title (str id))]))
     [:link {:href "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css", :rel "stylesheet"}]
     [:link {:href "/static/js/fa/css/all.min.css", :rel "stylesheet"}]
     [:link  {:href "/static/js/spinner.css"  :rel "stylesheet"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"}]
     [:script {:src "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/clojure.min.js"}]
     [:script {:src "//cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"}]
-    [:script {:src "/static/js/d3.js"}]
-    [:script {:src "/static/js/mindmap.js"}]
-    [:script {:src "/static/js/zendoc.js"}]
-    [:script {:src "/static/js/quick-score.min.js"}]
     [:script {:src "/static/js/core.js"}]
+    [:script {:src "/static/js/quick-score.min.js"}]
     [:script {:src "/static/js/editor.js"}]]
    [:body {:class (c {})}
     [:div#overlay
      {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
                 {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
     content
-    [:script "var zd={};"]
-    [:script "zd.nav=" (json/generate-string (build-navigation ztx))]
     [:script "hljs.highlightAll()"]]])

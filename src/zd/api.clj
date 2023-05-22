@@ -62,7 +62,7 @@
   [ztx config {page :page :as req} {bdy :body :as resp} & args]
   (when (and (not (string? bdy)) (= 200 (:status resp)))
     {:headers {"Content-Type" "text/html"}
-     :body (layout/sidebar ztx bdy)}))
+     :body (layout/sidebar ztx {:request req} bdy)}))
 
 (defmethod zen/op 'zd/render-widget
   [ztx _cfg {{id :id wgt :widget-id} :route-params r :root :keys [doc] :as req} & opts]

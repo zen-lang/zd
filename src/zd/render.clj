@@ -5,7 +5,6 @@
    [zd.reader :as reader]
    [cheshire.core :as json]
    [hiccup.core :as hiccup]
-   [zd.blocks.widgets :as widgets]
    [clojure.java.io :as io]
    [zd.icons :as icons]
    [clojure.string :as str]
@@ -132,13 +131,10 @@
      [:div {:class (c [:py 4])}
       (doall
        (for [sub-key subdocs]
-         [:div {:class (c [:pt 4])}
+         [:div {:class (c [:mt 4])}
           [:div {:class (c :border-b [:text :gray-700] :flex :flex-row)}
-           [:span
-            [:span {:class (c [:text :green-500])} "&"]
-            [:span {:class (c [:text :gray-600])} (name sub-key)]]
-           [:span {:class (c [:text :gray-500] [:pl 2])}
-            "subdoc"]]
+           [:span {:class (c [:text :green-500])} "&"]
+           [:span {:class (c [:text :gray-600])} (name sub-key)]]
           (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])
    (let [links (seq (get-in doc [:zd/meta :backlinks]))]
      (when-not render-subdoc?

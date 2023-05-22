@@ -19,7 +19,7 @@
                          (every? symbol? data)))
     (->> data
          (mapv (fn [x] (methods/rendercontent ztx ctx (assoc block :data x))))
-         (into [:div {:class (c :flex [:space-x 1] {:flex-wrap "wrap"})}
+         (into [:div {:class (c :flex [:space-x 1.5] {:flex-wrap "wrap"})}
                 [:div {:class (c [:text :gray-500] :text-sm)} "#"]]))
     :else
     [:div.code-block

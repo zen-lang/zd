@@ -6,8 +6,6 @@
    ;; by document keys
    [zd.blocks.keys]
 
-   [zd.blocks.widgets]
-
    ;; blocks defined by zentext content type
    [zd.blocks.zentext]
 
