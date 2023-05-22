@@ -1,5 +1,6 @@
 (ns zd.blocks.zd
   (:require [zd.link :as link]
+            [zd.zentext :as zentext]
             [zd.memstore :as memstore]
             [zd.meta :as meta]
             [clojure.string :as str]
@@ -20,7 +21,7 @@
     [:div
    ;; TODO remove last-updated from db query?
      (for [[p links] (group-by :path docs)]
-       [:div {:class (c [:mt 2])}
+       [:div {:class (c [:mt 4])}
         [:span p]
         (for [{docname :doc} links]
           (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
@@ -35,21 +36,42 @@
                (when (str/includes? (str docname) "_schema")
                  [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
                   "_schema"])
+               ;; TODO get last updated from git repo
                #_[:div {:class (c [:text :gray-500])}
                   "upd: " lu]]]
-             #_(when-let [desc (get doc :desc)]
-                 (render-desc ztx anns desc))
              [:div
               (doall
                (for [[k v] (select-keys doc summary-keys)]
-              ;; display edn summary props as small badges
                  (when (= (get-in anns [k :zd/content-type]) :edn)
-               ;; TODO check if badge class is still neeeded
-                   [:div {:class (c :inline-flex :text-sm :items-baseline [:mr 2])}
-                    [:div {:class (c [:text :gray-700] [:mr 0.5])}
+                   [:div {:class (c :inline-flex :text-sm :items-baseline [:mr 2.2])}
+                    [:div {:class (c [:mr 0.5])}
                      (str (name k) ":")]
                     [:div {:class (c :flex :flex-no-wrap :overflow-hidden [:mr 1])}
-                     (methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]]))])]))
+                     (cond
+                       (or (set? v) (vector? v))
+                       (into [:div {:class (c :flex [:space-x 1] :items-center)}]
+                             (interpose
+                              [:span {:class (c [:m 0] [:p 0])} ","]
+                              (mapv
+                               (fn [s]
+                                 (if (symbol? s)
+                                   (let [res (memstore/get-doc ztx s)]
+                                     [:a {:href (str "/" s)
+                                          :class (c :inline-flex
+                                                    :items-center
+                                                    [:hover [:text :blue-600] :underline]
+                                                    :whitespace-no-wrap
+                                                    {:text-decoration-thickness "0.5px"})}
+                                      [:span (:title res)]])
+                                   [:span (pr-str s)]))
+                               v)))
+
+                       (string? v)
+                       (zentext/parse-block ztx v {:key k :data v :ann (get anns k)})
+
+                       :else [:span (pr-str v)])
+
+                     #_(methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]]))])]))
 
 (defmethod methods/renderkey :zd/backlinks
   [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]
