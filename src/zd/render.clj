@@ -140,7 +140,7 @@
      (when-not render-subdoc?
        [:div (methods/renderkey ztx ctx {:data links :key :zd/backlinks})]))])
 
-(defn render-doc [ztx {{qs :query-string} :request :as ctx} {{dn :docname} :zd/meta :as doc}]
+(defn render-doc [ztx ctx doc]
   [:div {:class (c :flex :w-full :flex-col :flex-wrap :content-center)}
    (topbar ztx ctx doc)
    [:div#blocks {:class (c [:text "#3b454e"] [:pb 4] [:w "60rem"])}

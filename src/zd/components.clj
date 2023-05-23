@@ -8,7 +8,7 @@
    [zd.methods :as methods]))
 
 (defn table
-  "renders table from vector of hashmaps. memstore document model is supported."
+  "renders table from vector of hashmaps. each hashmap is a memstore document"
   [ztx ctx headers data]
   [:table {:class (c :rounded [:py 2]
                      {:display "block"
@@ -45,12 +45,21 @@
                               (link/icon ztx doc)
                               (or (:title doc) docname)]
 
-                             (and (some? v) (= :zentext (:zd/content-type key-ann)))
-                             [:div (zentext/parse-block ztx v block)]
+                             (= :zentext (:zd/content-type key-ann))
+                             [:div {:class (c [:w-min "16rem"])}
+                              (zentext/parse-block ztx v block)]
 
-                             ;; TODO think about saving symbols in xtdb
-                             (and (some? v) docname)
-                             (methods/rendercontent ztx ctx block)
+                             (= :edn (:zd/content-type key-ann))
+                             (cond
+                               (set? v)
+                               (->> v
+                                    (mapv (fn [e]
+                                            (if (symbol? e)
+                                              (link/symbol-link ztx e)
+                                              (zentext/parse-block ztx (str e) block))))
+                                    (into [:div {:class (c :flex :flex-col :text-sm {:flex-wrap "wrap"})}]))
+
+                               :else (methods/rendercontent ztx ctx block))
 
                              (some? v)
                              (methods/rendercontent ztx ctx {:data v :key h :ann {:zd/content-type :edn}})))]))]))

@@ -15,8 +15,7 @@
     (or (string? data) (number? data)) (zentext/parse-block ztx (str data) block)
     (symbol? data) (link/symbol-link ztx data)
     (keyword? data) (zentext/parse-block ztx (str data) block)
-    (or (set? data) (and (vector? data)
-                         (every? symbol? data)))
+    (or (set? data) (vector? data))
     (->> data
          (mapv (fn [x] (methods/rendercontent ztx ctx (assoc block :data x))))
          (into [:div {:class (c :flex [:space-x 1.5] {:flex-wrap "wrap"})}
@@ -46,10 +45,9 @@
 
 (defmethod methods/rendercontent :datalog
   [ztx ctx {{headers :table-of} :ann data :data :as block}]
-  (let [result
-        (if (vector? data)
-          (apply d/query (concat [ztx] data))
-          (d/query ztx data))]
+  (let [result (if-let [params (:in data)]
+                 (apply d/query ztx data params)
+                 (d/query ztx data))]
     (if (set? result)
       (if (seq headers)
         (comp/table ztx ctx headers (map first result))
