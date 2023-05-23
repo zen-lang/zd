@@ -115,7 +115,8 @@
         sync-fn
         (fn [ag]
           (let [{st :status}
-                ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)]
+                (-> ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)
+                    (:result))]
             (when (= :updated st)
               (reload ztx root paths))))
         load-result (reload ztx root paths)]

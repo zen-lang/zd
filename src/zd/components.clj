@@ -21,11 +21,6 @@
                  (str/lower-case (name k))]))
          (into [:tr]))]
    (->> data
-        (sort-by (fn [r]
-                   (if-let [v (get r (first headers))]
-                     (if (string? v)
-                       v
-                       (pr-str v)))))
         (mapv (fn [row]
                 [:tr
                  (doall

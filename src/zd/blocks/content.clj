@@ -48,14 +48,17 @@
   (let [result (if-let [params (:in data)]
                  (apply d/query ztx data params)
                  (d/query ztx data))]
-    (if (set? result)
-      (if (seq headers)
-        (comp/table ztx ctx headers (map first result))
-        (let [headers* (->> (map first result)
-                            (mapcat keys)
-                            (set)
-                            (sort-by name))]
-          (comp/table ztx ctx headers* (map first result))))
-      (methods/rendercontent ztx ctx {:data result
-                                      :k (:key block)
-                                      :ann {:zd/content-type :edn}}))))
+    (if (seq result)
+      (if (map? (ffirst result))
+        (if (seq headers)
+          (comp/table ztx ctx headers (map first result))
+          (let [headers* (->> (map first result)
+                              (mapcat keys)
+                              (set)
+                              (sort-by name))]
+            (comp/table ztx ctx headers* (map first result))))
+        (methods/rendercontent ztx ctx
+                               {:data result
+                                :k (:key block)
+                                :ann {:zd/content-type :edn}}))
+      [:span "xtdb not available"])))
