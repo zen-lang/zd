@@ -327,7 +327,7 @@ var textarea_style = merge(poss, {overflow: 'hidden', position: absolute, margin
 var editor = (zendoc) => {
     var symIdx = new quickScore.QuickScore(zendoc.symbols, ["name", "title"]);
     symIdx.config.maxIterations = 1000;
-    var keysIdx = new quickScore.QuickScore(zendoc.keys, ["name", "title"]);
+    var keysIdx = new quickScore.QuickScore(zendoc.keys, ["name"]);
     keysIdx.config.maxIterations = 1000;
     var iconsIdx = new quickScore.QuickScore(zendoc.icons, ["name", "title"]);
     iconsIdx.config.maxIterations = 1000;

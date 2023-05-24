@@ -215,7 +215,7 @@
                               :logo logo
                               :icon ico})))
         keypaths (->> (:zd/keys @ztx)
-                      (mapv (fn [x] {:name x})))
+                      (mapv (fn [x] {:name (str x)})))
 
         zendoc {:text text
                 :symbols symbols

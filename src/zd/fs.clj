@@ -71,7 +71,7 @@
                                     ;; TODO implement deletion of a single document
                                     (reload ztx r pths))
                                   {:type 'zd.fs/delete-doc-error})]
-    (send-off ag fs-delete)
+    (send ag fs-delete)
     (await ag)))
 
 (defmethod zen/op 'zd.events/fs-save
@@ -100,7 +100,7 @@
                                   'ok)
                                 {:type :zd.fs/save-error})]
 
-    (send-off ag fs-save)
+    (send ag fs-save)
     (await ag)))
 
 (defmethod zen/start 'zd.engines/fs
@@ -124,7 +124,7 @@
     (if (instance? org.eclipse.jgit.api.Git repo)
       (let [task (proxy [TimerTask] []
                    (run []
-                     (send-off ag sync-fn)))]
+                     (send ag sync-fn)))]
         (.scheduleAtFixedRate ti task pull-rate pull-rate)
         {:ag ag
          :ti ti
