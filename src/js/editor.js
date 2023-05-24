@@ -215,12 +215,6 @@ var select = (ctx, dir) => {
     ctx.selection = sel;
 };
 
-// var stop = (ev) => {
-//     ev.preventDefault();
-//     ev.stopPropagation();
-//     ev.stopImmediatePropagation();
-// };
-
 var save = (ctx)=>{
 
     var value = ctx.editor.els.textarea.value;
@@ -269,9 +263,26 @@ var on_editor_keydown = (ctx, ev) => {
             hide_popup(ctx);
         }
     }
-}
+};
+
+var _render = (ev)=>  {
+    fetch(`/${ctx.doc}/preview`, {method: 'POST', body: ev.target.value}).then((resp)=> {
+        resp.text().then((txt)=> {
+            ctx.preview.innerHTML = txt;
+            // reload widgets
+            update_widgets();
+        });
+    });
+};
+
+var render = debounce(_render, 300);
 
 var on_editor_keyup = (ctx, ev) => {
+
+    if (!ctx.in_chrome){
+        render(ev);
+    }
+
     if(ctx.skip_up) {
         ctx.skip_up = false;
         return;
@@ -280,12 +291,11 @@ var on_editor_keyup = (ctx, ev) => {
     var v = t.value;
     if( v !== ctx.prev_value ){
         ctx.prev_value = v;
-        auto_close(ev.key, t);
+        //auto_close(ev.key, t);
         hl(ctx, v);
         autocompl(ctx, v);
     }
-}
-
+};
 
 var poss = {display: 'block',
             border: none,
@@ -326,6 +336,7 @@ var editor = (zendoc) => {
 
     var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, annotations: annotationsIdx, doc: zendoc.doc};
     var in_chrome = (window.location.search || '').includes('chrome') || document.body.getBoundingClientRect().width < 800;
+    ctx.in_chrome = in_chrome;
 
     var editor_style = {position: relative ,
                         background: black,
@@ -349,16 +360,6 @@ var editor = (zendoc) => {
                                          save(ctx);
                                      }}}}
                        });
-
-    var keypress = (ev)=>  {
-        fetch(`/${ctx.doc}/preview`, {method: 'POST', body: ev.target.value}).then((resp)=> {
-            resp.text().then((txt)=> {
-                ctx.preview.innerHTML = txt;
-                // reload widgets
-                update_widgets();
-            });
-        });
-    };
 
     var on_paste = (evt) => {
         const clipboardItems = evt.clipboardData.items;
@@ -398,7 +399,6 @@ var editor = (zendoc) => {
                                       on: {keyup:    (ev) => { on_editor_keyup(ctx,ev);},
                                            paste:    on_paste,
                                            keydown:  (ev) => { on_editor_keydown(ctx ,ev); },
-                                           keypress: ! in_chrome ? debounce(keypress, 300) : ()=> {},
                                            click:    (ev) => { hide_popup(ctx); }},
                                       value: zendoc.text || "",
                                       style: textarea_style},
@@ -422,4 +422,3 @@ main(()=>{
         editor(zendoc);
     }
 });
-
