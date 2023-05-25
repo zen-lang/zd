@@ -39,39 +39,46 @@
                ;; TODO get last updated from git repo
                #_[:div {:class (c [:text :gray-500])}
                   "upd: " lu]]]
-             [:div
+             [:div {:class (c :flex :flex-no-wrap :overflow-x-hidden)}
               (doall
                (for [[k v] (select-keys doc summary-keys)]
                  (when (= (get-in anns [k :zd/content-type]) :edn)
                    [:div {:class (c :inline-flex :text-sm :items-baseline [:mr 2.2])}
                     [:div {:class (c [:mr 0.5])}
                      (str (name k) ":")]
-                    [:div {:class (c :flex :flex-no-wrap :overflow-hidden [:mr 1])}
-                     (cond
-                       (or (set? v) (vector? v))
-                       (into [:div {:class (c :flex [:space-x 1] :items-center)}]
-                             (interpose
-                              [:span {:class (c [:m 0] [:p 0])} ","]
-                              (mapv
-                               (fn [s]
-                                 (if (symbol? s)
-                                   (let [res (memstore/get-doc ztx s)]
-                                     [:a {:href (str "/" s)
-                                          :class (c :inline-flex
-                                                    :items-center
-                                                    [:hover [:text :blue-600] :underline]
-                                                    :whitespace-no-wrap
-                                                    {:text-decoration-thickness "0.5px"})}
-                                      [:span (:title res)]])
-                                   [:span (pr-str s)]))
-                               v)))
+                    (cond
+                      (or (set? v) (vector? v))
+                      (into [:div {:class (c :flex [:space-x 1] :items-center)}]
+                            (interpose
+                             [:span {:class (c [:m 0] [:p 0])} ","]
+                             (mapv
+                              (fn [s]
+                                (if (symbol? s)
+                                  (let [res (memstore/get-doc ztx s)]
+                                    [:a {:href (str "/" s)
+                                         :class (c :inline-flex
+                                                   :items-center
+                                                   [:hover [:text :blue-600] :underline]
+                                                   :whitespace-no-wrap
+                                                   {:text-decoration-thickness "0.5px"})}
+                                     [:span (:title res)]])
+                                  [:span (pr-str s)]))
+                              v)))
 
-                       (string? v)
-                       (zentext/parse-block ztx v {:key k :data v :ann (get anns k)})
+                      (symbol? v)
+                      (let [res (memstore/get-doc ztx v)]
+                        [:a {:href (str "/" v)
+                             :class (c :inline-flex
+                                       :items-center
+                                       [:hover [:text :blue-600] :underline]
+                                       :whitespace-no-wrap
+                                       {:text-decoration-thickness "0.5px"})}
+                         [:span (:title res)]])
 
-                       :else [:span (pr-str v)])
+                      (string? v)
+                      (zentext/parse-block ztx v {:key k :data v :ann (get anns k)})
 
-                     #_(methods/rendercontent ztx ctx {:key k :data v :ann (get anns k)})]])))]]))])]))
+                      :else [:span (pr-str v)])])))]]))])]))
 
 (defmethod methods/renderkey :zd/backlinks
   [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]

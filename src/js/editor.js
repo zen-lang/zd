@@ -331,7 +331,7 @@ var editor = (zendoc) => {
     keysIdx.config.maxIterations = 1000;
     var iconsIdx = new quickScore.QuickScore(zendoc.icons, ["name", "title"]);
     iconsIdx.config.maxIterations = 1000;
-    var annotationsIdx = new quickScore.QuickScore(zendoc.annotations, ["name", "title"]);
+    var annotationsIdx = new quickScore.QuickScore(zendoc.annotations, ["name"]);
     annotationsIdx.config.maxIterations = 1000;
 
     var ctx = {symbols: symIdx, keys: keysIdx, icons: iconsIdx, annotations: annotationsIdx, doc: zendoc.doc};

@@ -104,3 +104,14 @@
                             :message "Rename :zd/docname from _draft"}))))
       ;; TODO emit zen event
       (do (println ":schema-not-found " docname) doc))))
+
+(defn annotations [ztx]
+  (->> (vals (:zd/meta @ztx))
+       (map :ann)
+       (mapcat (fn [el]
+                 (when (map? el)
+                   (keys el))))
+       (set)
+       (map (fn [e] {:name (str "^" (name e))}))))
+
+

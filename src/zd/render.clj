@@ -214,15 +214,16 @@
                               :name k
                               :logo logo
                               :icon ico})))
+
+        anns (meta/annotations ztx)
         keypaths (->> (:zd/keys @ztx)
                       (mapv (fn [x] {:name (str x)})))
-
         zendoc {:text text
                 :symbols symbols
                 :keys keypaths
                 :icons  icons/icons
                 ;; TODO add completion from blocks meta
-                :annotations []
+                :annotations anns
                 :preview (-> (preview ztx ctx text) (hiccup/html))
                 :doc (:docname m)}]
     [:script "var zendoc=" (json/generate-string zendoc)]))
