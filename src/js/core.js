@@ -264,21 +264,7 @@ var on_hotkey = (e) => {
         e.stopImmediatePropagation();
         return false;
     }
-}
-
-const on_tab_click = (e) => {
-    search_div = document.getElementById('zd-search');
-    menu_div = document.getElementById('zd-menu');
-
-    if (e.target.id == 'zd-menu-tab') {
-        search_div.style.display = 'none';
-        menu_div.style.display = 'block';
-    } else {
-        search_div.style.display = 'block';
-        document.getElementById('zd-search-input').focus();
-        menu_div.style.display = 'none';
-    }
-}
+};
 
 var search_debounce = debounce((v) => {
     var searchString = window.location.search;
@@ -308,21 +294,18 @@ var create_redirect = (e) => {
 var init_tabs = () => {
     var sp = new URLSearchParams(window.location.search);
 
-    var search_div = document.getElementById('zd-search');
     var menu_div = document.getElementById('zd-menu');
     var search_input = document.getElementById('zd-search-input');
 
     // TODO re impl with class toggle and css
     if (!sp.get('search')) {
-        search_div.style.display = 'none';
         menu_div.style.display = 'block';
     } else {
-        search_div.style.display = 'block';
         search_input.focus();
         search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
         menu_div.style.display = 'none';
     }
-}
+};
 
 main(() => {
     update_widgets();
@@ -332,10 +315,6 @@ main(() => {
     // TODO move to nav widget init, use dom model
 
     document.getElementById('zd-search-input').addEventListener('input', on_search_input);
-
-    document.getElementById('zd-search-tab').addEventListener('click', on_tab_click);
-
-    document.getElementById('zd-menu-tab').addEventListener('click', on_tab_click);
 
     init_tabs();
 

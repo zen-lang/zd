@@ -87,14 +87,18 @@
         docpath (str (str/replace docname "." "/") ".zd")
         filepath (str (first pths) "/" docpath)
         fs-save (utils/safecall (fn [ag]
+                                  ;; sync
                                   (.mkdirs (io/file dirname))
                                   (spit filepath cnt)
                                   (when-let [repo (get-repo ztx)]
                                     (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
+
                                   (memstore/load-document! ztx {:path filepath
                                                                 :root r
                                                                 :resource-path docpath
                                                                 :content cnt})
+
+                                  ;; async
                                   (memstore/load-links! ztx)
                                   (memstore/eval-macros! ztx)
                                   'ok)

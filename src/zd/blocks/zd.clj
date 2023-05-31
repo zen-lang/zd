@@ -16,103 +16,95 @@
    [:div {:class (c [:px 2] [:py 0.5] :inline-block :text-sm)}
     data]])
 
-(defn docs-cards [ztx ctx docs]
-  (let [summary-keys (meta/get-group ztx :zd/summary)]
-    [:div
-   ;; TODO remove last-updated from db query?
-     (for [[p links] (group-by :path docs)]
-       [:div {:class (c [:mt 4])}
-        [:span p]
-        (for [{docname :doc} links]
-          (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
-                (memstore/get-doc ztx (symbol docname))]
-            [:div {:class (c [:py 2] [:my 2] :flex :flex-col [:border-b "0.5" :gray-200])}
-             [:div {:class (c :inline-flex)}
-              (link/symbol-link ztx docname)
-              [:div {:class (c :flex :self-center)}
-               (when (str/includes? (str docname) "_template")
-                 [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
-                  "_template"])
-               (when (str/includes? (str docname) "_schema")
-                 [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
-                  "_schema"])
-               ;; TODO get last updated from git repo
-               #_[:div {:class (c [:text :gray-500])}
-                  "upd: " lu]]]
-             [:div {:class (c :flex :flex-no-wrap :overflow-x-hidden)}
-              (doall
-               (for [[k v] (select-keys doc summary-keys)]
-                 (when (= (get-in anns [k :zd/content-type]) :edn)
-                   [:div {:class (c :inline-flex :text-sm :items-baseline [:mr 2.2])}
-                    [:div {:class (c [:mr 0.5])}
-                     (str (name k) ":")]
-                    (cond
-                      (or (set? v) (vector? v))
-                      (into [:div {:class (c :flex [:space-x 1] :items-center)}]
-                            (interpose
-                             [:span {:class (c [:m 0] [:p 0])} ","]
-                             (mapv
-                              (fn [s]
-                                (if (symbol? s)
-                                  (let [res (memstore/get-doc ztx s)]
-                                    [:a {:href (str "/" s)
-                                         :class (c :inline-flex
-                                                   :items-center
-                                                   [:hover [:text :blue-600] :underline]
-                                                   :whitespace-no-wrap
-                                                   {:text-decoration-thickness "0.5px"})}
-                                     [:span (:title res)]])
-                                  [:span (pr-str s)]))
-                              v)))
-
-                      (symbol? v)
-                      (let [res (memstore/get-doc ztx v)]
-                        [:a {:href (str "/" v)
-                             :class (c :inline-flex
-                                       :items-center
-                                       [:hover [:text :blue-600] :underline]
-                                       :whitespace-no-wrap
-                                       {:text-decoration-thickness "0.5px"})}
-                         [:span (:title res)]])
-
-                      (string? v)
-                      (zentext/parse-block ztx v {:key k :data v :ann (get anns k)})
-
-                      :else [:span (pr-str v)])])))]]))])]))
-
 (defmethod methods/renderkey :zd/backlinks
   [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]
-  (let [links
+  (let [summary-keys (meta/get-group ztx :zd/summary)
+        links
         (->> data
              (map (fn [{d :doc p :path t :to}]
                     {:to t
                      :doc d
+                     :parent (when (str/includes? (str d) ".")
+                               (str/join "." (butlast (str/split (str d) #"\."))))
                      :path (->> (map name p)
                                 (str/join ".")
                                 (str ":"))}))
-
              (sort-by (juxt :path :doc))
-             ;; TODO impl paging for backlinks?
-             #_(take 50))]
-    [:div {:class (c [:text :gray-600] [:pt 2])}
-     [:div {:class (c :flex :flex-row [:text :gray-600] :border-b :items-baseline :justify-between)}
-      [:div {:class (c :flex :items-center)}
-       [:a {:id "backlinks"}
-        [:span {:class (c :text-sm {:text-transform "uppercase"})}
-         ":backlinks"]]]
-      [:div {:class (c [:pl 2])}
-       [:a {:class (c :cursor-pointer [:text :gray-600] [:hover [:text :green-600]])
-            :href (cond->> (str "_draft/edit?" qs)
-                    (not= dn (symbol r)) (str dn "."))
-            ;; TODO impl create by backlink flow
-            #_:onclick #_"create_redirect()"}
-        [:i.fas.fa-plus]]
-       [:select#zd-select {:class (c :text-base)}
-        [:option {:value "parent"} ":parent"]]]
-      #_[:div {:class (c [:text :gray-500])}
-         [:span "zdkey"]]]
-     [:div {:class (c [:py 2])}
-      (docs-cards ztx ctx links)]]))
+             (group-by :parent))]
+    (for [[parent links] links]
+      (let [*parent (or parent r)]
+        [:div {:class (c [:py 4] [:text :gray-600] )}
+         ;; TODO think about prefixed anchor e.g. :backlinks/parent
+         [:div {:class (c :flex :flex-row :justify-between :items-baseline :text-sm)}
+          [:a {:id *parent :class (c :uppercase)}
+           [:span {:class (c :text-xs [:pr 0.5] [:text :green-300])}
+            [:i.fas.fa-link]]
+           *parent]
+          [:div {:class (c [:text :gray-500])}
+           [:span {:class (c [:pr 2])}
+            (str/join ", " (set (map :path links)))]
+           [:a {:class (c :cursor-pointer [:hover [:text :green-600]])
+                :href (if (some? parent)
+                        (str parent "." "_draft/edit")
+                        "_draft/edit")}
+            [:i.fas.fa-plus]]]]
+         (for [{p :path docname :doc} links]
+           (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
+                 (memstore/get-doc ztx (symbol docname))]
+             [:div {:class (c [:pt 4] :flex :flex-col)}
+              [:div {:class (c :inline-flex :items-center)}
+               (link/symbol-link ztx docname)
+               #_[:span {:class (c :text-xs [:pl 2])} p]
+               [:div {:class (c :flex :self-center)}
+                (when (str/includes? (str docname) "_template")
+                  [:span {:class (c :text-xs [:text :orange-500] [:pl 2])}
+                   "_template"])
+                (when (str/includes? (str docname) "_schema")
+                  [:span {:class (c :text-xs [:text :orange-500] [:pl 2])}
+                   "_schema"])
+               ;; TODO get last updated from git repo
+                #_[:div {:class (c [:text :gray-500])}
+                   "upd: " lu]]]
+              [:div {:class (c :flex :flex-no-wrap :overflow-x-hidden)}
+               (doall
+                (for [[k v] (select-keys doc summary-keys)]
+                  (when (= (get-in anns [k :zd/content-type]) :edn)
+                    [:div {:class (c :inline-flex :text-sm :items-center [:mr 2.2])}
+                     [:div {:class (c [:mr 0.5])}
+                      (str (name k) ":")]
+                     (cond
+                       (or (set? v) (vector? v))
+                       (into [:div {:class (c :flex [:space-x 1] :items-center)}]
+                             (interpose
+                              [:span {:class (c [:m 0] [:p 0])} ","]
+                              (mapv
+                               (fn [s]
+                                 (if (symbol? s)
+                                   (let [res (memstore/get-doc ztx s)]
+                                     [:a {:href (str "/" s)
+                                          :class (c :inline-flex
+                                                    :items-center
+                                                    [:hover [:text :blue-600] :underline]
+                                                    :whitespace-no-wrap
+                                                    {:text-decoration-thickness "0.5px"})}
+                                      [:span (:title res)]])
+                                   [:span (pr-str s)]))
+                               v)))
+
+                       (symbol? v)
+                       (let [res (memstore/get-doc ztx v)]
+                         [:a {:href (str "/" v)
+                              :class (c :inline-flex
+                                        :items-center
+                                        [:hover [:text :blue-600] :underline]
+                                        :whitespace-no-wrap
+                                        {:text-decoration-thickness "0.5px"})}
+                          [:span (:title res)]])
+
+                       (string? v)
+                       (zentext/parse-block ztx v {:key k :data v :ann (get anns k)})
+
+                       :else [:span (pr-str v)])])))]]))]))))
 
 (defmethod methods/renderkey :zd/errors
   [ztx ctx {errors :data k :key :as block}]

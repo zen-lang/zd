@@ -10,10 +10,8 @@
 (defn table
   "renders table from vector of hashmaps. each hashmap is a memstore document"
   [ztx ctx headers data]
-  [:table {:class (c :rounded [:py 2]
-                     {:display "block"
-                      :table-layout "fixed"
-                      :overflow-x "overlay"})}
+  [:table {:class (c :rounded [:py 2] [:w-max "80rem"]
+                     {:display "block" :table-layout "fixed"})}
    [:thead
     (->> headers
          (map (fn [k]
@@ -41,7 +39,7 @@
                               (or (:title doc) docname)]
 
                              (= :zentext (:zd/content-type key-ann))
-                             [:div {:class (c [:w-min "16rem"])}
+                             [:div {:class (c [:w-min "16rem"] :text-sm)}
                               (zentext/parse-block ztx v block)]
 
                              (= :edn (:zd/content-type key-ann))

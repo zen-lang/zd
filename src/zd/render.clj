@@ -62,26 +62,24 @@
                "/"])]))])))
 
 (defn search [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  [:div#zd-search {:class (c [:text :gray-600] [:px 6] [:py 4] [:h "100vh"] :overflow-y-auto :hidden)}
-   [:div {:class (c [:w "14rem"] :flex :flex-row :items-baseline)}
-    [:span {:class (c {:font-size "14px"
-                       :margin-right "4px"
-                       :color "#718096"})}]
+  [:div#zd-search {:class (c [:text :gray-600] [:pt 4] :overflow-y-auto)}
+   [:div {:class (c :flex :text-sm :flex-row [:px 6] :items-baseline)}
+    [:span {:class (c [:pr 0.8])}
+     [:i.fas.fa-regular.fa-search]]
     [:input#zd-search-input
      {:type "search"
       :value search-text
       :class (c :border
                 [:text :gray-600]
-                :text-sm
                 :outline-none
                 [:rounded 14]
-                [:py 0.5]
+                [:py 0.2]
                 [:px 3]
                 [:w "100%"])}]]
    (when-let [search-text (not-empty search-text)]
      (let [query-result (map first (db/search ztx search-text #_(get-in doc [:zd/meta :docname]) #_page-number))]
        (if (seq query-result)
-         [:div {:class (c [:py 2])}
+         [:div {:class (c [:pl 6] [:py 2] :text-sm)}
           (for [[i docname] (map-indexed vector query-result)]
             (let [{{anns :ann lu :last-updated} :zd/meta p :parent :as doc}
                   (memstore/get-doc ztx (symbol docname))]
@@ -126,9 +124,10 @@
       (let [block {:data (get doc k)
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
-        (render-key ztx ctx block))))
+        [:div {:class (c [:w "60rem"])}
+         (render-key ztx ctx block)])))
    (when-let [subdocs (not-empty (filter #(get subs %) (:doc m)))]
-     [:div {:class (c [:py 4])}
+     [:div {:class (c [:w "60rem"] [:py 4])}
       (doall
        (for [sub-key subdocs]
          [:div {:class (c [:mt 4])}
@@ -138,42 +137,52 @@
           (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])
    (let [links (seq (get-in doc [:zd/meta :backlinks]))]
      (when-not render-subdoc?
-       [:div (methods/renderkey ztx ctx {:data links :key :zd/backlinks})]))])
+       [:div {:class (c [:w "60rem"])}
+        (methods/renderkey ztx ctx {:data links :key :zd/backlinks})]))])
 
 (defn render-doc [ztx ctx doc]
-  [:div {:class (c :flex :w-full :flex-col :flex-wrap :content-center)}
+  [:div
    (topbar ztx ctx doc)
-   [:div#blocks {:class (c [:text "#3b454e"] [:pb 4] [:w "60rem"])}
+   [:div#blocks {:class (c [:text "#3b454e"] [:pb 4])}
     (render-blocks ztx ctx doc)]])
 
 (defn navigation [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  (let [tab-class (c [:mr 2] [:px 3] [:py 0.2] [:border 1 :gray-300]
-                     [:rounded 14] [:hover :cursor-pointer [:border 1 :blue-200] [:text :blue-500]])]
-    [:div#left-nav {:class (c [:text :gray-600] [:px 0] [:py 0]
-                              :border-r
-                              :fixed
-                              :text-sm
-                              [:top 0]
-                              [:left 0]
-                              [:w "18rem"]
-                              [:h "100vh"]
-                              {:overflow-y "auto"})}
-     [:div {:class (c :flex :flex-col)}
-      [:div {:class (c [:mt 4] [:px 8] :items-center :flex :flex-row)}
-       [:span#zd-menu-tab {:class tab-class}
-        [:span {:class (c :text-xs [:px 1])}
-         [:i.fas.fa-burger]]
-        "menu"]
-       [:span#zd-search-tab {:class tab-class}
-        [:span {:class (c :text-xs [:px 1])}
-         [:i.fas.fa-regular.fa-search]]
-        "search"]]
-      (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
-        [:div#zd-menu {:class (c [:px 8] [:py 2] :hidden)}
-         (for [[d] docs]
-           [:div {:class (c [:py 1])}
-            (link/symbol-link ztx (symbol d))])])
-      (search ztx ctx doc)]]))
+  [:div#left-nav {:class (c :border-r
+                            [:bg "#fbfbfb"]
+                            :fixed
+                            [:top 0]
+                            [:left 0]
+                            [:w "18rem"]
+                            [:h "100vh"]
+                            {:overflow-y "auto"})}
+   [:div {:class (c :flex :flex-col)}
+    (search ztx ctx doc)
+    (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
+      [:div#zd-menu {:class (c [:pt 2])}
+       (for [[d] docs]
+         (let [doc (memstore/get-doc ztx (symbol d))]
+           [:div {:class (c :flex :flex-row [:hover :cursor-pointer [:bg "#f6f6f6"]]
+                            :items-center
+                            [:pseudo ":hover>a:last-child" :block]
+                            :justify-between)}
+
+            [:a {:href (str "/" d)
+                 :class (c [:py 2.3] [:px 6]
+                           [:text :gray-600]
+                           [:w "100%"]
+                           :flex :flex-row
+                           :items-baseline
+                           :text-sm)}
+             [:div {:class (c [:text :gray-700] [:w 6])}
+              (link/icon ztx doc)]
+             [:span {:class (c :capitalize)} d]]
+            [:a {:class (c :cursor-pointer
+                           [:text :gray-500]
+                           [:pr 6]
+                           :hidden
+                           [:hover [:text :green-600]])
+                 :href (str d "." "_draft/edit")}
+             [:i.fas.fa-plus]]]))])]])
 
 (defn doc-view [ztx ctx doc]
   [:div {:class (c :flex :flex-row :justify-center)}
