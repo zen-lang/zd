@@ -116,7 +116,7 @@
            (methods/renderkey ztx ctx err-block)))))
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc} & [render-subdoc?]]
-  [:div
+  [:div {:class (c [:w "60rem"])}
    (when-let [errs (:errors m)]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
@@ -124,10 +124,9 @@
       (let [block {:data (get doc k)
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
-        [:div {:class (c [:w "60rem"])}
-         (render-key ztx ctx block)])))
+        (render-key ztx ctx block))))
    (when-let [subdocs (not-empty (filter #(get subs %) (:doc m)))]
-     [:div {:class (c [:w "60rem"] [:py 4])}
+     [:div {:class (c [:py 4])}
       (doall
        (for [sub-key subdocs]
          [:div {:class (c [:mt 4])}
@@ -137,8 +136,7 @@
           (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])
    (let [links (seq (get-in doc [:zd/meta :backlinks]))]
      (when-not render-subdoc?
-       [:div {:class (c [:w "60rem"])}
-        (methods/renderkey ztx ctx {:data links :key :zd/backlinks})]))])
+       (methods/renderkey ztx ctx {:data links :key :zd/backlinks})))])
 
 (defn render-doc [ztx ctx doc]
   [:div
