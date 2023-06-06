@@ -32,7 +32,7 @@
     [:a {:id kp}
      [:span {:class (c [:text :orange-500])} ":"]
      [:span {:class (c [:text :gray-600] :text-sm {:text-transform "uppercase"})} kp]]
-    [:div {:class (c [:text :gray-500] :text-sm)}
+    #_[:div {:class (c [:text :gray-500] :text-sm)}
      (name (get-in block [:ann :zd/content-type]))]]
    (when-not (and (string? d) (str/blank? d))
      [:div (rendercontent ztx ctx block)])])

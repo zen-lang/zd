@@ -19,6 +19,7 @@
 (defmethod methods/renderkey :zd/backlinks
   [ztx {{{dn :docname} :zd/meta} :doc {qs :query-string} :request r :root :as ctx} {:keys [data] :as block}]
   (let [summary-keys (meta/get-group ztx :zd/summary)
+        ;; TODO move this processing to memstore
         links
         (->> data
              (map (fn [{d :doc p :path t :to}]
@@ -29,14 +30,13 @@
                      :path (->> (map name p)
                                 (str/join ".")
                                 (str ":"))}))
-             (sort-by (juxt :path :doc))
+             (sort-by (juxt :parent :path :doc))
              (group-by :parent))]
     (for [[parent links] links]
       (let [*parent (or parent r)]
         [:div {:class (c [:py 4] [:text :gray-600] )}
-         ;; TODO think about prefixed anchor e.g. :backlinks/parent
-         [:div {:class (c :flex :flex-row :justify-between :items-baseline :text-sm)}
-          [:a {:id *parent :class (c :uppercase)}
+         [:div {:class (c :flex :flex-row :justify-between :items-baseline)}
+          [:a {:id (str "backlinks-" *parent) :class (c :text-sm :uppercase)}
            [:span {:class (c :text-xs [:pr 0.5] [:text :green-300])}
             [:i.fas.fa-link]]
            *parent]

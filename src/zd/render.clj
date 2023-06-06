@@ -125,24 +125,65 @@
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
         (render-key ztx ctx block))))
-   (when-let [subdocs (not-empty (filter #(get subs %) (:doc m)))]
+   (when-let [subdocs (seq (filter #(get subs %) (:doc m)))]
      [:div {:class (c [:py 4])}
       (doall
        (for [sub-key subdocs]
          [:div {:class (c [:mt 4])}
           [:div {:class (c :border-b [:text :gray-700] :flex :flex-row)}
-           [:span {:class (c [:text :green-500])} "&"]
-           [:span {:class (c [:text :gray-600])} (name sub-key)]]
+           [:a {:id (str "subdocs-" (name sub-key))}
+            [:span {:class (c [:text :green-500])} "&"]
+            [:span {:class (c [:text :gray-600])} (name sub-key)]]]
           (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])
    (let [links (seq (get-in doc [:zd/meta :backlinks]))]
      (when-not render-subdoc?
        (methods/renderkey ztx ctx {:data links :key :zd/backlinks})))])
 
+(defn contents-sidebar [ztx {r :root :as ctx}
+                        {{order :doc :as m} :zd/meta links :zd/backlinks subs :zd/subdocs :as doc}]
+  (let [dockeys
+        (->> order
+             (filter (fn [k]
+                       (get doc k)))
+             (map name))
+        ;; TODO move backlinks processing to memstore
+        doclinks (->> (:backlinks m)
+                      (map (fn [{d :doc}]
+                             (if (str/includes? (str d) ".")
+                               (str/join "." (butlast (str/split (str d) #"\.")))
+                               r)))
+                      (set)
+                      (sort-by identity))
+        subdocs (->> order
+                     (filter #(get subs %)))
+
+        root (c :text-sm :fixed [:text :gray-600] [:top "4rem"] [:right "8rem"] :border-l [:px 4] [:bg "white"])
+        col  (c :flex :flex-col)
+        head (c :uppercase [:text :gray-500] :text-xs [:py 2])]
+    [:div {:class root}
+     [:div {:class col}
+      [:div {:class head} "profile"]
+      ;; TODO make items clickable
+      (for [k dockeys]
+        [:a {:href (str "#" k)} k])]
+     (when (seq subdocs)
+       [:div {:class col}
+        [:div {:class head} "subdocs"]
+        (for [k subdocs]
+          ;; TODO think about better convention?
+          [:a {:href (str "#subdocs-" k)} k])])
+     (when (seq doclinks)
+       [:div {:class col}
+        [:div {:class head} "backlinks"]
+        (for [k doclinks]
+          [:a {:href (str "#backlinks-" k)} k])])]))
+
 (defn render-doc [ztx ctx doc]
   [:div
    (topbar ztx ctx doc)
    [:div#blocks {:class (c [:text "#3b454e"] [:pb 4])}
-    (render-blocks ztx ctx doc)]])
+    (render-blocks ztx ctx doc)]
+   (contents-sidebar ztx ctx doc)])
 
 (defn navigation [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
   [:div#left-nav {:class (c :border-r

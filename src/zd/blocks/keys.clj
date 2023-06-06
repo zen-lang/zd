@@ -5,6 +5,7 @@
    [stylo.core :refer [c]]
    [zd.methods :as methods]))
 
+;; TODO use link badge for linkedin prop?
 (defmethod methods/renderkey :linkedin
   [ztx {{m :zd/meta} :doc} {data :data :as block}]
   (let [id (if (and data (not (str/blank? data)))
@@ -13,6 +14,7 @@
     [:a {:class (str "badge " (name (c :border [:m 1]  :inline-flex :rounded
                                        [:py 1]
                                        :text-sm [:text :blue-500] [:px 2])))
+         :id :linkedin
          :href
          (if (str/starts-with? (str (:docname m)) "organizations.")
            (str "https://www.linkedin.com/company/" id "/")
