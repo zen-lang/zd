@@ -28,6 +28,7 @@ there is also a link that includes hash char - [[a https://docs.google.com/sprea
 :string-file (load "file.txt")
 :macro-notfound (unload "nofile.txt")
 
+^table-of [:xt/id]
 :customers datalog/
 {:find [(pull e [:xt/id])]
 :where [[e :parent customers]]

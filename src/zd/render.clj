@@ -236,7 +236,7 @@
    [:div#page
     (render-doc ztx ctx doc)]])
 
-(def default-tpl ":title \"\"\n:tags #{}")
+(def default-tpl ":title \"\"")
 
 ;; TODO find template in memstore
 (defn find-template [ztx nm]

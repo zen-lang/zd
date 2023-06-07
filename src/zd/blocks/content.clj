@@ -44,22 +44,15 @@
    (zentext/parse-block ztx data block)])
 
 (defmethod methods/rendercontent :datalog
+  ;; TODO rename table-of to :table for consistency
   [ztx ctx {{headers :table-of} :ann data :data :as block}]
   (let [result (if-let [params (:in data)]
                  (apply d/query ztx data params)
                  (d/query ztx data))]
-    ;; TODO implement sane defaults for choosing the view for datalog query result
-    (if (seq result)
-      (if (map? (ffirst result))
-        (if (seq headers)
-          (comp/table ztx ctx headers (map first result))
-          (let [headers* (->> (map first result)
-                              (mapcat keys)
-                              (set)
-                              (sort-by name))]
-            (comp/table ztx ctx headers* (map first result))))
-        (methods/rendercontent ztx ctx
-                               {:data result
-                                :k (:key block)
-                                :ann {:zd/content-type :edn}}))
+
+    (if (and (seq result)
+             ;; fix this check
+             (map? (ffirst result))
+             (seq headers))
+      (comp/table ztx ctx headers (map first result))
       [:span (pr-str result)])))

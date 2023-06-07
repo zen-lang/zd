@@ -34,13 +34,13 @@
              (group-by :parent))]
     (for [[parent links] links]
       (let [*parent (or parent r)]
-        [:div {:class (c [:py 4] [:text :gray-600] )}
-         [:div {:class (c :flex :flex-row :justify-between :items-baseline)}
+        [:div {:class (c [:py 4] [:text :gray-600])}
+         [:div {:class (c :flex :flex-row)}
           [:a {:id (str "backlinks-" *parent) :class (c :text-sm :uppercase)}
            [:span {:class (c :text-xs [:pr 0.5] [:text :green-300])}
             [:i.fas.fa-link]]
            *parent]
-          [:div {:class (c [:text :gray-500])}
+          [:div {:class (c [:text :gray-500] :text-sm [:px 2])}
            [:span {:class (c [:pr 2])}
             (str/join ", " (set (map :path links)))]
            [:a {:class (c :cursor-pointer [:hover [:text :green-600]])
@@ -48,7 +48,8 @@
                         (str parent "." "_draft/edit")
                         "_draft/edit")}
             [:i.fas.fa-plus]]]]
-         (for [{p :path docname :doc} links]
+         ;; TODO think if path is needed in each link
+         (for [{p :path docname :doc} (distinct (map #(dissoc % :path) links))]
            (let [{{anns :ann lu :last-updated} :zd/meta :as doc}
                  (memstore/get-doc ztx (symbol docname))]
              [:div {:class (c [:pt 4] :flex :flex-col)}
@@ -68,7 +69,7 @@
               [:div {:class (c :flex :flex-no-wrap :overflow-x-hidden)}
                (doall
                 (for [[k v] (select-keys doc summary-keys)]
-                  (when (= (get-in anns [k :zd/content-type]) :edn)
+                  (when (and (some? v) (= (get-in anns [k :zd/content-type]) :edn))
                     [:div {:class (c :inline-flex :text-sm :items-center [:mr 2.2])}
                      [:div {:class (c [:mr 0.5])}
                       (str (name k) ":")]
@@ -80,14 +81,15 @@
                               (mapv
                                (fn [s]
                                  (if (symbol? s)
-                                   (let [res (memstore/get-doc ztx s)]
-                                     [:a {:href (str "/" s)
-                                          :class (c :inline-flex
-                                                    :items-center
-                                                    [:hover [:text :blue-600] :underline]
-                                                    :whitespace-no-wrap
-                                                    {:text-decoration-thickness "0.5px"})}
-                                      [:span (:title res)]])
+                                   [:a {:href (str "/" s)
+                                        :class (c :inline-flex
+                                                  :items-center
+                                                  [:hover [:text :blue-600] :underline]
+                                                  :whitespace-no-wrap
+                                                  {:text-decoration-thickness "0.5px"})}
+                                    [:span (if-let [res (memstore/get-doc ztx s)]
+                                             (:title res)
+                                             (str s))]]
                                    [:span (pr-str s)]))
                                v)))
 
