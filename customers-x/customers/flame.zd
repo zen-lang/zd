@@ -16,6 +16,8 @@
 
 :techs #{tech-postgres tech.js}
 
+:parent-doc customers
+
 :founder people.john
 
 :ceo people.john

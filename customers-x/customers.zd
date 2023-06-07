@@ -1,4 +1,7 @@
+:icon [:fa-solid :fa-store]
 :title "customers list"
+
+:menu-order 1
 
 :meta edn/
 {:tags #{rdfs.class}}
@@ -27,15 +30,14 @@ there is also a link that includes hash char - [[a https://docs.google.com/sprea
 
 :customers datalog/
 {:find [(pull e [:xt/id])]
- :where [[e :parent "customers"]]}
+:where [[e :parent customers]]
+:in [customers]}
 
-&nested
+&partners-list
 
 ;; annotation provided explicitly
 
 ^badge
 :countries #{countries.ru}
-
-;; or in metadata
 
 :tags #{tags.vendor}

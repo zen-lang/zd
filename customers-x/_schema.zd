@@ -1,14 +1,29 @@
+
+:menu-order 2
+
+:icon [:fa-regular :fa-file-chart-pie]
+
+:desc /
+
+this document sets the knowledgse base structure
+
+:tags #{builtin}
+
+// there are three types of document keys:
+// dockey (edn value or zentext markdown)
+// sudbocs (used to add a document as a property)
+// extkey (api call that may persist data)
+
 &title
 :type :dockey
 :desc "document title"
 :schema {:type zen/string}
 
-&rel
+&menu-order
 :type :dockey
-:group :zd/summary
-:schema {:type zen/set :every {:type zen/symbol}}
-:ann {:badge {}}
-:desc "relationship to an org"
+:desc "makes a document appear in left navigation bar"
+:schema {:type zen/number}
+:ann {:none {}}
 
 &site
 :type :dockey
@@ -20,6 +35,9 @@
 &mydoc
 :type :subdoc
 :schema {:require #{:rel :title}}
+// ha ha funny colision
+:rel ""
+:title ""
 
 &rel
 :type :dockey
@@ -43,9 +61,7 @@
 :desc "set of related countries"
 
 &icon
-;; TODO make icon list searchable
 :type :dockey
-:group :zd/summary
 :schema {:type zen/vector :every {:type zen/keyword}}
 :ann {:none {}}
 :desc "icon of a document"

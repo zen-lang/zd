@@ -1,0 +1,11 @@
+:title "people list"
+:icon [:fa-duotone :fa-people]
+:menu-order 3
+
+:desc /
+a list of contacts made by X company
+
+:people-roles datalog/
+{:find [?role (count ?role)]
+:where [[e :parent people] [e :role ?role]]
+:in [people]}

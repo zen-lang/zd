@@ -3,15 +3,15 @@
 
  zendoc
  {:zen/tags #{zd/zendoc}
-  ;; TODO make api ops work w multiple paths
-  :paths ["test/zd/tdocs/test" #_"/docs"]
-  :root "customers"
+  ;; TODO make fs,api ops work w multiple docdirs
+  :paths ["customers-x" #_"examples/docs"]
+  :root "index"
   ;; TODO make it in seconds
   :pull-rate 10800
   :remote
   ;; TODO think about how to make the test reproducible
   {:from "git@github.com:carbon-hvze/zendoc-gitsync.git"
-   :to "test/zd/tdocs/test"}}
+   :to "customers-x"}}
 
  datalog
  {:zen/tags #{zen/start zd.engines/datalog}
@@ -31,6 +31,7 @@
   :api zd/api}
 
  ;; TODO rename to desktop ui
+ ;; TODO use java fx to launch app status window or full UI
  web-ui
  {:zen/tags #{zen/start zd.engines/web-ui}
   :engine zd.engines/web-ui
