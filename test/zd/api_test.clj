@@ -12,8 +12,9 @@
 (defn req-body [s]
   (io/input-stream (.getBytes s)))
 
+;; TODO use path prefix from test.edn
 (defn read-doc [s]
-  (let [f (io/file (str "test/zd/tdocs/test" "/" s))]
+  (let [f (io/file (str "customers-x/" s))]
     (when (.exists f)
       (slurp f))))
 

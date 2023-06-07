@@ -98,7 +98,8 @@
 
 (defmethod collect! :key
   [ztx doc l lines]
-  (let [cnt-type (->> (reverse l)
+  (let [cnt-type (->> (str/trim l)
+                      (reverse)
                       (rest)
                       (take-while #(not= % \space))
                       (reverse)
@@ -152,7 +153,7 @@
 
 (defmethod parse! :key
   [ztx ctx l ls]
-  (let [[k val] (split #(= % \space) l)
+  (let [[k val] (split #(= % \space) (str/trim l))
         multiline? (= \/ (last val))
         k (keyword (apply str (rest k)))
         cnt-type (if multiline?
@@ -171,6 +172,7 @@
         ctx* (-> ctx
                  (update-in [:zd/meta :doc] conj k)
                  (assoc-in [:zd/meta :ann k :zd/content-type] cnt-type)
+                 (assoc-in [:zd/meta :ann k :zd/multiline] multiline?)
                  (assoc k (or cnt lines)))]
     (cond-> ctx*
       (and (nil? cnt) (or (= cnt-type :edn) (= cnt-type :datalog)))

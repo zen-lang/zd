@@ -33,7 +33,7 @@
                     'customers)))
 
   (matcho/assert
-   #{["people"] ["_schema"] ["customers.flame"]}
+   #{["customers.flame"]}
    (datalog/query ztx '{:find [e]
                         :where [[e :parent parent]]
                         :in [parent]}

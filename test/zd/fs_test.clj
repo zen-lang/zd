@@ -130,13 +130,13 @@
 
   (matcho/assert
    {:zd/subdocs
-    {:nested
+    {:partners-list
      {:tags set?
       :countries set?}}}
    doc)
 
   (def subdoc-ann
-    (get-in doc [:zd/subdocs :nested :zd/meta :ann]))
+    (get-in doc [:zd/subdocs :partners-list :zd/meta :ann]))
 
   (is (contains? (:tags subdoc-ann) :badge))
   (is (contains? (:countries subdoc-ann) :badge)))
@@ -167,18 +167,18 @@
    (web/handle ztx 'zd/api
                {:uri "/_draft/edit"
                 :request-method :put
-                :body (req-body ":zd/docname index\n:desc /")}))
+                :body (req-body ":zd/docname example\n:desc /")}))
 
   (matcho/assert
    {:status 200}
    (web/handle ztx 'zd/api
-               {:uri "/index/edit"
+               {:uri "/example/edit"
                 :request-method :put
-                :body (req-body ":zd/docname index\n:desc /\na description")}))
+                :body (req-body ":zd/docname example\n:desc /\na description")}))
 
   (matcho/assert
    {:status 200 :body "/index"}
-   (web/handle ztx 'zd/api {:uri "/index" :request-method :delete}))
+   (web/handle ztx 'zd/api {:uri "/example" :request-method :delete}))
 
   (is (nil? (agent-errors fs/ag)))
 

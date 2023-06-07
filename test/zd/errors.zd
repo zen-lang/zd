@@ -17,7 +17,9 @@ _^_table [:name ] :age]
 
 just a string block
 
-^lonely-badge
+:text-wrong-multiline / my content
+
+:edn-wrong-multiline #{1} /
 
 :wrong-multiline {:a "value"
 :b "another value"}
