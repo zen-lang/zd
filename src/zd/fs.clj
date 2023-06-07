@@ -71,7 +71,7 @@
                                     ;; TODO implement deletion of a single document
                                     (reload ztx r pths))
                                   {:type 'zd.fs/delete-doc-error})]
-    (send ag fs-delete)
+    (send-off ag fs-delete)
     (await ag)))
 
 (defmethod zen/op 'zd.events/fs-save
@@ -92,19 +92,17 @@
                                   (spit filepath cnt)
                                   (when-let [repo (get-repo ztx)]
                                     (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
-
                                   (memstore/load-document! ztx {:path filepath
                                                                 :root r
                                                                 :resource-path docpath
                                                                 :content cnt})
-
                                   ;; async
                                   (memstore/load-links! ztx)
                                   (memstore/eval-macros! ztx)
                                   'ok)
                                 {:type :zd.fs/save-error})]
 
-    (send ag fs-save)
+    (send-off ag fs-save)
     (await ag)))
 
 (defmethod zen/start 'zd.engines/fs
@@ -116,19 +114,18 @@
         repo
         (-> ((utils/safecall gitsync/init-remote {:type :gitsync/remote-init-error}) ztx remote)
             (:result))
-        sync-fn
-        (fn [ag]
-          (let [{st :status}
-                (-> ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)
-                    (:result))]
-            (when (= :updated st)
-              (reload ztx root paths))))
         load-result (reload ztx root paths)]
-    (await ag)
     (if (instance? org.eclipse.jgit.api.Git repo)
-      (let [task (proxy [TimerTask] []
+      (let [sync-fn
+            (fn [ag]
+              (let [{st :status}
+                    (-> ((utils/safecall gitsync/sync-remote {:type :gitsync/pull-remote-error}) ztx repo)
+                        (:result))]
+                (when (= :updated st)
+                  (reload ztx root paths))))
+            task (proxy [TimerTask] []
                    (run []
-                     (send ag sync-fn)))]
+                     (send-off ag sync-fn)))]
         (.scheduleAtFixedRate ti task pull-rate pull-rate)
         {:ag ag
          :ti ti

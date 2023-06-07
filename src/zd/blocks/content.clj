@@ -48,6 +48,7 @@
   (let [result (if-let [params (:in data)]
                  (apply d/query ztx data params)
                  (d/query ztx data))]
+    ;; TODO implement sane defaults for choosing the view for datalog query result
     (if (seq result)
       (if (map? (ffirst result))
         (if (seq headers)
@@ -61,4 +62,4 @@
                                {:data result
                                 :k (:key block)
                                 :ann {:zd/content-type :edn}}))
-      [:span "xtdb not available"])))
+      [:span (pr-str result)])))

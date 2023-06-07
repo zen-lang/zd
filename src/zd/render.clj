@@ -120,7 +120,7 @@
    (when-let [errs (:errors m)]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
-    (for [k (filter #(get doc %) (:doc m))]
+    (for [k (distinct (filter #(get doc %) (:doc m)))]
       (let [block {:data (get doc k)
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
@@ -129,8 +129,8 @@
      [:div {:class (c [:py 4])}
       (doall
        (for [sub-key subdocs]
-         [:div {:class (c [:mt 4])}
-          [:div {:class (c :border-b [:text :gray-700] :flex :flex-row)}
+         [:div {:class (c [:my 2])}
+          [:div {:class (c [:text :gray-700] :flex :flex-row)}
            [:a {:id (str "subdocs-" (name sub-key))}
             [:span {:class (c [:text :green-500])} "&"]
             [:span {:class (c [:text :gray-600])} (name sub-key)]]]
@@ -140,11 +140,17 @@
        (methods/renderkey ztx ctx {:data links :key :zd/backlinks})))])
 
 (defn contents-sidebar [ztx {r :root :as ctx}
-                        {{order :doc :as m} :zd/meta links :zd/backlinks subs :zd/subdocs :as doc}]
+                        {{order :doc anns :ann :as m} :zd/meta links :zd/backlinks subs :zd/subdocs :as doc}]
   (let [dockeys
         (->> order
              (filter (fn [k]
-                       (get doc k)))
+                       (let [ka (get anns k)]
+                         (and (get doc k)
+                            ;; TODO exclude based on the metadata property like .sidebar false
+                              (not (get ka :link-badge
+                                        (get ka :badge
+                                             (get ka :none))))))))
+
              (map name))
         ;; TODO move backlinks processing to memstore
         doclinks (->> (:backlinks m)
@@ -161,17 +167,18 @@
         col  (c :flex :flex-col)
         head (c :uppercase [:text :gray-500] :text-xs [:py 2])]
     [:div {:class root}
-     [:div {:class col}
-      [:div {:class head} "profile"]
-      ;; TODO make items clickable
-      (for [k dockeys]
-        [:a {:href (str "#" k)} k])]
+     (when (seq dockeys)
+       [:div {:class col}
+        [:div {:class head} "document"]
+        ;; TODO make items clickable
+        (for [k dockeys]
+          [:a {:href (str "#" k)} k])])
      (when (seq subdocs)
        [:div {:class col}
         [:div {:class head} "subdocs"]
         (for [k subdocs]
           ;; TODO think about better convention?
-          [:a {:href (str "#subdocs-" k)} k])])
+          [:a {:href (str "#subdocs-" (name k))} k])])
      (when (seq doclinks)
        [:div {:class col}
         [:div {:class head} "backlinks"]

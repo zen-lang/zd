@@ -5,6 +5,7 @@
          borkdude/edamame                                    {:mvn/version "0.0.18"}
          cheshire/cheshire                                   {:mvn/version "5.10.0"}
          clj-commons/clj-yaml                                {:mvn/version "0.7.106"}
+         ;; 1.0.1 is fixed for now because it works on java < 11
          clj-jgit/clj-jgit                                   {:mvn/version "1.0.1"}
          clj-time/clj-time                                   {:mvn/version "0.15.2"}
          hawk/hawk                                           {:mvn/version "0.2.11"}
@@ -26,7 +27,7 @@
                        :sha "caf9ba16124ceff98cddc9ea702d157e16e2cad7"}
          zen-lang/zen-web {:local/root "libs/zen-web"}}
  :aliases
- {:nrepl {:extra-paths ["docs" "test"]
+ {:nrepl {:extra-paths ["test"]
           :extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "2.5.1"}
                         cider/cider-nrepl             {:mvn/version "LATEST"}
                         healthsamurai/matcho          {:mvn/version "0.3.8"}

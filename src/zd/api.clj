@@ -93,6 +93,7 @@
                           :docname docname
                           :root r
                           :errors errs}}
+      ;; TODO make full reload if _schema or :schema was edited
       (do (zen/pub ztx 'zd.events/on-doc-save {:docname docname :content content :root r})
           {:status 200 :body (str "/" docname)}))))
 
@@ -101,9 +102,9 @@
   (println :delete id)
   (let [parts (str/split id #"\.")
         redirect
-        (if-let [parent (not-empty (butlast parts))]
+        (if-let [parent (seq (butlast parts))]
           (str "/" (str/join "." parent))
-          "/index")]
+          (str "/" r))]
     (zen/pub ztx 'zd.events/on-doc-delete {:docname id :root r})
     {:status 200 :body redirect}))
 
