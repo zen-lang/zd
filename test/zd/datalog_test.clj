@@ -12,6 +12,7 @@
 (comment
   (def ztx (zen/new-context {})))
 
+;; TODO test reactive updates of storage on document edit
 (deftest datalog-engine
   (zen/stop-system ztx)
 
@@ -33,7 +34,7 @@
                     'customers)))
 
   (matcho/assert
-   #{["customers.flame"]}
+   #{["customers.flame"] ["customers._schema"]}
    (datalog/query ztx '{:find [e]
                         :where [[e :parent parent]]
                         :in [parent]}

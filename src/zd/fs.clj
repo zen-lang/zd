@@ -47,7 +47,7 @@
 
 (defn reload [ztx root paths]
   (println :zd.fs/reload)
-  (swap! ztx dissoc :zdb :zd/meta :zrefs :zd/macros)
+  (swap! ztx dissoc :zdb :zd/schema :zrefs :zd/macros)
   (load-docs! ztx root paths)
   (memstore/load-links! ztx)
   (memstore/eval-macros! ztx)

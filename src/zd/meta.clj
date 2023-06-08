@@ -1,21 +1,38 @@
 (ns zd.meta
   (:require
+   [zen-web.utils :as utils]
    [zd.reader :as reader]
    [clojure.string :as str]
    [zen.core :as zen]))
 
+(defn get-parent [ztx nm]
+  (when-let [p (seq (butlast (str/split (str nm) #"\.")))]
+    (symbol (apply str p))))
+
+;; needed for windows compatibility
+(def file-separator-regex
+  (re-pattern
+   (java.util.regex.Pattern/quote
+    (System/getProperty "file.separator"))))
+
+(defn path->docname [ztx resource-path]
+  (-> resource-path
+      (str/replace #"\.zd$" "")
+      (str/replace file-separator-regex ".")
+      (symbol)))
+
 (defn get-group
   "finds keys by :group from a _schema"
   [ztx group-name]
-  (->> (get-in @ztx [:zd/meta])
+  (->> (get-in @ztx [:zd/schema :keys-idx])
        (filter (fn [[k v]]
                  (= group-name (:group v))))
        (map first)))
 
 (defn append-meta
-  "appends annotations from _schemas to a block"
+  "appends annotations from _schema's to a key"
   [ztx doc]
-  (let [blocks-meta (:zd/meta @ztx)]
+  (let [keys-meta (get-in @ztx [:zd/schema :keys-idx])]
     (let [subdocs*
           (->> (:zd/subdocs doc)
                (map (fn [[subname cnt]]
@@ -27,27 +44,36 @@
            (reduce (fn [*doc [k _]]
                      (update-in *doc [:zd/meta :ann k]
                                 (fn [anns]
-                                  (merge anns (get-in blocks-meta [k :ann])))))
+                                  (merge anns (get-in keys-meta [k :ann])))))
                    (assoc doc :zd/subdocs subdocs*))))))
 
 (defn load-meta!
   "load _schema into ztx"
-  [ztx {c :content}]
-  (let [ann-idx (reduce (fn [acc [k v]]
-                          (->> (select-keys v [:type :schema :group :ann])
-                               (assoc acc k)))
-                        {}
-                        (:zd/subdocs (reader/parse ztx {} c)))]
-    (swap! ztx update :zd/meta merge ann-idx)))
+  [ztx {c :content rp :resource-path}]
+  (let [sch (reader/parse ztx {} c)
+        keys-ns (or (get-parent ztx (path->docname ztx rp)) :zd/root)
+        keys-idx (reduce (fn [acc [k v]]
+                           (-> acc
+                               (assoc k (select-keys v [:type :schema :group :ann]))
+                               (assoc-in [k :namespace] keys-ns)))
+                         {}
+                         (:zd/subdocs sch))]
+    (swap! ztx update :zd/schema
+           (fn [st]
+             (cond-> st
+               (:schema sch) (update-in [:schemas keys-ns] merge (:schema sch))
+               :always (update :keys-idx merge keys-idx))))))
 
 (defn zen-schema
-  "compile zen schema from _schema.zd"
+  "compile zen schema for a document from _schema's defined in knowledge base"
   [ztx docname]
   (let [head {:type 'zen/map
               :validation-type :open}
-        doc-keys (->> (:zd/meta @ztx)
+        doc-keys (->> (:keys-idx (:zd/schema @ztx))
                       (filter (fn [[_ v]]
-                                (not= :subdoc (:type v))))
+                                (and (not= :subdoc (:type v))
+                                     (or (= (:namespace v) :zd/root)
+                                         (= (:namespace v) (get-parent ztx docname))))))
                       (map (fn [[k v]] [k (:schema v)]))
                       (into {:zd/docname {:type 'zen/symbol}}))
         meta-sch
@@ -65,18 +91,21 @@
         subdocs
         {:type 'zen/map
          :validation-type :open
-         ;; TODO add validation of subdocs
+         ;; TODO enable validation of nested subdocs /w zen/schema :confirms
          :values (assoc head :keys (merge doc-keys {:zd/meta meta-sch}))
-         :keys (->> (:zd/meta @ztx)
+         :keys (->> (:keys-idx (:zd/schema @ztx))
                     (filter (fn [[_ v]]
                               (= :subdoc (:type v))))
                     (map (fn [[k v]]
                            [k (:schema v)]))
-                    (into {}))}]
+                    (into {}))}
+        toplevel
+        (utils/deep-merge head
+                          (get-in @ztx [:zd/schema :schemas (get-parent ztx docname)])
+                          (get-in @ztx [:zd/schema :schemas :zd/root]))]
+
     (-> {:zen/name 'zd.schema/document :tags #{'zen/schema}}
-        (merge head)
-        ;; TODO add :schema from top level of _schema.zd
-;;        (merge (:schema doc-schema))
+        (merge toplevel)
         (assoc-in [:keys :zd/meta] meta-sch)
         (assoc-in [:keys :zd/subdocs] subdocs)
         (update :keys merge doc-keys))))
@@ -84,34 +113,33 @@
 (defn validate-doc
   "validate doc with zen schema compiled from a _schema.zd"
   [ztx doc]
-  (let [docname (str (:zd/docname doc))]
-    (if-let [sch (zen-schema ztx docname)]
-      (let [errs (->> (zen/validate-schema ztx sch doc)
-                      (:errors)
-                      (map (fn [e] {:type :doc-validation
-                                    :message (:message e)
-                                    :path (:path e)})))]
-        (update-in doc [:zd/meta :errors] into
-                   (cond-> errs
-                     (or (empty? docname) (str/ends-with? docname "."))
-                     (conj {:type :docname-validation
-                            :path [:zd/docname]
-                            :message "Add not empty :zd/docname"})
+  (let [docname (str (:zd/docname doc))
+        sch (zen-schema ztx docname)
+        errs (->> (zen/validate-schema ztx sch doc)
+                  (:errors)
+                  (map (fn [e] {:type :doc-validation
+                                :message (:message e)
+                                :path (:path e)})))]
+    (update-in doc [:zd/meta :errors] into
+               (cond-> errs
+                 (or (empty? docname) (str/ends-with? docname "."))
+                 (conj {:type :docname-validation
+                        :path [:zd/docname]
+                        :message "Add not empty :zd/docname"})
 
-                     (str/ends-with? docname "_draft")
-                     (conj {:type :docname-validation
-                            :path [:zd/docname]
-                            :message "Rename :zd/docname from _draft"}))))
-      ;; TODO emit zen event
-      (do (println ":schema-not-found " docname) doc))))
+                 (str/ends-with? docname "_draft")
+                 (conj {:type :docname-validation
+                        :path [:zd/docname]
+                        :message "Rename :zd/docname from _draft"})))))
 
-(defn annotations [ztx]
-  (->> (vals (:zd/meta @ztx))
+(defn annotations
+  "list annotations used in _schema"
+  [ztx]
+  ;; TODO think about defining annotations in meta ?
+  (->> (vals (:keys-idx (:zd/schema @ztx)))
        (map :ann)
        (mapcat (fn [el]
                  (when (map? el)
                    (keys el))))
        (set)
        (map (fn [e] {:name (str "^" (name e))}))))
-
-

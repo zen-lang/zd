@@ -1,0 +1,27 @@
+:title "Customer schema"
+
+// customers._schema defines keys for customers.* documents
+
+:schema {:type zen/map :require #{:rel}}
+
+&site
+:type :dockey
+:group :zd/summary
+:schema {:type zen/string}
+:ann {:link-badge {}}
+:desc "link to a an organization website"
+
+&rel
+:type :dockey
+:group :zd/summary
+// TODO define a document set here
+:schema {:type zen/set :every {:type zen/symbol}}
+:ann {:badge {}}
+:desc "relationship of a customer to an X organization"
+
+&country
+:type :dockey
+:group :zd/summary
+:schema {:type zen/set :every {:type zen/symbol}}
+:ann {:badge {}}
+:desc "set of country where customers operates"

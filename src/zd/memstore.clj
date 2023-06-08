@@ -11,12 +11,6 @@
 (defn get-doc [ztx nm]
   (get-in @ztx [:zdb nm]))
 
-;; needed for windows compatibility
-(def file-separator-regex
-  (re-pattern
-   (java.util.regex.Pattern/quote
-    (System/getProperty "file.separator"))))
-
 (defn *edn-links [acc docname path node]
   (cond
     (symbol? node)
@@ -121,9 +115,7 @@
                {})))
 
 (defn load-document! [ztx {:keys [root resource-path path content] :as doc}]
-  (let [docname (symbol (str/replace (str/replace resource-path #"\.zd$" "")
-                                     file-separator-regex
-                                     "."))
+  (let [docname (meta/path->docname ztx resource-path)
         parent-link
         (->> (str/split (str docname) #"\.")
              (butlast)

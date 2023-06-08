@@ -125,12 +125,12 @@
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
         (render-key ztx ctx block))))
-   (when-let [subdocs (seq (filter #(get subs %) (:doc m)))]
+   (when-let [subdocs (distinct (seq (filter #(get subs %) (:doc m))))]
      [:div {:class (c [:py 4])}
       (doall
        (for [sub-key subdocs]
          [:div {:class (c [:my 2])}
-          [:div {:class (c [:text :gray-700] :flex :flex-row)}
+          [:div {:class (c [:text :gray-700] :flex :flex-row :border-b)}
            [:a {:id (str "subdocs-" (name sub-key))}
             [:span {:class (c [:text :green-500])} "&"]
             [:span {:class (c [:text :gray-600])} (name sub-key)]]]
@@ -142,6 +142,7 @@
 (defn contents-sidebar [ztx {r :root :as ctx}
                         {{order :doc anns :ann :as m} :zd/meta links :zd/backlinks subs :zd/subdocs :as doc}]
   (let [dockeys
+        ;; TODO fix case when subdocs and dockey are the same
         (->> order
              (filter (fn [k]
                        (let [ka (get anns k)]
@@ -161,7 +162,8 @@
                       (set)
                       (sort-by identity))
         subdocs (->> order
-                     (filter #(get subs %)))
+                     (filter #(get subs %))
+                     (distinct))
 
         root (c :text-sm :fixed [:text :gray-600] [:top "4rem"] [:right "8rem"] :border-l [:px 4] [:bg "white"])
         col  (c :flex :flex-col)

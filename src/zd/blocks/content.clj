@@ -30,13 +30,12 @@
                 :top       "5px"
                 :right     "20px"}}]
       ;; TODO fix edn display code block
-      [:code {:style {:background "white"
-                      :border :none
-                      :word-wrap "break-word"}
-              :class (str "language-edn hljs")}
-       (if (string? data)
-         data
-         (with-out-str (pprint/pprint data)))]]]))
+      [:code {:style {:background "white !important"
+                      :word-wrap "break-word"}}
+       [:span {:class (str (str "language-edn hljs ")  (c [:bg "white"]))}
+        (if (string? data)
+          data
+          (with-out-str (pprint/pprint data)))]]]]))
 
 (defmethod methods/rendercontent :zentext
   [ztx ctx {:keys [data] :as block}]

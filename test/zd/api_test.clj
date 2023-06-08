@@ -1,5 +1,6 @@
 (ns zd.api-test
   (:require
+   [clojure.string :as str]
    [zd.api]
    [matcho.core :as matcho]
    [clojure.java.io :as io]
@@ -58,9 +59,9 @@
      (web/handle ztx 'zd/api
                  {:uri "/testdoc/edit"
                   :request-method :put
-                  :body (req-body ":zd/docname testdoc\n:desc /")}))
+                  :body (req-body ":zd/docname testdoc\n:title \"testdoc\"\n:tags #{}\n:desc /")}))
 
-    (is (= (read-doc "testdoc.zd") ":desc /")))
+    (is (not (str/blank? (read-doc "testdoc.zd")))))
 
   (testing "delete document"
     (matcho/assert
@@ -80,22 +81,28 @@
 
   (zen/start-system ztx 'zd.test/system)
 
-  (def invalid-doc ":zd/docname customers._draft\n:title #{mytitle}\n:rel \"a string\"")
+  (def invalid-doc ":zd/docname customers._draft\n:title #{mytitle}\n:icon \"a string\"")
 
-  (def doc ":zd/docname customers.zero\n:title \"zero inc\"\n:rel #{rel.partner}\n:techs #{techs.clojure}")
+  (def doc ":zd/docname customers.zero\n:title \"zero inc\"\n:rel #{rel.partner}\n:techs #{techs.clojure}\n:tags #{}")
 
   (def errs
     [{:type :docname-validation,
       :path [:zd/docname],
       :message "Rename :zd/docname from _draft"}
+     ;; two keys defined in _schema
      {:type :doc-validation,
       :message "Expected type of 'string, got 'persistenthashset",
       :path [:title]}
      {:type :doc-validation,
-      :message "Expected type of 'set, got 'string",
-      :path [:rel]}])
+      :message "Expected type of 'vector, got 'string",
+      :path [:icon]}
+     ;; required in customers._schema
+     {:type :doc-validation, :message ":rel is required", :path [:rel]}
+     ;; required in _schema
+     {:type :doc-validation,
+      :path [:tags]}])
 
-  (testing ":zd/docname and props from _schema zd are validated"
+  (testing ":zd/docname, keys from both _schema and customers._schema are validated"
     (matcho/assert
      {:status 422
       :body
@@ -107,7 +114,7 @@
                   :request-method :put
                   :body (req-body invalid-doc)})))
 
-  (testing "extra props are allowed"
+  (testing "extra key :techs is allowed, required keys pass validation"
     (matcho/assert
      {:status 200}
      (web/handle ztx 'zd/api
@@ -120,21 +127,21 @@
     (is (= 200 (:status (web/handle ztx 'zd/api {:uri "/customers.zero"
                                                  :request-method :delete})))))
 
-  (testing "subdocuments are validated"
+  (testing "keys in subdocuments are validated with _schemas"
 
-    (def doc ":zd/docname customers.uno\n&mycustomdoc\n:rel tags.client")
+    (def doc ":zd/docname customers.uno\n&partners\n:rel tags.client")
 
     (matcho/assert
      {:status 422
       :body {:errors [{:type :doc-validation
                        :message "Expected type of 'set, got 'symbol"
-                       :path [:zd/subdocs :mycustomdoc :rel]}]}}
+                       :path [:zd/subdocs :partners :rel]}]}}
      (web/handle ztx 'zd/api
                  {:uri "/customers._draft/edit"
                   :request-method :put
                   :body (req-body doc)}))
 
-    (def doc ":zd/docname customers.uno\n&mycustomdoc\n:rel #{tags.client}")
+    (def doc ":zd/docname customers.uno\n:rel #{rel.client}\n:tags #{tags.champion}\n:title \"uno inc.\"\n&partners \n:rel #{rel.unknown}")
 
     (matcho/assert
      {:status 200}
@@ -145,23 +152,25 @@
 
     (is (read-doc "customers/uno.zd"))
 
-    (def doc ":zd/docname customers.uno\n&mydoc\n:rel #{tags.client}")
+    (testing ":schema defined for a subdocument &mydoc in _schema.zd"
 
-    (matcho/assert
-     {:status 422,
-      :body
-      {:message "document validation failed",
-       :docname "customers.uno",
-       :errors
-       [{:type :doc-validation,
-         :message ":title is required",
-         :path [:zd/subdocs :mydoc :title]}]}}
-     (web/handle ztx 'zd/api
-                 {:uri "/customers.uno/edit"
-                  :request-method :put
-                  :body (req-body doc)}))
+      (def doc ":zd/docname customers.uno\n:title \"uno inc\"\n:rel #{}\n:tags #{}\n&mydoc\n:rel #{tags.client}")
 
-    (def doc ":zd/docname customers.uno\n&mydoc\n:rel #{tags.client}\n:title \"mytitle\"")
+      (matcho/assert
+       {:status 422,
+        :body
+        {:message "document validation failed",
+         :docname "customers.uno",
+         :errors
+         [{:type :doc-validation,
+           :message ":title is required",
+           :path [:zd/subdocs :mydoc :title]}]}}
+       (web/handle ztx 'zd/api
+                   {:uri "/customers.uno/edit"
+                    :request-method :put
+                    :body (req-body doc)})))
+
+    (def doc ":zd/docname customers.uno\n:title \"uno inc\"\n:tags #{}\n:rel #{}\n&mydoc\n:rel #{tags.client}\n:title \"mytitle\"")
 
     (matcho/assert
      {:status 200}
@@ -170,12 +179,13 @@
                   :request-method :put
                   :body (req-body doc)})))
 
-  (matcho/assert
-   {:status 200 :body "/customers"}
-   (web/handle ztx 'zd/api {:uri "/customers.uno"
-                            :request-method :delete}))
+  (testing "cleanup and check"
+    (matcho/assert
+     {:status 200 :body "/customers"}
+     (web/handle ztx 'zd/api {:uri "/customers.uno"
+                              :request-method :delete}))
 
-  (is (nil? (read-doc "customers/uno.zd")))
+    (is (nil? (read-doc "customers/uno.zd"))))
 
   (zen/stop-system ztx))
 

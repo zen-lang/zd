@@ -16,8 +16,6 @@
 
 :techs #{tech-postgres tech.js}
 
-:parent-doc customers
-
 :founder people.john
 
 :ceo people.john
@@ -38,6 +36,7 @@
 
 ^attribute
 :potential :high
+^attribute
 :sales-cycle :slow
 :proactive.feedback :medium
 :organized.payments :low

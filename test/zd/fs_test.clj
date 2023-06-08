@@ -74,8 +74,6 @@
 
   (is (nil? (agent-errors fs/ag)))
 
-  (:zdb @ztx)
-
   (testing "edn links loaded"
     (:zrefs @ztx)
     (matcho/match

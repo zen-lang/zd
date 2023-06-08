@@ -1,13 +1,20 @@
 
+:title "Default schema"
+
 :menu-order 2
 
 :icon [:fa-regular :fa-file-chart-pie]
 
 :desc /
 
-this document sets the knowledgse base structure
+this document sets the knowledge base structure
 
 :tags #{builtin}
+
+// require :tags and :title keys for all documents in the knowledge base
+:schema {:type zen/map :require #{:tags :title}}
+
+// define keys using subdocuments syntax
 
 // there are three types of document keys:
 // dockey (edn value or zentext markdown)
@@ -16,52 +23,38 @@ this document sets the knowledgse base structure
 
 &title
 :type :dockey
-:desc "document title"
+:desc "document title. required"
 :schema {:type zen/string}
+
+&desc
+:type :dockey
+:desc "document description. optional"
+:schema {:type zen/string}
+
+&icon
+:type :dockey
+:desc "a document icon. to search icons type :fs- prefix"
+:schema {:type zen/vector :every {:type zen/keyword}}
+:ann {:none {}}
 
 &menu-order
 :type :dockey
-:desc "makes a document appear in left navigation bar"
+:desc "set a document position in left navigation bar"
 :schema {:type zen/number}
 :ann {:none {}}
-
-&site
-:type :dockey
-:group :zd/summary
-:schema {:type zen/string}
-:ann {:link-badge {}}
-:desc "relationship to an org"
-
-&mydoc
-:type :subdoc
-:schema {:require #{:rel :title}}
-// ha ha funny colision
-:rel ""
-:title ""
-
-&rel
-:type :dockey
-:group :zd/summary
-:schema {:type zen/set :every {:type zen/symbol}}
-:ann {:badge {}}
-:desc "relationship to an org"
 
 &tags
 :type :dockey
 :group :zd/summary
 :schema {:type zen/set :every {:type zen/symbol}}
 :ann {:badge {}}
-:desc "document tags"
+:desc "document tags. required"
 
-&country
-:type :dockey
-:group :zd/summary
-:schema {:type zen/set :every {:type zen/symbol}}
-:ann {:badge {}}
-:desc "set of related countries"
-
-&icon
-:type :dockey
-:schema {:type zen/vector :every {:type zen/keyword}}
-:ann {:none {}}
-:desc "icon of a document"
+// define schema for a :mydoc subdocument
+// not fully functional aorn
+&mydoc
+:type :subdoc
+:schema {:require #{:rel :title}}
+// ha ha funny collision
+:rel ""
+:title ""
