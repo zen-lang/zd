@@ -27,24 +27,20 @@
 
 ;; by default add a header and renders content of a block
 (defmethod renderkey :default [ztx ctx {kp :key d :data anns :ann :as block}]
+  ;; TODO fix render inline for bb run
   (let [render-inline?
         (and (not (:zd/multiline anns))
              (= (:zd/content-type anns) :edn)
              (not (map? d)))]
-    [:div {:class (c [:py 4] :flex)
-           :style (if render-inline?
-                    {:flex-direction "row"}
-                    {:flex-direction "column"})}
-     [:div {:class (c :flex :flex-row :items-center :justify-between)}
+    [:div {:class (c [:py 4])}
+     [:div {:class (c :flex :flex-row :items-center)}
       [:a {:id kp}
        [:span {:class (c [:text :orange-500])} ":"]
        [:span {:class (c [:text :gray-600] :text-sm {:text-transform "uppercase"})} kp]]
       #_[:div {:class (c [:text :gray-500] :text-sm)}
          (name (get-in block [:ann :zd/content-type]))]]
      (when-not (and (string? d) (str/blank? d))
-       [:div {:style (when render-inline?
-                       {:padding-left "1rem"})}
-        (rendercontent ztx ctx block)])]))
+       [:div (rendercontent ztx ctx block)])]))
 
 ;; zentext methods
 (defmulti inline-method   (fn [ztx m arg ctx] (keyword m)))

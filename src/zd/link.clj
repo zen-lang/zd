@@ -22,7 +22,7 @@
         (resolve-icon ztx parent)))))
 
 (defn icon [ztx res]
-  (when-let [icon (resolve-icon ztx res)]
+  (if-let [icon (resolve-icon ztx res)]
     (cond (= (:type icon) :img)
           [:img {:src (:img icon)
                  :class (c :inline-block [:mr 1]
