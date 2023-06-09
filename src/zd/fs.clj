@@ -87,23 +87,28 @@
         docpath (str (str/replace docname "." "/") ".zd")
         filepath (str (first pths) "/" docpath)
         fs-save (utils/safecall (fn [ag]
-                                  ;; sync
                                   (.mkdirs (io/file dirname))
                                   (spit filepath cnt)
-                                  (when-let [repo (get-repo ztx)]
-                                    (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
-                                  (memstore/load-document! ztx {:path filepath
-                                                                :root r
-                                                                :resource-path docpath
-                                                                :content cnt})
-                                  ;; async
-                                  (memstore/load-links! ztx)
-                                  (memstore/eval-macros! ztx)
+                                  (if (str/includes? docname "_schema")
+                                    (reload ztx r pths)
+                                    (memstore/load-document! ztx {:path filepath
+                                                                  :root r
+                                                                  :resource-path docpath
+                                                                  :content cnt}))
                                   'ok)
-                                {:type :zd.fs/save-error})]
+                                {:type :zd.fs/save-error})
+
+        fs-reload (utils/safecall (fn [ag]
+                                    (when-let [repo (get-repo ztx)]
+                                      (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
+                                    (memstore/load-links! ztx)
+                                    (memstore/eval-macros! ztx)
+                                    'ok)
+                                  {:type :zd.fs/reload-error})]
 
     (send-off ag fs-save)
-    (await ag)))
+    (await ag)
+    (send-off ag fs-reload)))
 
 (defmethod zen/start 'zd.engines/fs
   [ztx {zd-config :zendoc :as config} & args]

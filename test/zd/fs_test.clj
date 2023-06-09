@@ -67,7 +67,7 @@
       :not-found {:zd/macro list?}
       :office-locations {:zd/macro list?}}}}
 
-   (memstore/get-doc ztx 'customers)))
+   (memstore/get-doc ztx 'macros)))
 
 (deftest referenced-loaded
   (load! ztx)

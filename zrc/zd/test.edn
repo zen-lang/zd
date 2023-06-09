@@ -7,7 +7,7 @@
   :paths ["customers-x" #_"examples/docs"]
   :root "index"
   ;; TODO make it in seconds
-  :pull-rate 10800
+  :pull-rate 32400
   :remote
   ;; TODO think about how to make the test reproducible
   {:from "git@github.com:carbon-hvze/zendoc-gitsync.git"

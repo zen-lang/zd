@@ -67,9 +67,7 @@
 (defn zen-schema
   "compile zen schema for a document from _schema's defined in knowledge base"
   [ztx docname]
-  (let [head {:type 'zen/map
-              :validation-type :open}
-        doc-keys (->> (:keys-idx (:zd/schema @ztx))
+  (let [doc-keys (->> (:keys-idx (:zd/schema @ztx))
                       (filter (fn [[_ v]]
                                 (and (not= :subdoc (:type v))
                                      (or (= (:namespace v) :zd/root)
@@ -92,7 +90,9 @@
         {:type 'zen/map
          :validation-type :open
          ;; TODO enable validation of nested subdocs /w zen/schema :confirms
-         :values (assoc head :keys (merge doc-keys {:zd/meta meta-sch}))
+         :values {:type 'zen/map
+                  :validation-type :open
+                  :keys (merge doc-keys {:zd/meta meta-sch})}
          :keys (->> (:keys-idx (:zd/schema @ztx))
                     (filter (fn [[_ v]]
                               (= :subdoc (:type v))))
@@ -100,11 +100,13 @@
                            [k (:schema v)]))
                     (into {}))}
         toplevel
-        (utils/deep-merge head
-                          (get-in @ztx [:zd/schema :schemas (get-parent ztx docname)])
+        (utils/deep-merge (get-in @ztx [:zd/schema :schemas (get-parent ztx docname)])
                           (get-in @ztx [:zd/schema :schemas :zd/root]))]
 
-    (-> {:zen/name 'zd.schema/document :tags #{'zen/schema}}
+    (-> {:zen/name 'zd.schema/document
+         :tags #{'zen/schema}
+         :type 'zen/map
+         :validation-type :open}
         (merge toplevel)
         (assoc-in [:keys :zd/meta] meta-sch)
         (assoc-in [:keys :zd/subdocs] subdocs)

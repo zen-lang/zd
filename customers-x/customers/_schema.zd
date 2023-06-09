@@ -1,5 +1,8 @@
 :title "Customer schema"
 
+:rel #{}
+:tags #{}
+
 // customers._schema defines keys for customers.* documents
 
 :schema {:type zen/map :require #{:rel}}

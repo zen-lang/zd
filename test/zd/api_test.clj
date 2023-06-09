@@ -189,6 +189,73 @@
 
   (zen/stop-system ztx))
 
+(deftest schema-edit
+  (zen/stop-system ztx)
+
+  (zen/read-ns ztx 'zd)
+
+  (zen/read-ns ztx 'zd.test)
+
+  (zen/start-system ztx 'zd.test/system)
+
+  (def doc ":zd/docname partners.boom\n:title \"boom industries\"")
+
+  (testing "root _schema requires :tags"
+    (matcho/assert
+     {:status 422
+      :body {:errors [{:path [:tags]}]}}
+     (web/handle ztx 'zd/api
+                 {:uri "/partners._draft/edit"
+                  :request-method :put
+                  :body (req-body doc)})))
+
+  (def sch ":zd/docname partners._schema\n:title \"Schema\"\n:tags #{}\n:schema {:require #{:category}}")
+
+  (testing "add _schema for partners"
+    (matcho/assert
+     {:status 200}
+     (web/handle ztx 'zd/api
+                 {:uri "/partners._draft/edit"
+                  :request-method :put
+                  :body (req-body sch)}))
+    (is (string? (read-doc "partners/_schema.zd"))))
+
+  (testing ":category is now required in partners._schema"
+    (def doc ":zd/docname partners.boom\n:title \"boom industries\"\n:tags #{}")
+
+    (matcho/assert
+     {:status 422}
+     (web/handle ztx 'zd/api
+                 {:uri "/partners._draft/edit"
+                  :request-method :put
+                  :body (req-body doc)}))
+
+    (def doc ":zd/docname partners.boom\n:title \"boom industries\"\n:tags #{}\n:category \"E-commerce\"")
+
+    (matcho/assert
+     {:status 200}
+     (web/handle ztx 'zd/api
+                 {:uri "/partners._draft/edit"
+                  :request-method :put
+                  :body (req-body doc)}))
+    (is (string? (read-doc "partners/boom.zd"))))
+
+  (testing "delete created docs"
+    (matcho/assert
+     {:status 200 :body string?}
+     (web/handle ztx 'zd/api {:uri "/partners._schema"
+                              :request-method :delete}))
+
+    (is (nil? (read-doc "partners/_schema.zd")))
+
+    (matcho/assert
+     {:status 200 :body string?}
+     (web/handle ztx 'zd/api {:uri "/partners.boom"
+                              :request-method :delete}))
+    (is (nil? (read-doc "partners/boom.zd"))))
+
+  (zen/stop-system ztx))
+
 (defn restart! [ztx]
   (zen/stop-system ztx)
   (zen/start-system ztx 'zd.test/system))

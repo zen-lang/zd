@@ -3,9 +3,6 @@
 
 :menu-order 1
 
-:meta edn/
-{:tags #{rdfs.class}}
-
 :desc /
 
 a description that refers to #people.john and mentions @todd.
@@ -21,12 +18,6 @@ there is also a link that includes hash char - [[a https://docs.google.com/sprea
 :tags [tags.telemed]
 
 :best-customer people.john
-
-:office-locations (load "office-locations.json" :json)
-:yaml-example (load "sample.yaml" :yaml)
-:not-found (load "not-found.json")
-:string-file (load "file.txt")
-:macro-notfound (unload "nofile.txt")
 
 ^table-of [:xt/id]
 :customers datalog/

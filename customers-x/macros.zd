@@ -1,0 +1,10 @@
+:title "Macros examples"
+:icon [:fa-duotone :fa-circle-m]
+:tags #{tags.builtin}
+:menu-order 4
+
+:office-locations (load "office-locations.json" :json)
+:yaml-example (load "sample.yaml" :yaml)
+:not-found (load "not-found.json")
+:string-file (load "file.txt")
+:macro-notfound (unload "nofile.txt")

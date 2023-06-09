@@ -117,6 +117,7 @@
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc} & [render-subdoc?]]
   [:div {:class (c [:w "60rem"])}
+   ;; TODO check if document errors are rendered in view
    (when-let [errs (:errors m)]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
@@ -125,19 +126,19 @@
                    :key k
                    :ann (get-in doc [:zd/meta :ann k])}]
         (render-key ztx ctx block))))
-   (when-let [subdocs (distinct (seq (filter #(get subs %) (:doc m))))]
+   (let [links (seq (get-in doc [:zd/meta :backlinks]))]
+     (when-not render-subdoc?
+       (methods/renderkey ztx ctx {:data links :key :zd/backlinks})))
+   (when-let [subdocs (seq (filter #(get subs %) (:doc m)))]
      [:div {:class (c [:py 4])}
       (doall
-       (for [sub-key subdocs]
+       (for [sub-key (distinct subdocs)]
          [:div {:class (c [:my 2])}
           [:div {:class (c [:text :gray-700] :flex :flex-row :border-b)}
            [:a {:id (str "subdocs-" (name sub-key))}
             [:span {:class (c [:text :green-500])} "&"]
             [:span {:class (c [:text :gray-600])} (name sub-key)]]]
-          (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])
-   (let [links (seq (get-in doc [:zd/meta :backlinks]))]
-     (when-not render-subdoc?
-       (methods/renderkey ztx ctx {:data links :key :zd/backlinks})))])
+          (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])])
 
 (defn contents-sidebar [ztx {r :root :as ctx}
                         {{order :doc anns :ann :as m} :zd/meta links :zd/backlinks subs :zd/subdocs :as doc}]
