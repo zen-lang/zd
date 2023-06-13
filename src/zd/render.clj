@@ -33,10 +33,18 @@
              :onclick (when-not (= docname 'index) del-script)}
          [:i.fas.fa-trash-xmark]]
 
+        plus-btn
+        [:a {:class (c :cursor-pointer
+                       [:text :gray-600]
+                       [:ml 4]
+                       [:hover [:text :green-600]])
+             :href (str docname "." "_draft/edit")}
+         [:i.fas.fa-plus]]
+
         container
         [:div {:class (c :flex :items-center :border-l [:ml 4])}]]
 
-    (conj container edit-btn del-btn)))
+    (conj container edit-btn del-btn plus-btn)))
 
 (defn breadcrumbs [ztx {{uri :uri} :request root :root} {{:keys [docname]} :zd/meta :as doc}]
   (let [parts (str/split (str docname) #"\.")
@@ -117,8 +125,8 @@
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc} & [render-subdoc?]]
   [:div {:class (c [:w "60rem"])}
-   ;; TODO check if document errors are rendered in view
-   (when-let [errs (:errors m)]
+   ;; TODO render errors in doc view
+   (when-let [errs (seq (:errors m))]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
    (doall
     (for [k (distinct (filter #(get doc %) (:doc m)))]

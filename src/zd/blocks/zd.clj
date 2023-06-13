@@ -110,15 +110,14 @@
 
 (defmethod methods/renderkey :zd/errors
   [ztx ctx {errors :data k :key :as block}]
-  (when (seq errors)
-    [:div {:class (c [:text :red-700] [:p 4] [:my 4] :rounded
-                     {:background-color "#fff5f5"})}
-     [:ul {:class (c :font-bold :text-lg [:mb 2] [:ml 0] {:color "#e53e3e"})}
-      "Document errors"]
-     (for [err (sort-by :type errors)]
-       [:li {:class (c [:mb 1] [:py 1] :flex [:space-x 3] [:text :gray-600])}
-        [:span (->> (:path err)
-                    (map (fn [p] (if (keyword? p) (name p) (str p))))
-                    (str/join ".")
-                    (str ":"))]
-        [:span {:class (c [:ml 4] {:text-align "right"})} (:message err)]])]))
+  [:div {:class (c [:text :red-700] [:p 4] [:my 4] :rounded
+                   {:background-color "#fff5f5"})}
+   [:ul {:class (c :font-bold :text-lg [:mb 2] [:ml 0] {:color "#e53e3e"})}
+    "Document errors"]
+   (for [err (sort-by :type errors)]
+     [:li {:class (c [:mb 1] [:py 1] :flex [:space-x 3] [:text :gray-600])}
+      [:span (->> (:path err)
+                  (map (fn [p] (if (keyword? p) (name p) (str p))))
+                  (str/join ".")
+                  (str ":"))]
+      [:span {:class (c [:ml 4] {:text-align "right"})} (:message err)]])])

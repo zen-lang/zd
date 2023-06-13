@@ -222,16 +222,11 @@ var get_href = (ev) => {
 var on_link_click = (ev) => {
     var res = get_href(ev);
     try {
-        if (res.dir) {
-            render_menu(res.dir);
-            ev.preventDefault();
-            ev.stopPropagation();
-            ev.stopImmediatePropagation();
-            return false;
-        } else if (res.href) {
+        if (res.href) {
+            var l = new URL(res.href);
             var href = res.href;
             var parts = href.split('/');
-            if (parts.length == 4 && parts[2] == 'localhost:3333') {
+            if (!l.hash && parts.length == 4 && parts[2] == 'localhost:3333') {
                 load_page(href, true);
                 ev.preventDefault();
                 ev.stopPropagation();
