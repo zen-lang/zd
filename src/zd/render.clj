@@ -69,43 +69,6 @@
               [:span {:class (c [:text :gray-500] [:mx 1.5] {:font-size "18px"})}
                "/"])]))])))
 
-(defn search [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
-  [:div#zd-search {:class (c [:text :gray-600] [:pt 4] :overflow-y-auto)}
-   [:div {:class (c :flex :text-sm :flex-row [:px 6] :items-baseline)}
-    [:span {:class (c [:pr 0.8])}
-     [:i.fas.fa-regular.fa-search]]
-    [:input#zd-search-input
-     {:type "search"
-      :value search-text
-      :class (c :border
-                [:text :gray-600]
-                :outline-none
-                [:rounded 14]
-                [:py 0.2]
-                [:px 3]
-                [:w "100%"])}]]
-   (when-let [search-text (not-empty search-text)]
-     (let [query-result (map first (db/search ztx search-text #_(get-in doc [:zd/meta :docname]) #_page-number))]
-       (if (seq query-result)
-         [:div {:class (c [:pl 6] [:py 2] :text-sm)}
-          (for [[i docname] (map-indexed vector query-result)]
-            (let [{{anns :ann lu :last-updated} :zd/meta p :parent :as doc}
-                  (memstore/get-doc ztx (symbol docname))]
-              [:div {:class (c [:py 2])}
-               [:div {:class (c :overflow-hidden)}
-                (link/symbol-link ztx docname)
-                [:div {:class (c :flex :flex-row :items-baseline)}
-                 (when (symbol? p)
-                   [:div p])
-                 (when (str/includes? (str docname) "_template")
-                   [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
-                    "_template"])
-                 (when (str/includes? (str docname) "_schema")
-                   [:span {:class (c [:text :orange-500] [:p 1] [:px 2])}
-                    "_schema"])]]]))]
-         [:span {:class (c [:text :gray-600] :text-sm)}
-          "No results"])))])
-
 (defn topbar [ztx ctx doc]
   [:div {:class (c :flex :items-baseline [:w "64rem"] [:py 4])}
    (breadcrumbs ztx ctx doc)
@@ -206,45 +169,78 @@
 (defn navigation [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
   [:div#left-nav {:class (c :border-r
                             [:bg "#fbfbfb"]
-                            :fixed
-                            [:top 0]
-                            [:left 0]
-                            [:w "14rem"]
                             [:h "100vh"]
-                            {:overflow-y "auto"})}
-   [:div {:class (c :flex :flex-col)}
-    (search ztx ctx doc)
-    (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
-      [:div#zd-menu {:class (c [:pt 2])}
-       (for [[d] docs]
-         (let [doc (memstore/get-doc ztx (symbol d))]
-           [:div {:class (c :flex :flex-row [:hover :cursor-pointer [:bg "#f6f6f6"]]
-                            :items-center
-                            [:pseudo ":hover>a:last-child" :block]
-                            :justify-between)}
+                            [:py 4]
+                            :overflow-y-auto
+                            :flex
+                            :flex-col
+                            :flex-grow
+                            [:flex-shrink 0]
+                            {:flex-basis "16rem"})}
 
-            [:a {:href (str "/" d)
-                 :class (c [:py 2.3] [:px 6]
-                           [:text :gray-600]
-                           [:w "100%"]
-                           :flex :flex-row
-                           :items-baseline
-                           :text-sm)}
-             [:div {:class (c [:text :gray-700] [:w 6])}
-              (link/icon ztx doc)]
-             [:span {:class (c :capitalize)} d]]
-            [:a {:class (c :cursor-pointer
-                           [:text :gray-500]
-                           [:pr 6]
-                           :hidden
-                           [:hover [:text :green-600]])
-                 :href (str d "." "_draft/edit")}
-             [:i.fas.fa-plus]]]))])]])
+   [:div {:class (c :flex :text-sm :flex-row [:px 6] :items-baseline)}
+    [:span {:class (c :text-sm [:px 1] [:text :gray-600])} #_{:class (c :relative [:right -5])}
+     [:i.fas.fa-regular.fa-search]]
+    [:input#zd-search-input
+     {:type "search"
+      :value search-text
+      :class (c :border
+                [:text :gray-600]
+                :outline-none
+                [:rounded 4]
+                [:py 0.2]
+                [:px 1])}]]
+   (if (not (str/blank? search-text))
+     (let [query-result (map first (db/search ztx search-text #_(get-in doc [:zd/meta :docname]) #_page-number))]
+       (if (seq query-result)
+         [:div {:class (c :flex :flex-col :text-sm [:pl 6] [:py 2] :text-sm {:flex-basis "18rem"})}
+          (for [[i docname] (map-indexed vector query-result)]
+            (let [{{anns :ann lu :last-updated} :zd/meta p :parent :as doc}
+                  (memstore/get-doc ztx (symbol docname))]
+              [:div {:class (c [:py 2])}
+               [:div {:class (c :overflow-hidden)}
+                (link/symbol-link ztx docname)
+                [:div {:class (c :flex :flex-row :items-baseline)}
+                 (when (symbol? p)
+                   [:div p])
+                 (when (str/includes? (str docname) "_template")
+                   [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
+                    "_template"])
+                 (when (str/includes? (str docname) "_schema")
+                   [:span {:class (c [:text :orange-500] [:py 1] [:px 2])}
+                    "_schema"])]]]))]
+         [:span {:class (c [:text :gray-600] :text-sm [:py 1] [:px 2])}
+          "No results"]))
+     (let [{:keys [docs templates schemas views]} (db/navbar-docs ztx)]
+       [:div#zd-menu {:class (c [:pt 2])}
+        (for [[d] docs]
+          (let [doc (memstore/get-doc ztx (symbol d))]
+            [:div {:class (c :flex :flex-row [:hover :cursor-pointer [:bg "#f6f6f6"]]
+                             :items-center
+                             [:pseudo ":hover>a:last-child" :block]
+                             :justify-between)}
+             [:a {:href (str "/" d)
+                  :class (c [:py 2.3] [:px 6]
+                            [:text :gray-600]
+                            [:w "100%"]
+                            :flex :flex-row
+                            :items-baseline
+                            :text-sm)}
+              [:div {:class (c [:text :gray-700] [:w 6])}
+               (link/icon ztx doc)]
+              [:span {:class (c :capitalize)} d]]
+             [:a {:class (c :cursor-pointer
+                            [:text :gray-500]
+                            [:pr 6]
+                            :hidden
+                            [:hover [:text :green-600]])
+                  :href (str d "." "_draft/edit")}
+              [:i.fas.fa-plus]]]))]))])
 
 (defn doc-view [ztx ctx doc]
-  [:div {:class (c :flex :flex-row :justify-center)}
+  [:div {:class (c :flex [:h "100%"])}
    (navigation ztx ctx doc)
-   [:div#page
+   [:div#page {:class (c :flex :flex-grow [:flex-shrink 1] [:px 2] :overflow-y-auto {:flex-basis "100%"})}
     (render-doc ztx ctx doc)]])
 
 (def default-tpl ":title \"\"")

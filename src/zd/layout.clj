@@ -110,9 +110,6 @@
     [:script {:src "/static/js/vega.min.js"}]
     [:script {:src "/static/js/quick-score.min.js"}]
     [:script {:src "/static/js/editor.js"}]]
-   [:body {:class (c {})}
-    [:div#overlay
-     {:class (c :fixed [:top 0] [:left 0] :h-min-full :w-min-full :overflow-y-hidden
-                {:z-index 1} {:background-color "rgba(0, 0, 0, 0.4)"} {:visibility "hidden"})}]
+   [:body {:class (c :oveflow-hidden [:h "100vh"])}
     content
     [:script "hljs.highlightAll()"]]])

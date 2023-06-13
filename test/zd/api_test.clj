@@ -83,7 +83,7 @@
 
   (def invalid-doc ":zd/docname customers._draft\n:title #{mytitle}\n:icon \"a string\"")
 
-  (def doc ":zd/docname customers.zero\n:title \"zero inc\"\n:rel #{rel.partner}\n:techs #{techs.clojure}\n:tags #{}")
+  (def doc ":zd/docname customers.zero\n:title \"zero inc\"\n:rel #{rel.partner}\n:techs #{techs.clojure}\n:desc \"mydesc\" ")
 
   (def errs
     [{:type :docname-validation,
@@ -100,7 +100,7 @@
      {:type :doc-validation, :message ":rel is required", :path [:rel]}
      ;; required in _schema
      {:type :doc-validation,
-      :path [:tags]}])
+      :path [:desc]}])
 
   (testing ":zd/docname, keys from both _schema and customers._schema are validated"
     (matcho/assert
@@ -141,7 +141,7 @@
                   :request-method :put
                   :body (req-body doc)}))
 
-    (def doc ":zd/docname customers.uno\n:rel #{rel.client}\n:tags #{tags.champion}\n:title \"uno inc.\"\n&partners \n:rel #{rel.unknown}")
+    (def doc ":zd/docname customers.uno\n:rel #{rel.client}\n:desc \"best client!\"\n:title \"uno inc.\"\n&partners \n:rel #{rel.unknown}")
 
     (matcho/assert
      {:status 200}
@@ -170,7 +170,7 @@
                     :request-method :put
                     :body (req-body doc)})))
 
-    (def doc ":zd/docname customers.uno\n:title \"uno inc\"\n:tags #{}\n:rel #{}\n&mydoc\n:rel #{tags.client}\n:title \"mytitle\"")
+    (def doc ":zd/docname customers.uno\n:title \"uno inc\"\n:desc \"uno incorporated\"\n:rel #{}\n&mydoc\n:rel #{tags.client}\n:title \"mytitle\"")
 
     (matcho/assert
      {:status 200}
@@ -200,16 +200,16 @@
 
   (def doc ":zd/docname partners.boom\n:title \"boom industries\"")
 
-  (testing "root _schema requires :tags"
+  (testing "root _schema requires :desc"
     (matcho/assert
      {:status 422
-      :body {:errors [{:path [:tags]}]}}
+      :body {:errors [{:path [:desc]}]}}
      (web/handle ztx 'zd/api
                  {:uri "/partners._draft/edit"
                   :request-method :put
                   :body (req-body doc)})))
 
-  (def sch ":zd/docname partners._schema\n:title \"Schema\"\n:tags #{}\n:schema {:require #{:category}}")
+  (def sch ":zd/docname partners._schema\n:title \"Schema\"\n:desc /\nschema\n:tags #{}\n:schema {:require #{:category}}")
 
   (testing "add _schema for partners"
     (matcho/assert
@@ -230,7 +230,7 @@
                   :request-method :put
                   :body (req-body doc)}))
 
-    (def doc ":zd/docname partners.boom\n:title \"boom industries\"\n:tags #{}\n:category \"E-commerce\"")
+    (def doc ":zd/docname partners.boom\n:title \"boom industries\"\n:desc \"mydesc\"\n:category \"E-commerce\"")
 
     (matcho/assert
      {:status 200}

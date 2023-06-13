@@ -20,6 +20,7 @@
 (defn delete-doc [ztx repo {p :docpath d :docname}]
   (let [{:keys [missing]} (git/git-status repo)
         git-config (git/git-config-load repo)
+        ;; TODO use default uname and email
         uname (.getString git-config "user" nil "name")
         email (.getString git-config "user" nil "email")]
     (doseq [m missing]

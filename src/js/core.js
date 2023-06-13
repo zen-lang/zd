@@ -286,22 +286,6 @@ var create_redirect = (e) => {
     window.location.href = p + "._draft/edit?" + window.location.search;
 };
 
-var init_tabs = () => {
-    var sp = new URLSearchParams(window.location.search);
-
-    var menu_div = document.getElementById('zd-menu');
-    var search_input = document.getElementById('zd-search-input');
-
-    // TODO re impl with class toggle and css
-    if (!sp.get('search')) {
-        menu_div.style.display = 'block';
-    } else {
-        search_input.focus();
-        search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
-        menu_div.style.display = 'none';
-    }
-};
-
 main(() => {
     update_widgets();
 
@@ -311,7 +295,14 @@ main(() => {
 
     document.getElementById('zd-search-input').addEventListener('input', on_search_input);
 
-    init_tabs();
+    var sp = new URLSearchParams(window.location.search);
+
+    var search_input = document.getElementById('zd-search-input');
+
+    if (sp.get('search')){
+        search_input.focus();
+        search_input.selectionStart = search_input.selectionEnd = search_input.value.length;
+    }
 
     window.addEventListener('popstate', (ev) => {
         console.log('pop', ev.state, window.location.href);

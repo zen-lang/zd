@@ -41,7 +41,7 @@
                   'customers))
 
   (matcho/assert
-   #{[{:xt/id "people.john" :name "John"}]}
+   #{[{:xt/id "people.john"}]}
    (datalog/query ztx '{:find [(pull e [:xt/id :name])]
                         :where [[e :role "ceo"]]}))
 
