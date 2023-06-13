@@ -1,0 +1,14 @@
+:title "Pipedrive integration"
+:tags #{backlog.tags.business-features}
+
+:desc /
+
+features related to fetching data from Pipedrive CRM.
+
+:feature-spec /
+
+integration widget that allows to fetch data from Pipedrive CRM
+
+* change syntax to pipedrive/person, pipedrive/org
+* impl timeline person view
+* show full note and email content?

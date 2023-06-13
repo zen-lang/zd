@@ -1,0 +1,16 @@
+:title "Gitsync"
+
+:tags #{backlog.tags.tech-platform}
+
+:desc /
+allows to sync (auto commit / pull / push) documents to a remote git repository. Used as a way to implement collaborative editing of a knowledge database.
+
+:gitsync /
+
+* remote git repo as cloud service (easier to setup than github)
+* visual feedback about gitsync status
+* support multiple remotes (map file to path) in gitsync and loader
+* merge conflicts auto resolution. maybe impl git merge strategy that saves both files and allows user to select a correct file?
+* auto restart (when network had not been available before)
+* more authentication options
+* support use case when gitsync is turned on at the existing docdir

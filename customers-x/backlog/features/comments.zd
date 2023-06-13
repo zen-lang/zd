@@ -1,0 +1,11 @@
+:title "Comments syntax"
+
+:tags #{backlog.tags.business-features}
+
+:desc /
+
+features related to comments in documents. comments are entered by prefixing a line with "//" and may be used for questions, todo lists, attention markers
+
+:feature-spec /
+
+* render comments from editor in document view page

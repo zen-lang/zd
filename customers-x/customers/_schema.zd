@@ -14,6 +14,11 @@
 :ann {:link-badge {}}
 :desc "link to a an organization website"
 
+&category
+:type :dockey
+:schema {:type zen/string}
+:desc "category of a customer"
+
 &rel
 :type :dockey
 :group :zd/summary

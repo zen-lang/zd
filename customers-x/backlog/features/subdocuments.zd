@@ -1,0 +1,13 @@
+:title "Subdocuments"
+:tags #{backlog.tags.business-features}
+
+:desc /
+
+Subdocuments allows to embed documents. Write as one document, view, query & edit as separate documents.
+
+:feature-spec /
+
+* view separately as if a subdoc is a separate file
+* query separately, store subdocs separately in xtdb
+* subdocs layout as accordeon (foldable)
+* try contacts subdocument for organization

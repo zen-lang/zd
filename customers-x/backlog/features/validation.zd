@@ -1,0 +1,15 @@
+:title "Validation"
+:tags #{backlog.tags.tech-platform}
+
+:desc /
+
+document validation with _schema.zd files
+
+:feature-spec /
+
+* RDF/OWL ontologies support (.ttl)
+* better error messages (types description)
+* add page with all validation errors
+* display errors for a single document view
+* add .search property to a key schema to prompt a value from dict in editor
+* merge _template into _schema

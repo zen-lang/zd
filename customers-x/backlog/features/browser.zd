@@ -1,0 +1,10 @@
+:title "Browser"
+:tags #{backlog.tags.business-features}
+
+:desc /
+
+Browser is a tool that allows to query knowledge base and view, filter & sort results.
+
+:feature-spec /
+* use [metabase](http://metabase.com) query builder as an example
+* check [snomed browser](https://browser.ihtsdotools.org/) for ideas

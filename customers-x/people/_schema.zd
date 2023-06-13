@@ -1,0 +1,9 @@
+:title "People schema"
+:desc /
+
+defines keys for people.* documents
+
+&role
+:type :dockey
+:schema {:type zen/set :every {:type zen/string}}
+:desc "role of a person in an organization"

@@ -1,0 +1,13 @@
+:title "Pub-sub"
+:tags #{backlog.tags.tech-platform}
+:desc /
+
+integration bus that allows zen services to communicate.
+
+:feature-spec /
+
+use cognitect.anomalies as an example
+
+* default logging bus that prints
+* user-related events on UI with reactive updates
+* reactive and concurrent implementation

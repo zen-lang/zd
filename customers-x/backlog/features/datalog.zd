@@ -1,0 +1,10 @@
+:title "Datalog XTDB"
+:tags #{backlog.tags.tech-platform backlog.tags.database-engine}
+:desc /
+database engine that allows to query content of documents and aggregate results
+:feature-spec /
+
+* impl #backlog.features.browser
+* add hash syntax for symbols in queries
+* impl ^list annotation for displaying query results
+* auto indentation in editor

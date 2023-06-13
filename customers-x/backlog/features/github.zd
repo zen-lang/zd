@@ -1,0 +1,11 @@
+:title "Github integration"
+:tags #{backlog.tags.business-features}
+
+:desc /
+features related to github api integration
+
+:feature-spec /
+
+* render issue, pull request in zendoc
+* display embedded code blocks
+* maybe embed a project dashboard as an iframe?

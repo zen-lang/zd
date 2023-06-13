@@ -1,0 +1,15 @@
+:title "Dataviz engine"
+
+:tags #{backlog.tags.business-features}
+
+:desc /
+
+allows rendering of graphs and diagrams with a set of annotations.
+
+:feature-spec /
+
+* choose dataviz engine to use (explore options). maybe use [vega](https://vega.github.io/)
+
+reports examples:
+
+customers needs, features used (generative backlog), LTV, MRR

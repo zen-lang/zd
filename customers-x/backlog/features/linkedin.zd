@@ -1,0 +1,10 @@
+:title "Linkedin API"
+:tags #{backlog.tags.business-features}
+:desc /
+
+features related to linkedin integration
+
+:feature-spec /
+
+* for :linkedin key show link-badge with organization id
+* impl external key for location, number of employees
