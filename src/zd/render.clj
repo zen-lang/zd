@@ -209,7 +209,7 @@
                             :fixed
                             [:top 0]
                             [:left 0]
-                            [:w "18rem"]
+                            [:w "14rem"]
                             [:h "100vh"]
                             {:overflow-y "auto"})}
    [:div {:class (c :flex :flex-col)}
