@@ -88,7 +88,7 @@
            (methods/renderkey ztx ctx err-block)))))
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc} & [render-subdoc?]]
-  [:div {:class (c [:w "60rem"])}
+  [:div {:class (c [:w-max "60rem"])}
    ;; TODO render errors in doc view
    (when-let [errs (seq (:errors m))]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
