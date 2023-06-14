@@ -1,0 +1,12 @@
+:title "Document model"
+
+:tags #{backlog.tags.tech-platform}
+
+:desc /
+functionality related to .zd -> memory document representation
+
+:feature-spec /
+
+* unparse document (from in memory to text representation). take comments into account
+* get document field value from API (external fields, statuses from CRM)
+* support renaming document with :zd/docname. re calculate links after changing directory.

@@ -1,0 +1,10 @@
+:title "ML engine"
+:tags #{backlog.tags.tech-platform}
+:desc /
+special type of storage + lm (llm) library to extract insights from zentext
+
+:feature-spec /
+
+* try integrate vector database for text based topic modelling
+* use [https://stanfordnlp.github.io/CoreNLP](stanford nlp) toolkit to process zentext
+* explore [https://gate.ac.uk/family/embedded.html](gate framework) for text processing

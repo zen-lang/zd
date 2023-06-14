@@ -1,0 +1,10 @@
+:title "Popup"
+:tags #{backlog.tags.usability}
+:desc /
+
+preview div that is added on hover (check github)
+
+:feature-spec /
+* render document summary in a popup on symbol link hover
+* pin popup
+* allow layering of popups - free links navigation

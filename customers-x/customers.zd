@@ -17,7 +17,7 @@ there is also a link that includes hash char - [[a https://docs.google.com/sprea
 
 :tags [tags.telemed]
 
-:best-customer people.john
+:product-champion people.john
 
 ^table-of [:xt/id]
 :customers datalog/

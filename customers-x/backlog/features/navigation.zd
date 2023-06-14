@@ -1,0 +1,6 @@
+:title "Navigation"
+:tags #{backlog.tags.tech-platform}
+:desc /
+left navigation sidebar
+:feature-spec /
+* impl _nav.zd where user configures navigation with text

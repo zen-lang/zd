@@ -1,0 +1,16 @@
+:title "Editor"
+:tags #{backlog.tags.tech-platform}
+:desc /
+live document editor
+:feature-spec /
+* auto save _draft documents
+* button to close editor
+* help widget with editor tutorial
+* auto complete lists, functions and methods in zentext; content-types
+* highlight subdocs, edn values, datalog queries
+* use different color scheme for highlighting
+* buttons to increase/decrease font-size
+* render diff of a document with git
+* make sure links are not clickable in editor view (alert before navigating?)
+* render :desc for keys autocomplete from metadata
+* search dictionaries for keys with .search from metadata

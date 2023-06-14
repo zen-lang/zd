@@ -1,0 +1,26 @@
+:title "Zentext"
+:tags #{backlog.tags.tech-platform}
+
+:desc /
+
+free-text formatting language called zentext
+
+[github formatting](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+and
+[advanced formatting on github](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections)
+
+:feature-spec /
+
+* h1, h2, h3 headings
+* linebreak
+* italic, bold, etc
+* bullets and numbered bullets with depth of 4
+* quoted text
+* color tokens in HEX
+* render anchor links for headings by default
+* relative links (to loader paths)
+* task lists (with checkboxes)
+* foldable paragraphs
+* add emojis and unicode characters
+* use mona sans and hubot sans fonts
+* add tabulation for ease of read

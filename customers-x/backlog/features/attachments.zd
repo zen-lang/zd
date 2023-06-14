@@ -1,0 +1,10 @@
+:title "Attachments"
+
+:desc /
+enables adding images, files and other types of content into zendoc.
+
+:feature-spec /
+
+* git lfs as storage layer?
+* bulk export / import of media
+* store blobs in gcp

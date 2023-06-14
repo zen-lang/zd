@@ -1,0 +1,7 @@
+:title "Toggle keys"
+:tags #{backlog.tags.usability}
+:desc /
+
+:feature-spec /
+* make keys and subdocs togglable
+* add expand all / collapse all buttons to document view
