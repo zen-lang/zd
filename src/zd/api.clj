@@ -93,7 +93,6 @@
                           :docname docname
                           :root r
                           :errors errs}}
-      ;; TODO make full reload if _schema or :schema was edited
       (do (zen/pub ztx 'zd.events/on-doc-save {:docname docname :content content :root r})
           {:status 200 :body (str "/" docname)}))))
 

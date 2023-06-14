@@ -91,7 +91,7 @@
                               :transition "all 0.26s"}]]]])
 
 (defn sidebar [ztx {{{id :id} :route-params} :request} content]
-  [:html
+  [:html #_{:class (c {:font-size "14px"})}
    [:head
     [:style (stylo.core/compile-styles @stylo.core/styles)]
     [:style (garden.core/css common-style)]
@@ -110,6 +110,6 @@
     [:script {:src "/static/js/vega.min.js"}]
     [:script {:src "/static/js/quick-score.min.js"}]
     [:script {:src "/static/js/editor.js"}]]
-   [:body {:class (c :oveflow-hidden [:h "100vh"])}
+   [:body {:class (c :oveflow-hidden [:h "100vh"] [:text "#353B50"])}
     content
     [:script "hljs.highlightAll()"]]])

@@ -159,7 +159,7 @@
                                ;; TODO rename :doc to :from
                                {:to docname :path p :doc from}))
                            links)]
-        (swap! ztx assoc-in [:zdb docname :zd/meta :backlinks] links*)
+        (swap! ztx assoc-in [:zdb docname :zd/meta :backlinks] (set links*))
         (recur oth)))))
 
 (defn eval-macros! [ztx]

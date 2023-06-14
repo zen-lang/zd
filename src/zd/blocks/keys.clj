@@ -32,7 +32,7 @@
 
 (defmethod methods/renderkey :title
   [ztx {doc :doc} {title :data :as block}]
-  [:h1 {:class (c :flex :items-center) :id "title"}
+  [:h1 {:class (c :flex :items-center [:m 0] [:py 4]) :id "title"}
    (if-let [img (or (:avatar doc) (:logo doc))]
      [:img {:src img
             :class (c [:w 8] [:h 8] :inline-block [:mr 2] {:border-radius "100%"})}]

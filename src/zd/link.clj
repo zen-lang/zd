@@ -37,7 +37,7 @@
 
 (defn symbol-link [ztx s & [opts]]
   (if-let [res (memstore/get-doc ztx (symbol s))]
-    [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]] :whitespace-no-wrap)}
+    [:a {:href (str "/" s) :class (c :inline-flex :items-center [:text "#4B5BA0"] [:hover [:underline]] :whitespace-no-wrap)}
      (icon ztx res)
      (when-not (:compact opts)
        (or (:title res) s))]

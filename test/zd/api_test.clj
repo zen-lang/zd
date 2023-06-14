@@ -6,7 +6,8 @@
    [clojure.java.io :as io]
    [clojure.test :refer [deftest is testing]]
    [zen.core :as zen]
-   [zen-web.core :as web]))
+   [zen-web.core :as web]
+   [zd.memstore :as memstore]))
 
 (defonce ztx (zen/new-context {}))
 
@@ -253,6 +254,56 @@
      (web/handle ztx 'zd/api {:uri "/partners.boom"
                               :request-method :delete}))
     (is (nil? (read-doc "partners/boom.zd"))))
+
+  (zen/stop-system ztx))
+
+(deftest backlinks-update
+  (zen/stop-system ztx)
+
+  (zen/read-ns ztx 'zd)
+
+  (zen/read-ns ztx 'zd.test)
+
+  (zen/start-system ztx 'zd.test/system)
+
+  (testing "two backlinks are present"
+    (matcho/assert
+     #{{:to 'customers :path [:parent] :doc 'customers._schema}
+       {:to 'customers :path [:parent] :doc 'customers.flame}}
+     (:backlinks (:zd/meta (memstore/get-doc ztx 'customers)))))
+
+  (testing "add child document"
+    (def doc ":zd/docname customers.newcust\n:title \"my cust\"\n:desc \"\"\n:rel #{}")
+
+    (matcho/assert
+     {:status 200}
+     (web/handle ztx 'zd/api
+                 {:uri "/customers._draft/edit"
+                  :request-method :put
+                  :body (req-body doc)}))
+
+    (is (string? (read-doc "customers/newcust.zd"))))
+
+  (testing "third backlink is added"
+    (matcho/assert
+     #{{:path [:parent] :doc 'customers._schema :to 'customers}
+       {:path [:parent] :doc 'customers.newcust :to 'customers}
+       {:path [:parent] :doc 'customers.flame :to 'customers}}
+     (:backlinks (:zd/meta (memstore/get-doc ztx 'customers)))))
+
+  (testing "third backlink is gone after newcust deletion"
+    (matcho/assert
+     {:status 200 :body string?}
+     (web/handle ztx 'zd/api {:uri "/customers.newcust"
+                              :request-method :delete}))
+
+    (is (nil? (read-doc "testdoc.zd"))))
+
+  (testing "third backlink is added"
+    (matcho/assert
+     #{{:path [:parent] :doc 'customers._schema :to 'customers}
+       {:path [:parent] :doc 'customers.flame :to 'customers}}
+     (:backlinks (:zd/meta (memstore/get-doc ztx 'customers)))))
 
   (zen/stop-system ztx))
 

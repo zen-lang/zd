@@ -34,20 +34,18 @@
              (group-by :parent))]
     (for [[parent links] links]
       (let [*parent (or parent r)]
-        [:div {:class (c [:py 4] [:text :gray-600])}
-         [:div {:class (c :flex :flex-row)}
-          [:a {:id (str "backlinks-" *parent) :class (c :text-sm :uppercase)}
-           [:span {:class (c :text-xs [:pr 0.5] [:text :green-300])}
-            [:i.fas.fa-link]]
-           *parent]
-          [:div {:class (c [:text :gray-500] :text-sm [:px 2])}
-           [:span {:class (c [:pr 2])}
-            (str/join ", " (set (map :path links)))]
-           [:a {:class (c :cursor-pointer [:hover [:text :green-600]])
-                :href (if (some? parent)
-                        (str parent "." "_draft/edit")
-                        "_draft/edit")}
-            [:i.fas.fa-plus]]]]
+        [:div {:class (c [:py 4] #_[:text :gray-600])}
+         [:div {:class (c :flex :flex-row :items-center :border-b :justify-between [:py 1])}
+          [:div
+           [:a {:id (str "backlinks-" *parent) :class (c :uppercase {:font-weight "600"})}
+            *parent]
+           [:span {:class (c [:pl 2] :text-sm [:text :gray-500])}
+            (str/join ", " (set (map :path links)))]]
+          [:a {:class (c :block [:p 1] :text-lg :cursor-pointer [:hover [:text :green-600]])
+               :href (if (some? parent)
+                       (str parent "." "_draft/edit")
+                       "_draft/edit")}
+           [:i.fas.fa-plus]]]
          ;; TODO think if path is needed in each link
          (for [{p :path docname :doc} (distinct (map #(dissoc % :path) links))]
            (let [{{anns :ann lu :last-updated} :zd/meta :as doc}

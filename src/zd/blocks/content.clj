@@ -39,8 +39,7 @@
 
 (defmethod methods/rendercontent :zentext
   [ztx ctx {:keys [data] :as block}]
-  [:div {:class (c [:py 1])}
-   (zentext/parse-block ztx data block)])
+  [:div (zentext/parse-block ztx data block)])
 
 (defmethod methods/rendercontent :datalog
   ;; TODO rename table-of to :table for consistency
@@ -48,9 +47,8 @@
   (let [result (if-let [params (:in data)]
                  (apply d/query ztx data params)
                  (d/query ztx data))]
-
     (if (and (seq result)
-             ;; fix this check
+             ;; TODO fix this check
              (map? (ffirst result))
              (seq headers))
       (comp/table ztx ctx headers (map first result))

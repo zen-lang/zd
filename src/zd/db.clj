@@ -29,7 +29,7 @@
         args (cond-> [ztx query]
                (some? dn) (conj dn)
                ;; here we use fuzzy lucene trailing wildcard
-               (valid-search? search-text) (conj (str search-text "*")))]
+               (valid-search? search-text) (conj (str (str/trim search-text) "*")))]
     (apply d/query args)))
 
 (defn navbar-docs [ztx]
@@ -50,7 +50,7 @@
                             [(clojure.string/includes? ?id "_schema")]]})
 
      :docs (d/query ztx
-                    '{:find [?id ?mu]
+                    '{:find [?id ?mu (pull ?e [:section])]
                       :where [[?e :xt/id ?id]
                               [(some? ?mu)]
                               [?e :menu-order ?mu]]

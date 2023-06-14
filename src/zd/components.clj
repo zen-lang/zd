@@ -34,7 +34,7 @@
 
                        (cond (= :xt/id h)
                              [:a {:href (str "/" docname)
-                                  :class (c :inline-flex :items-center [:text :blue-600] [:hover [:underline]])}
+                                  :class (c :inline-flex :items-center [:text "#4B5BA0"] [:hover [:underline]])}
                               (link/icon ztx doc)
                               (or (:title doc) docname)]
 

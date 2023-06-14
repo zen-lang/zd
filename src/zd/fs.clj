@@ -97,7 +97,6 @@
                                                                   :content cnt}))
                                   'ok)
                                 {:type :zd.fs/save-error})
-
         fs-reload (utils/safecall (fn [ag]
                                     (when-let [repo (get-repo ztx)]
                                       (gitsync/commit-doc ztx repo {:docpath filepath :docname docname}))
@@ -105,7 +104,6 @@
                                     (memstore/eval-macros! ztx)
                                     'ok)
                                   {:type :zd.fs/reload-error})]
-
     (send-off ag fs-save)
     (await ag)
     (send-off ag fs-reload)))

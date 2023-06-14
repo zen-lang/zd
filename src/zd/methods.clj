@@ -33,10 +33,10 @@
              (= (:zd/content-type anns) :edn)
              (not (map? d)))]
     [:div {:class (c [:py 4])}
-     [:div {:class (c :flex :flex-row :items-center)}
+     [:div {:class (c :flex :flex-row :items-center [:py 1] :border-b)}
       [:a {:id kp}
-       [:span {:class (c [:text :orange-500])} ":"]
-       [:span {:class (c [:text :gray-600] :text-sm {:text-transform "uppercase"})} kp]]
+       [:span {:class (c [:text :gray-600])} ":"]
+       [:span {:class (c :uppercase {:font-weight "600"})} kp]]
       #_[:div {:class (c [:text :gray-500] :text-sm)}
          (name (get-in block [:ann :zd/content-type]))]]
      (when-not (and (string? d) (str/blank? d))
