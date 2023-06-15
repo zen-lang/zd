@@ -52,7 +52,10 @@
                  (memstore/get-doc ztx (symbol docname))]
              [:div {:class (c [:pt 4] :flex :flex-col)}
               [:div {:class (c :inline-flex :items-center)}
-               (link/symbol-link ztx docname)
+               [:a {:href (str "/" docname)
+                   :class (c :inline-flex :items-center [:text "#4B5BA0"]
+                             [:hover [:underline]] :whitespace-no-wrap)}
+                (:title doc)]
                #_[:span {:class (c :text-xs [:pl 2])} p]
                [:div {:class (c :flex :self-center)}
                 (when (str/includes? (str docname) "_template")

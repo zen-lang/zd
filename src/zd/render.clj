@@ -88,7 +88,7 @@
            (methods/renderkey ztx ctx err-block)))))
 
 (defn render-blocks [ztx ctx {m :zd/meta subs :zd/subdocs :as doc} & [render-subdoc?]]
-  [:div {:class (c [:w-max "60rem"])}
+  [:div {:class (c [:w "60vw"])}
    ;; TODO render errors in doc view
    (when-let [errs (seq (:errors m))]
      (methods/renderkey ztx ctx {:data errs :ann {} :key :zd/errors}))
@@ -96,7 +96,7 @@
     (for [k (distinct (filter #(get doc %) (:doc m)))]
       (let [block {:data (get doc k)
                    :key k
-                   :ann (get-in doc [:zd/meta :ann k])}]
+                   :ann (assoc (get-in doc [:zd/meta :ann k]) :zd/render-subdoc? render-subdoc?)}]
         (render-key ztx ctx block))))
    (let [links (seq (get-in doc [:zd/meta :backlinks]))]
      (when-not render-subdoc?
@@ -108,12 +108,12 @@
          [:div {:class (c [:my 2])}
           [:div {:class (c :flex :flex-row :border-b)}
            [:a {:id (str "subdocs-" (name sub-key))}
-            [:span {:class (c [:text :gray-600])} "&"]
+            #_[:span {:class (c [:text :gray-600])} "&"]
             [:span {:class (c :uppercase {:font-weight "600"})} (name sub-key)]]]
           (render-blocks ztx ctx (get-in doc [:zd/subdocs sub-key]) true)]))])])
 
-(defn contents-sidebar [ztx {r :root :as ctx}
-                        {{order :doc anns :ann :as m} :zd/meta links :zd/backlinks subs :zd/subdocs :as doc}]
+(defn contents-sidebar [ztx {r :root :as ctx} {{order :doc anns :ann :as m} :zd/meta
+                                               links :zd/backlinks subs :zd/subdocs :as doc}]
   (let [dockeys
         ;; TODO fix case when subdocs and dockey are the same
         (->> order
@@ -138,7 +138,7 @@
                      (filter #(get subs %))
                      (distinct))
 
-        root (c :text-sm :fixed [:top "4rem"] [:right "8rem"] :border-l [:px 4] [:bg "white"])
+        root (c :text-sm [:p 6] [:bg "white"])
         col  (c :flex :flex-col [:py 2])
         head (c :uppercase [:py 1])]
     [:div {:class root}
@@ -163,8 +163,9 @@
 (defn render-doc [ztx ctx doc]
   [:div
    (topbar ztx ctx doc)
-   [:div#blocks (render-blocks ztx ctx doc)]
-   (contents-sidebar ztx ctx doc)])
+   [:div#blocks {:class (c :flex :flex-row [:w-max "60rem"])}
+    (render-blocks ztx ctx doc)
+    (contents-sidebar ztx ctx doc)]])
 
 (defn navigation [ztx {{{search-text :search} :query-params :as req} :request r :root :as ctx} doc]
   [:div#left-nav {:class (c :border-r
@@ -218,7 +219,8 @@
                 (group-by (comp :section #(nth % 2)))
                 (sort-by first)
                 (reverse))]
-       [:div#zd-menu {:class (c [:pt 0] [:pr 6] [:pb 6] [:pl 6] #_[:pseudo "div>div:last-child>#section" :hidden])}
+       [:div#zd-menu
+        {:class (c [:pt 0] [:pr 6] [:pb 6] [:pl 6] [:pseudo ">div:last-child>#section-break" :hidden])}
         (for [[section docs] grouped]
           [:div
            (for [[d] docs]
@@ -233,12 +235,12 @@
                 [:a {:class (c :cursor-pointer :text-lg [:text :gray-500] :hidden [:hover [:text :green-600]])
                      :href (str d "." "_draft/edit")}
                  [:i.fas.fa-plus]]]))
-           [:div#section {:class (c :border-b [:my 2])}]])]))])
+           [:div#section-break {:class (c :border-b [:my 2])}]])]))])
 
 (defn doc-view [ztx ctx doc]
   [:div {:class (c :flex [:h "100%"])}
    (navigation ztx ctx doc)
-   [:div#page {:class (c :flex :flex-grow [:flex-shrink 1] [:py 6] [:px 12] :overflow-y-auto 
+   [:div#page {:class (c :flex :flex-grow [:flex-shrink 1] [:py 6] [:px 12] :overflow-y-auto
                          {:flex-basis "100%"})}
     (render-doc ztx ctx doc)]])
 

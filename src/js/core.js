@@ -226,7 +226,7 @@ var on_link_click = (ev) => {
             var l = new URL(res.href);
             var href = res.href;
             var parts = href.split('/');
-            if (!l.hash && parts.length == 4 && parts[2] == 'localhost:3333') {
+            if (!l.hash && parts.length == 4) {
                 load_page(href, true);
                 ev.preventDefault();
                 ev.stopPropagation();

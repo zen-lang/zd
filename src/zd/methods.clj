@@ -31,11 +31,15 @@
   (let [render-inline?
         (and (not (:zd/multiline anns))
              (= (:zd/content-type anns) :edn)
-             (not (map? d)))]
+             (not (map? d)))
+        basic-style (c :flex :flex-row :items-center [:py 1] :border-b)
+        embedded-style (c :flex :flex-row :items-center [:py 1])]
     [:div {:class (c [:py 4])}
-     [:div {:class (c :flex :flex-row :items-center [:py 1] :border-b)}
+     [:div {:class (if (:zd/render-subdoc? anns)
+                     embedded-style
+                     basic-style)}
       [:a {:id kp}
-       [:span {:class (c [:text :gray-600])} ":"]
+       #_[:span {:class (c [:text :gray-600])} ":"]
        [:span {:class (c :uppercase {:font-weight "600"})} kp]]
       #_[:div {:class (c [:text :gray-500] :text-sm)}
          (name (get-in block [:ann :zd/content-type]))]]
