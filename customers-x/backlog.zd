@@ -1,6 +1,9 @@
 :title "Zendoc backlog"
 
-:menu-order 5
+:icon [:fa-solid :fa-rectangle-list]
+
+:menu-order 1
+:section "first"
 
 :desc /
 

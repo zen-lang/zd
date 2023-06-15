@@ -1,0 +1,13 @@
+:title "Desktop launch"
+
+:tags #{backlog.tags.tech-platform}
+
+:desc /
+
+allows to launch zendoc as a desktop application
+
+:desktop-app /
+
+* try app start with javafx (application scene with gitsync status, link to web)
+* just launch terminal with a shortcut command
+* run pre-built jar directly?

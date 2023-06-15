@@ -43,6 +43,12 @@ this document sets the knowledge base structure
 :schema {:type zen/number}
 :ann {:none {}}
 
+&section
+:type :dockey
+:desc "set a document section in left navigation bar"
+:schema {:type zen/string :minLength 1}
+:ann {:none {}}
+
 &tags
 :type :dockey
 :group :zd/summary

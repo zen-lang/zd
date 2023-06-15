@@ -1,5 +1,7 @@
 :title "Attachments"
 
+:tags #{backlog.tags.tech-platform}
+
 :desc /
 enables adding images, files and other types of content into zendoc.
 
