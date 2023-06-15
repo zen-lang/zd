@@ -1,5 +1,6 @@
 (ns zd.api-test
   (:require
+   [clojure.set :as set]
    [clojure.string :as str]
    [zd.api]
    [matcho.core :as matcho]
@@ -7,7 +8,8 @@
    [clojure.test :refer [deftest is testing]]
    [zen.core :as zen]
    [zen-web.core :as web]
-   [zd.memstore :as memstore]))
+   [zd.memstore :as memstore]
+   [zd.fs :as fs]))
 
 (defonce ztx (zen/new-context {}))
 
@@ -267,13 +269,12 @@
   (zen/start-system ztx 'zd.test/system)
 
   (testing "two backlinks are present"
-    (matcho/assert
-     #{{:to 'customers :path [:parent] :doc 'customers._schema}
-       {:to 'customers :path [:parent] :doc 'customers.flame}}
-     (:backlinks (:zd/meta (memstore/get-doc ztx 'customers)))))
+    (is (set/subset? #{{:to 'people.john :path [:founder] :doc 'customers.flame}
+                       {:to 'people.john :path [:ceo] :doc 'customers.flame}}
+                     (:backlinks (:zd/meta (memstore/get-doc ztx 'people.john))))))
 
-  (testing "add child document"
-    (def doc ":zd/docname customers.newcust\n:title \"my cust\"\n:desc \"\"\n:rel #{}")
+  (testing "add new cust with a backlink"
+    (def doc ":zd/docname customers.newcust\n:title \"my cust\"\n:desc \"\"\n:rel #{}\n:first-contact people.john")
 
     (matcho/assert
      {:status 200}
@@ -284,26 +285,45 @@
 
     (is (string? (read-doc "customers/newcust.zd"))))
 
+  ;; TODO think about awaits in zd.fs
+  (await fs/ag)
+
   (testing "third backlink is added"
+    (is (set/subset? #{{:to 'people.john :path [:founder] :doc 'customers.flame}
+                       {:to 'people.john :path [:first-contact] :doc 'customers.newcust}
+                       {:to 'people.john :path [:ceo] :doc 'customers.flame}}
+                     (:backlinks (:zd/meta (memstore/get-doc ztx 'people.john))))))
+
+  (testing "edit new cust backlink"
+    (def doc ":zd/docname customers.newcust\n:title \"my cust\"\n:desc \"\"\n:rel #{}\n:discovered-by people.john")
+
     (matcho/assert
-     #{{:path [:parent] :doc 'customers._schema :to 'customers}
-       {:path [:parent] :doc 'customers.newcust :to 'customers}
-       {:path [:parent] :doc 'customers.flame :to 'customers}}
-     (:backlinks (:zd/meta (memstore/get-doc ztx 'customers)))))
+     {:status 200}
+     (web/handle ztx 'zd/api
+                 {:uri "/customers._draft/edit"
+                  :request-method :put
+                  :body (req-body doc)}))
+
+    (await fs/ag)
+
+    (is (string? (read-doc "customers/newcust.zd")))
+
+    (is (not (contains? (:backlinks (:zd/meta (memstore/get-doc ztx 'people.john)))
+                        {:to 'people.john :path [:first-contact] :doc 'customers.newcust})))
+
+    (is (contains? (:backlinks (:zd/meta (memstore/get-doc ztx 'people.john)))
+                   {:to 'people.john :path [:discovered-by] :doc 'customers.newcust})))
 
   (testing "third backlink is gone after newcust deletion"
-    (matcho/assert
-     {:status 200 :body string?}
-     (web/handle ztx 'zd/api {:uri "/customers.newcust"
-                              :request-method :delete}))
+      (matcho/assert
+       {:status 200 :body string?}
+       (web/handle ztx 'zd/api {:uri "/customers.newcust"
+                                :request-method :delete}))
 
-    (is (nil? (read-doc "testdoc.zd"))))
+      (is (nil? (read-doc "testdoc.zd")))
 
-  (testing "third backlink is added"
-    (matcho/assert
-     #{{:path [:parent] :doc 'customers._schema :to 'customers}
-       {:path [:parent] :doc 'customers.flame :to 'customers}}
-     (:backlinks (:zd/meta (memstore/get-doc ztx 'customers)))))
+      (is (not (contains? (:backlinks (:zd/meta (memstore/get-doc ztx 'people.john)))
+                          {:to 'people.john :path [:first-contact] :doc 'customers.newcust}))))
 
   (zen/stop-system ztx))
 

@@ -87,11 +87,11 @@
          [[to from :as links] & oth] (seq patch)]
     (if (nil? links)
       acc
-      (recur (reduce (fn [acc* [from path]]
-                       (update-in acc* [to from] (fnil into #{}) path))
-                     acc
-                     from)
-             oth))))
+      (let [new-acc (reduce (fn [acc* [from path]]
+                              (update-in acc* [to from] (fnil into #{}) path))
+                            (update acc to dissoc (ffirst from))
+                            from)]
+        (recur new-acc oth)))))
 
 (defn *collect-macros [acc path node]
   (cond
@@ -149,7 +149,7 @@
     (cond
       (nil? i) 'ok
 
-      ;; hanging link is found
+      ;; TODO hanging link is found, add to idx and display error
       (nil? (get-in @ztx [:zdb docname]))
       (recur oth)
 
