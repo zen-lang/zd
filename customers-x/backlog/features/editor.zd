@@ -1,4 +1,5 @@
 :title "Editor"
+:priority "high"
 :tags #{backlog.tags.tech-platform}
 :desc /
 live document editor
@@ -15,3 +16,6 @@ live document editor
 * render :desc for keys autocomplete from metadata
 * search dictionaries for keys with .search from metadata
 * add context actions in editor - cut/append to another document
+* format and indent datalog queries; use 4 whitespaces for indentation
+* create by backlink flow. prefill link to connected resource in editor.
+* add cheatsheet with zd syntax, zentext syntax

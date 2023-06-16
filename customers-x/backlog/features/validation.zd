@@ -11,3 +11,4 @@ functionality related to constraining document structure and its values
 * RDF/OWL ontologies support (.ttl)
 * better error messages (- types description, - get rid of "incorrect edn" error)
 * add page with all documents errors and broken links
+* merge _template and _schema into _schema.zd

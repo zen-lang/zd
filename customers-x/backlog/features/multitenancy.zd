@@ -1,0 +1,6 @@
+:title "Multitenancy"
+:desc /
+connect multiple knowledge bases to one client
+:feature-spec /
+* label documents in #backlog.features.docmodel with docdir
+* teach zd.fs to use docdir to save file

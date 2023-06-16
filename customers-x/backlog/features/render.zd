@@ -1,0 +1,11 @@
+:title "Document render"
+:tags #{backlog.tags.usability}
+:desc /
+
+render document from .zd to html view
+
+:feature-spec /
+
+* display history of changes from git
+* separate tags render from :badges and other keys
+* ability to add document to favorites, display favorites tab in #backlog.features.navigation

@@ -12,5 +12,6 @@ allows to sync (auto commit / pull / push) documents to a remote git repository.
 * support multiple remotes (map file to path) in gitsync and loader
 * merge conflicts auto resolution. maybe impl git merge strategy that saves both files and allows user to select a correct file?
 * auto restart (when network had not been available before)
-* more authentication options
+* more authentication options. does not work currently if .ssh key is protected by a passphrase.
+* display error if git config name and email are not set, use defaults
 * support use case when gitsync is turned on at the existing docdir

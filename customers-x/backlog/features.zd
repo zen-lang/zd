@@ -4,9 +4,9 @@
 
 features to be implemented grouped by tags
 
-^table-of [:xt/id :desc :feature-spec]
+^table-of [:xt/id :tags :feature-spec]
 :top-priority datalog/
-{:find [(pull ?e [:xt/id :desc :feature-spec])]
+{:find [(pull ?e [:xt/id :tags :feature-spec])]
 :where [[?e :parent backlog.features]
 [?e :priority "high"]]
 :in [backlog.features]}
