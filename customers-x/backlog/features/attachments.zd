@@ -3,7 +3,7 @@
 :tags #{backlog.tags.tech-platform}
 
 :desc /
-enables adding images, files and other types of content into zendoc.
+enables adding images, files and other types of content into zendoc. should support both uploading at attachment locally and providing and external link.
 
 :feature-spec /
 

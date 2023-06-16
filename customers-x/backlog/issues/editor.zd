@@ -1,0 +1,5 @@
+:title "Editor issues"
+:desc /
+* preview is not rendered on dropdown select
+* & notes as subdoc rendered incorrectly
+* docname can not start with _

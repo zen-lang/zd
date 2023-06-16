@@ -14,3 +14,4 @@ live document editor
 * make sure links are not clickable in editor view (alert before navigating?)
 * render :desc for keys autocomplete from metadata
 * search dictionaries for keys with .search from metadata
+* add context actions in editor - cut/append to another document

@@ -1,0 +1,9 @@
+:title "Full text search"
+:tags #{backlog.tags.usability}
+:desc /
+full page popup that searches document content
+
+:feature-spec /
+
+* may be context-dependent
+* streams results to UI

@@ -1,0 +1,4 @@
+:title "Redirect on delete"
+:desc /
+
+fix redirect to parent / root on document deletion.

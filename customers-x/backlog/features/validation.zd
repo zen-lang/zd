@@ -1,6 +1,8 @@
 :title "Document validation"
 :tags #{backlog.tags.tech-platform}
 
+:priority "high"
+
 :desc /
 functionality related to constraining document structure and its values
 

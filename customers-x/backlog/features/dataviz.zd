@@ -1,5 +1,7 @@
 :title "Dataviz engine"
 
+:priority "high"
+
 :tags #{backlog.tags.business-features}
 
 :desc /

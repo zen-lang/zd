@@ -1,0 +1,12 @@
+:title "Publishing"
+:tags #{backlog.tags.business-features}
+:priority "high"
+:desc /
+enables deploying zendoc knowledge base as a static site
+
+:feature-spec /
+
+* disable editing in publish mode
+* re-deploy on commit to synced repo
+* impl basic and oauth auth flows
+* allow user to set his domain or use [knowledge-base].zendoc.me

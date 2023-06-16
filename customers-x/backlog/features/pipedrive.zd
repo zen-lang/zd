@@ -12,3 +12,4 @@ integration widget that allows to fetch data from Pipedrive CRM
 * change syntax to pipedrive/person, pipedrive/org
 * impl timeline person view
 * show full note and email content?
+* allow fetching document key value from pipedrive api. related to #backlog.features.docmodel

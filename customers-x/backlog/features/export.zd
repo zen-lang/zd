@@ -1,0 +1,7 @@
+:title "Export"
+:tags #{backlog.tags.business-features}
+:desc /
+functionality related to exporting knowledge from zendoc
+
+:feature-spec /
+* export document as pdf

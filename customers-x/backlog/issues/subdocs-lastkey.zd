@@ -1,0 +1,3 @@
+:title "Last key in subdoc list"
+:desc /
+last key of the subdocument is not rendered if the next subdocument is present
