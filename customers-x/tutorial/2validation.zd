@@ -1,0 +1,25 @@
+:title "2. Validation"
+:desc /
+allows to constraint document's structure and field values.
+
+:feature-desc /
+_template and _schema files.
+_template is used on document creation.
+
+_schema files are collected at startup and define document :keys.
+_schema documents allows constraints on three levels:
+* whole document
+* a separate key
+* a subdocument
+
+^table-of [:xt/id]
+:templates-defined datalog/
+{:find [(pull ?e [:xt/id])]
+:where [[?e :xt/id ?id]
+[(clojure.string/includes? ?id "_template")]]}
+
+^table-of [:xt/id]
+:schemas-defined datalog/
+{:find [(pull ?e [:xt/id])]
+:where [[?e :xt/id ?id]
+[(clojure.string/includes? ?id "_schema")]]}

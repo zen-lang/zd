@@ -47,3 +47,17 @@
 
   (zen/stop-system ztx))
 
+#_(deftest xtdb-sync
+
+  (zen/stop-system ztx)
+
+  (zen/read-ns ztx 'zd)
+
+  (zen/read-ns ztx 'zd.test)
+
+  (zen/start-system ztx 'zd.test/system)
+
+  (xtdb/sync (:node (datalog/get-state ztx)))
+
+  (zen/stop-system ztx))
+

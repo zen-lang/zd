@@ -8,3 +8,5 @@ database engine that allows to query content of documents and aggregate results
 * add hash syntax for symbols in queries
 * impl ^list annotation for displaying query results
 * auto indentation in editor
+* purge document from xtdb on deletion from zendoc
+* test that document is updated in xtdb after update in zd

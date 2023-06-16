@@ -7,7 +7,7 @@
 
 (defn get-parent [ztx nm]
   (when-let [p (seq (butlast (str/split (str nm) #"\.")))]
-    (symbol (apply str p))))
+    (symbol (str/join "." p))))
 
 ;; needed for windows compatibility
 (def file-separator-regex
@@ -71,7 +71,7 @@
                       (filter (fn [[_ v]]
                                 (and (not= :subdoc (:type v))
                                      (or (= (:namespace v) :zd/root)
-                                         (= (:namespace v) (get-parent ztx docname))))))
+                                         (str/includes? (str docname) (str (:namespace v)))))))
                       (map (fn [[k v]] [k (:schema v)]))
                       (into {:zd/docname {:type 'zen/symbol}}))
         meta-sch

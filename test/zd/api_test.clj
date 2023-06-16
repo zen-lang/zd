@@ -76,6 +76,7 @@
   (zen/stop-system ztx))
 
 (deftest doc-validation-test
+  ;; TODO add test when schema is embedded on the top level e.g. backlog._schema , backlog.features.my-feature
   (zen/stop-system ztx)
 
   (zen/read-ns ztx 'zd)

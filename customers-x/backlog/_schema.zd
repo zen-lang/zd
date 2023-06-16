@@ -1,0 +1,9 @@
+:title "Backlog documents schema"
+:desc /
+defines keys for zendoc baclogs document set
+
+&priority
+:type :dockey
+:ann {:badge {}}
+:schema {:type zen/string :minLength 1}
+:desc "priority of a feature"

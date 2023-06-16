@@ -1,0 +1,3 @@
+:title "6. Architecture and extensibility"
+:desc /
+means that allow to extend zendoc with new keys, annotation and content-types.

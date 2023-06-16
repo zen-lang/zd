@@ -1,5 +1,6 @@
 (ns zd.fs-test
   (:require
+   [clojure.set :as set]
    [matcho.core :as matcho]
    [clojure.java.io :as io]
    [clojure.string :as str]
@@ -100,14 +101,14 @@
     (matcho/assert {:zd/meta {:backlinks #{{:to 'customers.flame :path [:desc] :doc 'customers}}}}
                    (memstore/get-doc ztx 'customers.flame))
 
-    (matcho/assert {:zd/meta {:backlinks #{{:to 'people.john :path [:desc] :doc 'customers}
-                                           {:to 'people.john :path [:product-champion] :doc 'customers}
-                                           {:to 'people.john :path [:ceo] :doc 'customers.flame}
-                                           {:to 'people.john :path [:founder] :doc 'customers.flame}}}}
-                   (memstore/get-doc ztx 'people.john))
+    (is (set/subset? #{{:to 'people.john :path [:desc] :doc 'customers}
+                       {:to 'people.john :path [:product-champion] :doc 'customers}
+                       {:to 'people.john :path [:ceo] :doc 'customers.flame}
+                       {:to 'people.john :path [:founder] :doc 'customers.flame}}
+                     (:backlinks (:zd/meta (memstore/get-doc ztx 'people.john)))))
 
-    (matcho/assert {:zd/meta {:backlinks #{{:to 'people.todd :doc 'customers :path [:desc]}}}}
-                   (memstore/get-doc ztx 'people.todd))))
+    (is (set/subset? #{{:to 'people.todd :doc 'customers :path [:desc]}}
+                     (:backlinks (:zd/meta (memstore/get-doc ztx 'people.todd)))))))
 
 (deftest block-meta-added
   (load! ztx)

@@ -1,0 +1,37 @@
+:title "1. A Document"
+:desc /
+Shows syntax of .zd files
+
+// simple keys
+:key "simple string"
+:another-key 1
+:yet-another :key
+
+^badge
+:annotated-key "value"
+
+// key value as a collection of elements
+:collection #{1 2 3}
+:oth-collection ["string a", "string b", "string c"]
+
+// links to other documents
+:linked-person people.john
+// check that people.john shows backlink
+:person-list #{people.john, people.todd}
+
+// multiline keys
+:multiline-text /
+zentext as a markdown-like layout language.
+
+:multiline-edn edn/
+{:a "1" :b 2}
+
+&a-note
+
+:title "A note embedded in a document"
+:desc /
+that has its separate title and description
+
+&b-note
+
+:title "another note embedded"
