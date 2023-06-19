@@ -9,6 +9,7 @@
    ;; blocks defined by zentext content type
    [zd.blocks.zentext]
 
+   [zd.blocks.timeline]
    ;; blocks defined with :zd/ prefix
    [zd.blocks.zd]))
 
