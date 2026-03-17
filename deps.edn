@@ -14,8 +14,10 @@
          org.clojure/java.jdbc                               {:mvn/version "0.7.12"}
          org.postgresql/postgresql                           {:mvn/version "42.7.10"}
          org.babashka/sci                                    {:mvn/version "0.10.49"}
-         ring/ring                                           {:mvn/version "1.13.0"}
-         ring/ring-defaults                                  {:mvn/version "0.5.0"}
+         ring/ring                                           {:mvn/version "1.15.3"
+                                                              :exclusions [crypto-random/crypto-random]}
+         ring/ring-defaults                                  {:mvn/version "0.7.0"
+                                                              :exclusions [crypto-random/crypto-random]}
          stylo/stylo                                         {:git/url "https://github.com/HealthSamurai/macrocss"
                                                               :sha "3423951651da97b533020b4b70a29607c6979508"}
          zen-lang/zen                                        {:git/url "https://github.com/zen-lang/zen" :sha "77a51fe414c552755876b517d06e3c625f322c45"}
